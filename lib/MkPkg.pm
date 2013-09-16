@@ -90,6 +90,17 @@ sub git_tag_sign_id {
     return undef;
 }
 
+sub valid_id {
+    my ($id, $valid_id) = @_;
+    if (ref $valid_id eq 'ARRAY') {
+        foreach my $v (@$valid_id) {
+            return 1 if $id eq $v;
+        }
+        return undef;
+    }
+    return $id eq $valid_id;
+}
+
 sub maketar {
     my ($project, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config('output_dir', $project)));
@@ -108,6 +119,22 @@ sub maketar {
         || exit_error 'No git_hash specified';
     my $version = project_config('version', $project)
         || exit_error 'No version specified';
+    if (my $tag_gpg_id = project_config('tag_gpg_id', $project)) {
+        my $id = git_tag_sign_id($git_hash) ||
+                exit_error "$git_hash is not a signed tag";
+        if (!valid_id($id, $tag_gpg_id)) {
+            exit_error "$git_hash is not signed with a valid key";
+        }
+        print "Tag $git_hash is signed with key $id\n";
+    }
+    if (my $commit_gpg_id = project_config('commit_gpg_id', $project)) {
+        my $id = git_commit_sign_id($git_hash) ||
+                exit_error "$git_hash is not a signed commit";
+        if (!valid_id($id, $commit_gpg_id)) {
+            exit_error "$git_hash is not signed with a valid key";
+        }
+        print "Commit $git_hash is signed with key $id\n";
+    }
     system('git', 'archive', "--prefix=$project-$version/",
         "--output=$dest_dir/$project-$version.tar.gz", $git_hash) == 0
         || exit_error 'Error running git archive.';
