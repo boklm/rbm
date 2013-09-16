@@ -101,9 +101,16 @@ sub valid_id {
     return $id eq $valid_id;
 }
 
+sub valid_project {
+    my ($project) = @_;
+    exists $config->{projects}{$project}
+        || exit_error "Unknown project $project";
+}
+
 sub maketar {
     my ($project, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    valid_project($project);
     my $clonedir = path(project_config('git_clone_dir', $project));
     my $old_cwd = getcwd;
     if (!chdir path("$clonedir/$project")) {
