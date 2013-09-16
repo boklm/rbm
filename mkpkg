@@ -55,7 +55,8 @@ sub usageexit {
 
 sub set_options {
     my @options = qw(distribution=s version=s gitref=s tag-gpg-id=s commit-gpg-id=s
-                     projects-dir=s git-clone-dir=s git-hash=s output-dir=s);
+                     projects-dir=s git-clone-dir=s git-hash=s output-dir=s
+                     compress_tar=s);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options);
     foreach my $k (keys %val) {

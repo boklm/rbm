@@ -135,10 +135,24 @@ sub maketar {
         }
         print "Commit $git_hash is signed with key $id\n";
     }
+    my $tar_file = "$project-$version.tar";
     system('git', 'archive', "--prefix=$project-$version/",
-        "--output=$dest_dir/$project-$version.tar.gz", $git_hash) == 0
+        "--output=$dest_dir/$tar_file", $git_hash) == 0
         || exit_error 'Error running git archive.';
-    print "Created $dest_dir/$project-$version.tar.gz\n";
+    my %compress = (
+        xz  => ['xz', '-f'],
+        gz  => ['gzip', '-f'],
+        bz2 => ['bzip2', '-f'],
+    );
+    if (my $c = project_config('compress_tar', $project)) {
+        if (!defined $compress{$c}) {
+            exit_error "Unknow compression $c";
+        }
+        system(@{$compress{$c}}, "$dest_dir/$tar_file") == 0
+                || exit_error "Error compressing $tar_file with $compress{$c}->[0]";
+        $tar_file .= ".$c";
+    }
+    print "Created $dest_dir/$tar_file\n";
 }
 
 1;
