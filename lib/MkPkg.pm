@@ -104,7 +104,7 @@ sub valid_id {
 sub maketar {
     my ($project, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config('output_dir', $project)));
-    my $clonedir = path(config('git_clone_dir', [ 'projects', $project ]));
+    my $clonedir = path(project_config('git_clone_dir', $project));
     my $old_cwd = getcwd;
     if (!chdir path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
