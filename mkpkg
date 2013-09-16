@@ -18,6 +18,14 @@ $0 tar [options] [project]
 
 END
     },
+    rpmspec => {
+        run => \&rpmspec,
+        descr => 'Create rpm spec file',
+        usage => <<END,
+$0 rpmspec [options] [project]
+
+END
+    },
     showconf => {
         run => \&show_conf,
         descr => 'Show configuration',
@@ -79,6 +87,14 @@ sub tar {
     my $args = set_options(@_);
     usageexit('usage', 'tar') unless @$args == 1;
     MkPkg::maketar($args->[0]);
+}
+
+sub rpmspec {
+    usageexit('usage', $_[0]) unless @_ >= 2;
+    shift;
+    my $args = set_options(@_);
+    usageexit('usage', 'rpmspec') unless @$args == 1;
+    MkPkg::rpmspec($args->[0]);
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {

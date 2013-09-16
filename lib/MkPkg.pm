@@ -163,4 +163,28 @@ sub maketar {
     chdir($old_cwd);
 }
 
+sub rpmspec {
+    my ($project, $dest_dir) = @_;
+    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    my $projects_dir = abs_path(path(project_config('projects_dir', $project)));
+    valid_project($project);
+    -f "$projects_dir/$project/$project.spec"
+        || exit_error "Template for $project.spec is missing";
+    my $template = Template->new(
+        ENCODING        => 'utf8',
+        INCLUDE_PATH    => "$projects_dir/$project",
+        OUTPUT_PATH     => $dest_dir,
+    );
+    my $vars = {
+        config  => $config,
+        project => $project,
+        p       => $config->{projects}{$project},
+        f       => {
+            config => sub { project_config($_[0], $project) },
+        },
+    };
+    $template->process("$project.spec", $vars, "$project.spec",
+                        binmode => ':utf8');
+}
+
 1;
