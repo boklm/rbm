@@ -61,7 +61,7 @@ sub project_config {
 
 sub exit_error {
     print STDERR $_[0], "\n";
-    exit defined $_[1] ? $_[1] : 1;
+    exit (exists $_[1] ? $_[1] : 1);
 }
 
 sub git_commit_sign_id {
