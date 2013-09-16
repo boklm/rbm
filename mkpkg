@@ -1,0 +1,88 @@
+#!/usr/bin/perl -w
+
+use strict;
+use File::Basename;
+use lib dirname($0) . '/lib';
+use MkPkg;
+use YAML;
+use Getopt::Long;
+#use Data::Dump qw/dd/;
+
+
+my %actions = (
+    tar  => {
+        run   => \&tar,
+        descr => 'Create source tarball',
+        usage => <<END,
+$0 tar [options] [project]
+
+END
+    },
+    showconf => {
+        run => \&show_conf,
+        descr => 'Show configuration',
+        usage => <<END,
+$0 showconf
+
+Show the configuration.
+END
+    },
+    usage => {
+        run => \&usage,
+        descr => 'Show usage information for an action',
+        usage => <<END,
+$0 usage [action]
+
+Show action usage
+END
+    },
+);
+
+sub usage {
+    if ($_[1] && $actions{$_[1]}) {
+        print STDERR $actions{$_[1]}->{usage};
+    } else {
+        print STDERR "$0 [action] [options]\n";
+        print STDERR "$0 usage [action]\n\n";
+        print STDERR "Available actions:\n";
+        print STDERR map { " - $_ : $actions{$_}->{descr}\n" } keys %actions;
+    }
+}
+sub usageexit {
+    usage(@_);
+    exit 1;
+}
+
+sub set_options {
+    my @options = qw(distribution=s version=s gitref=s tag-gpg-id=s commit-gpg-id=s
+                     projects-dir=s git-clone-dir=s git-hash=s output-dir=s);
+    my %val;
+    Getopt::Long::GetOptionsFromArray(\@_, \%val, @options);
+    foreach my $k (keys %val) {
+        my $l = $k;
+        $l =~ s/-/_/;
+        $MkPkg::config->{run}{$l} = $val{$k};
+    }
+    return $MkPkg::config->{run}{args} = \@_;
+}
+
+sub show_conf {
+    shift;
+    set_options(@_);
+    print YAML::Dump($MkPkg::config);
+}
+
+sub tar {
+    usageexit('usage', $_[0]) unless @_ >= 2;
+    shift;
+    my $args = set_options(@_);
+    usageexit('usage', 'tar') unless @$args == 1;
+    MkPkg::maketar($args->[0]);
+}
+
+if (@ARGV == 0 || !$actions{$ARGV[0]}) {
+    usageexit();
+}
+MkPkg::load_config;
+$actions{$ARGV[0]}->{run}->(@ARGV);
+
