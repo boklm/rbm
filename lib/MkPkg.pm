@@ -160,6 +160,7 @@ sub maketar {
         $tar_file .= ".$c";
     }
     print "Created $dest_dir/$tar_file\n";
+    chdir($old_cwd);
 }
 
 1;
