@@ -60,7 +60,7 @@ sub project_config {
 }
 
 sub exit_error {
-    print STDERR $_[0], "\n";
+    print STDERR "Error: ", $_[0], "\n";
     exit (exists $_[1] ? $_[1] : 1);
 }
 
