@@ -97,6 +97,23 @@ sub git_tag_sign_id {
     return undef;
 }
 
+sub git_describe {
+    my ($project, $git_hash) = @_;
+    return if $config->{projects}{$project}{describe};
+    $config->{projects}{$project}{describe} = {};
+    my $old_cwd = getcwd;
+    git_clone_pull_chdir($project);
+    my ($stdout, $stderr, $success, $exit_code)
+        = capture_exec('git', 'describe', '--long', $git_hash);
+    if ($success) {
+        (   $config->{projects}{$project}{describe}{tag},
+            $config->{projects}{$project}{describe}{tag_reach},
+            $config->{projects}{$project}{describe}{hash}
+        ) = $stdout =~ m/^(.+)-(\d+)-g([^-]+)$/;
+    }
+    chdir($old_cwd);
+}
+
 sub valid_id {
     my ($id, $valid_id) = @_;
     if (ref $valid_id eq 'ARRAY') {
@@ -125,18 +142,23 @@ sub git_clone_pull_chdir {
         }
         chdir($project) || exit_error "Error entering $project directory";
     }
-    system('git', 'pull') == 0 || exit_error "Error running git pull on $project";
+    if (!$config->{projects}{$project}{pulled}) {
+        system('git', 'pull') == 0 || exit_error "Error running git pull on $project";
+        $config->{projects}{$project}{pulled} = 1;
+    }
 }
 
 sub maketar {
     my ($project, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config('output_dir', $project)));
     valid_project($project);
-    my $old_cwd = getcwd;
-    git_clone_pull_chdir($project);
     my $git_hash = project_config('git_hash', $project)
         || exit_error 'No git_hash specified';
+    my $old_cwd = getcwd;
+    git_clone_pull_chdir($project);
+    git_describe($project, $git_hash);
     my $version = project_config('version', $project)
+        || $config->{projects}{$project}{describe}{tag}
         || exit_error 'No version specified';
     if (my $tag_gpg_id = project_config('tag_gpg_id', $project)) {
         my $id = git_tag_sign_id($git_hash) ||
@@ -182,6 +204,12 @@ sub rpmspec {
     valid_project($project);
     -f "$projects_dir/$project/$project.spec"
         || exit_error "Template for $project.spec is missing";
+    if (my $git_hash = project_config('git_hash', $project)) {
+        git_describe($project, $git_hash);
+        $config->{projects}{$project}{version}
+                //= $config->{projects}{$project}{describe}{tag};
+    }
+    project_config('version', $project) || exit_error 'No version specified';
     my $template = Template->new(
         ENCODING        => 'utf8',
         INCLUDE_PATH    => "$projects_dir/$project",
