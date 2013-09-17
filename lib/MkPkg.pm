@@ -8,6 +8,7 @@ use Template;
 use File::Basename;
 use IO::Handle;
 use IO::CaptureOutput qw(capture_exec);
+use File::Temp;
 #use Data::Dump qw/dd/;
 
 our $config;
@@ -189,6 +190,19 @@ sub rpmspec {
 
 sub projectslist {
     keys %{$config->{projects}};
+}
+
+sub makesrpm {
+    my ($project, $dest_dir) = @_;
+    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    valid_project($project);
+    my $tmpdir = File::Temp->newdir;
+    maketar($project, $tmpdir->dirname);
+    rpmspec($project, $tmpdir->dirname);
+    system('rpmbuild', '-bs', '--define', "_topdir $tmpdir",
+        '--define', "_sourcedir $tmpdir",
+        '--define', "_srcrpmdir $dest_dir", "$tmpdir/$project.spec") == 0
+        || exit_error "Error running rpmbuild";
 }
 
 1;

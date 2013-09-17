@@ -34,6 +34,14 @@ $0 rpmspec [options] [project]
 
 END
     },
+    srpm => {
+        run => \&srpm,
+        descr => 'Create source rpm file',
+        usage => <<END,
+$0 srpm [options] [project]
+
+END
+    },
     showconf => {
         run => \&show_conf,
         descr => 'Show configuration',
@@ -108,6 +116,14 @@ sub rpmspec {
 sub print_projects {
     usageexit('usage', $_[0]) unless @_ == 1;
     print join("\n", MkPkg::projectslist()), "\n";
+}
+
+sub srpm {
+    usageexit('usage', $_[0]) unless @_ >= 2;
+    shift;
+    my $args = set_options(@_);
+    usageexit('usage', 'srpm') unless @$args == 1;
+    MkPkg::makesrpm($args->[0]);
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {

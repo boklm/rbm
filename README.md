@@ -29,6 +29,9 @@ The following commands are available :
  - **tar** :
         create a source tarball for a project
  
+ - **srpm** :
+        create a source rpm package
+ 
  - **showconf** :
         print the configuration
  
