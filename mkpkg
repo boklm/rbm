@@ -10,6 +10,14 @@ use Getopt::Long;
 
 
 my %actions = (
+    projects => {
+        run   => \&print_projects,
+        descr => 'Print projects list',
+        usage => <<END,
+$0 projects
+
+END
+    },
     tar  => {
         run   => \&tar,
         descr => 'Create source tarball',
@@ -95,6 +103,11 @@ sub rpmspec {
     my $args = set_options(@_);
     usageexit('usage', 'rpmspec') unless @$args == 1;
     MkPkg::rpmspec($args->[0]);
+}
+
+sub print_projects {
+    usageexit('usage', $_[0]) unless @_ == 1;
+    print join("\n", MkPkg::projectslist()), "\n";
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {

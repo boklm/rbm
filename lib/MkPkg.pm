@@ -187,4 +187,8 @@ sub rpmspec {
                         binmode => ':utf8');
 }
 
+sub projectslist {
+    keys %{$config->{projects}};
+}
+
 1;
