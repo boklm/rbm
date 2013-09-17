@@ -11,10 +11,16 @@ use IO::CaptureOutput qw(capture_exec);
 use File::Temp;
 #use Data::Dump qw/dd/;
 
+my %default_config = (
+    projects_dir  => 'projects',
+    output_dir    => 'out',
+    git_clone_dir => 'git_clones',
+);
+
 our $config;
 sub load_config {
     my $config_file = shift // find_config_file();
-    $config = LoadFile($config_file);
+    $config = { %default_config, %{ LoadFile($config_file) } };
     $config->{basedir} = dirname($config_file);
     foreach my $p (glob path($config->{projects_dir}) . '/*') {
         next unless -f "$p/config";

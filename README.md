@@ -62,11 +62,11 @@ located anywhere on your filesystem, but you will need to run the
 All relative paths used in the configuration are relative from the
 *mkpkg.conf* location.
 
-At the minimum, the *mkpkg.conf* file should contain the definition for
-the **projects_dir** option :
+An example *mkpkg.conf* file will look like this :
 
 ```
 projects_dir: projects
+compress_tar: xz
 ```
 
 The *projects_dir* option define the path to the directory containing
@@ -93,14 +93,16 @@ Configuration options
 The following configuration options are available :
 
 - **projects_dir** :
-        The directory containing the projects definitions.
+        The directory containing the projects definitions. The default
+        value is *projects*.
 
 - **git_clone_dir** :
-        The directory used to store clones of git repositories.
+        The directory used to store clones of git repositories. The
+        default value is *git_clones*.
 
 - **output_dir** :
         The directory where output files (tarballs, spec files or
-        packages) are created.
+        packages) are created. The default value is *out*.
 
 - **compress_tar** :
         If set, the tarball created will be compressed in the select
