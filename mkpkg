@@ -70,7 +70,7 @@ sub usageexit {
 }
 
 sub set_options {
-    my @options = qw(distribution=s version=s git-hash=s tag-gpg-id=s commit-gpg-id=s
+    my @options = qw(distribution=s version=s tag-gpg-id=s commit-gpg-id=s
                      projects-dir=s git-clone-dir=s git-hash=s output-dir=s
                      compress_tar=s);
     my %val;
