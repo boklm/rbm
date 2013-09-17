@@ -114,12 +114,9 @@ sub valid_project {
         || exit_error "Unknown project $project";
 }
 
-sub maketar {
-    my ($project, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
-    valid_project($project);
+sub git_clone_pull_chdir {
+    my $project = shift;
     my $clonedir = path(project_config('git_clone_dir', $project));
-    my $old_cwd = getcwd;
     if (!chdir path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
         if (system('git', 'clone',
@@ -129,6 +126,14 @@ sub maketar {
         chdir($project) || exit_error "Error entering $project directory";
     }
     system('git', 'pull') == 0 || exit_error "Error running git pull on $project";
+}
+
+sub maketar {
+    my ($project, $dest_dir) = @_;
+    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    valid_project($project);
+    my $old_cwd = getcwd;
+    git_clone_pull_chdir($project);
     my $git_hash = project_config('git_hash', $project)
         || exit_error 'No git_hash specified';
     my $version = project_config('version', $project)
