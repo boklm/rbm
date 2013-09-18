@@ -210,6 +210,10 @@ sub rpmspec {
                 //= $config->{projects}{$project}{describe}{tag};
     }
     project_config('version', $project) || exit_error 'No version specified';
+    my $distribution = project_config('distribution', $project)
+                || exit_error 'No distribution specified';
+    exists $config->{distributions}{$distribution}
+                || exit_error "Unknown distribution $distribution";
     my $template = Template->new(
         ENCODING        => 'utf8',
         INCLUDE_PATH    => "$projects_dir/$project",
@@ -219,6 +223,7 @@ sub rpmspec {
         config  => $config,
         project => $project,
         p       => $config->{projects}{$project},
+        d       => $config->{distributions}{$distribution},
         f       => {
             config => sub { project_config($_[0], $project) },
         },
