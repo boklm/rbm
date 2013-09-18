@@ -225,6 +225,9 @@ TODO
 
 - Add support for Debian packages
 
+- Update file modification time of all created files to be the date of
+  the commit used (to allow reproducible builds)
+
 [mock]: http://fedoraproject.org/wiki/Projects/Mock
 [iurt]: http://gitweb.mageia.org/software/build-system/iurt/
 
