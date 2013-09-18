@@ -152,9 +152,31 @@ Template files
 The template files are made using perl Template Toolkit. You can read
 more about the syntax on the [Template Toolkit website][perltt].
 
-TODO: description of the variables that can be used.
-
 [perltt]: http://www.template-toolkit.org/
+
+The following variables can be used in the template files :
+
+- **config** :
+        contains all the configuration. You can view the content with
+        `mkpkg showconf`.
+
+- **c** :
+        This variable is a function reference. Instead of accessing the
+        *config* variable directly, you can use the *c* function which
+        will look at the command line parameters, the project specific
+        configuration then the global configuration and return the first
+        defined one. The syntax to use this function is `c('option-name')`.
+
+- **project** :
+        The name of the project for which we are processing a template.
+
+- **p** :
+        The project's configuration. This is a shortcut for the value
+        of `config.projects.$project`.
+
+- **d** :
+        The selected distribution configuration. This is a shortcut for
+        `distro = c('distribution'); config.distributions.$distro`.
 
 
 Examples
