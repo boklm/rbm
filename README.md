@@ -115,6 +115,9 @@ The following configuration options are available :
         Version number of the software. This is used to create the
         tarball, and in the package spec file.
 
+- **pkg_rel** :
+        Package release number.
+
 - **git_hash** :
         A git hash, branch name or tag. This is what is used to create
         the tarball.
