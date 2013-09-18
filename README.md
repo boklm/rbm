@@ -157,6 +157,12 @@ more about the syntax on the [Template Toolkit website][perltt].
 
 [perltt]: http://www.template-toolkit.org/
 
+The template files are added to the directory *projects_dir/project*
+where *projects_dir* is the projects directory (the default is
+*projects*) and *project* the name of the project. Other template files
+can be added in the directory *projects_dir/common*, to be included
+from any of the other templates.
+
 The following variables can be used in the template files :
 
 - **config** :

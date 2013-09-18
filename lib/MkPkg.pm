@@ -216,7 +216,7 @@ sub rpmspec {
                 || exit_error "Unknown distribution $distribution";
     my $template = Template->new(
         ENCODING        => 'utf8',
-        INCLUDE_PATH    => "$projects_dir/$project",
+        INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
         OUTPUT_PATH     => $dest_dir,
     );
     my $vars = {
