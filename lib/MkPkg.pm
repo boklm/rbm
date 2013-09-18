@@ -9,6 +9,7 @@ use File::Basename;
 use IO::Handle;
 use IO::CaptureOutput qw(capture_exec);
 use File::Temp;
+use File::Copy;
 #use Data::Dump qw/dd/;
 
 my %default_config = (
@@ -257,12 +258,24 @@ sub projectslist {
     keys %{$config->{projects}};
 }
 
+sub copy_files {
+    my ($project, $dest_dir) = @_;
+    my $copy_files = project_config('copy_files', $project);
+    return unless $copy_files;
+    my $proj_dir = abs_path(path(project_config('projects_dir', $project)));
+    my $src_dir = "$proj_dir/$project";
+    foreach my $file (@$copy_files) {
+        copy("$src_dir/$file", "$dest_dir/$file");
+    }
+}
+
 sub rpmbuild {
     my ($project, $action, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config('output_dir', $project)));
     valid_project($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
+    copy_files($project, $tmpdir->dirname);
     rpmspec($project, $tmpdir->dirname);
     system('rpmbuild', $action, '--define', "_topdir $tmpdir",
         '--define', "_sourcedir $tmpdir",

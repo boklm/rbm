@@ -148,6 +148,10 @@ The following configuration options are available :
         The format is like this: 1B678A63. For this to work, the GPG
         keys should be present in the GPG public keyring.
 
+- **copy_files** :
+        A list of files that should be copied when building the package.
+        Path is relative to the project's template directory.
+
 In addition to the configuration options listed here, you are free to
 add any other options that you want, and use them in the template files.
 Unfortunately this also means that you won't have an error message in
