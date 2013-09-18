@@ -8,6 +8,31 @@ use YAML;
 use Getopt::Long;
 #use Data::Dump qw/dd/;
 
+my $options_help = <<END;
+Main options:
+
+ --output-dir [directory]
+     Set the output directory
+
+ --version [version]
+     Set the package version
+
+ --pkg-rel [rel]
+     Set package release number
+
+ --git-hash [hash]
+     The git hash of the commit / tag to use.
+ 
+ --distribution [distribution]
+     The name of the linux distribution to build package for.
+ 
+ --commit-gpg-id [GPG ID]
+     Check the commit to be signed by this GPG key ID.
+ 
+ --tag-gpg-id [GPG ID]
+     Check if the selected git hash is a tag and is signed by select
+     GPG key ID.
+END
 
 my %actions = (
     projects => {
@@ -24,6 +49,7 @@ END
         usage => <<END,
 $0 tar [options] [project]
 
+$options_help
 END
     },
     rpmspec => {
@@ -32,6 +58,7 @@ END
         usage => <<END,
 $0 rpmspec [options] [project]
 
+$options_help
 END
     },
     rpm => {
@@ -40,6 +67,7 @@ END
         usage => <<END,
 $0 rpm [options] [project]
 
+$options_help
 END
     },
     srpm => {
@@ -48,6 +76,7 @@ END
         usage => <<END,
 $0 srpm [options] [project]
 
+$options_help
 END
     },
     showconf => {
