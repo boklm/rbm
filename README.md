@@ -169,6 +169,8 @@ TODO
 - Add support for building packages inside a chroot, with [Mock][mock]
   or [Iurt][iurt].
 
+- Add support for Debian packages
+
 [mock]: http://fedoraproject.org/wiki/Projects/Mock
 [iurt]: http://gitweb.mageia.org/software/build-system/iurt/
 
