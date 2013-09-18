@@ -148,6 +148,32 @@ sub git_clone_pull_chdir {
     }
 }
 
+sub version_command {
+    my ($project, $git_hash) = @_;
+    my $version_cmd = project_config('version_command', $project);
+    return undef unless $version_cmd;
+    my $old_cwd = getcwd;
+    git_clone_pull_chdir($project);
+    my ($stdout, $stderr, $success, $exit_code)
+        = capture_exec('git', 'checkout', $git_hash);
+    exit_error "Cannot checkout $git_hash" unless $success;
+    ($stdout, $stderr, $success, $exit_code)
+        = capture_exec($version_cmd);
+    chdir($old_cwd);
+    chomp $stdout;
+    return $success ? $stdout : undef;
+}
+
+sub set_project_version {
+    my ($project, $git_hash) = @_;
+    return if project_config('version', $project);
+    exit_error "No version or git_hash specified" unless $git_hash;
+    $config->{projects}{$project}{version} = 
+           version_command($project, $git_hash)
+        || $config->{projects}{$project}{describe}{tag}
+        || exit_error "No version specified";
+}
+
 sub maketar {
     my ($project, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config('output_dir', $project)));
@@ -157,9 +183,8 @@ sub maketar {
     my $old_cwd = getcwd;
     git_clone_pull_chdir($project);
     git_describe($project, $git_hash);
-    my $version = project_config('version', $project)
-        || $config->{projects}{$project}{describe}{tag}
-        || exit_error 'No version specified';
+    set_project_version($project, $git_hash);
+    my $version = project_config('version', $project);
     if (my $tag_gpg_id = project_config('tag_gpg_id', $project)) {
         my $id = git_tag_sign_id($git_hash) ||
                 exit_error "$git_hash is not a signed tag";
@@ -204,12 +229,9 @@ sub rpmspec {
     valid_project($project);
     -f "$projects_dir/$project/$project.spec"
         || exit_error "Template for $project.spec is missing";
-    if (my $git_hash = project_config('git_hash', $project)) {
-        git_describe($project, $git_hash);
-        $config->{projects}{$project}{version}
-                //= $config->{projects}{$project}{describe}{tag};
-    }
-    project_config('version', $project) || exit_error 'No version specified';
+    my $git_hash = project_config('git_hash', $project);
+    git_describe($project, $git_hash) if $git_hash;
+    set_project_version($project, $git_hash);
     my $distribution = project_config('distribution', $project)
                 || exit_error 'No distribution specified';
     exists $config->{distributions}{$distribution}

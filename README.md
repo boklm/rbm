@@ -115,6 +115,11 @@ The following configuration options are available :
         Version number of the software. This is used to create the
         tarball, and in the package spec file.
 
+- **version_command** :
+        A command to run in the checked out source tree to determine
+        the version, if the *version* option is not set. The command
+        should print the version on stdout.
+
 - **pkg_rel** :
         Package release number.
 
@@ -186,6 +191,23 @@ The following variables can be used in the template files :
 - **d** :
         The selected distribution configuration. This is a shortcut for
         `distro = c('distribution'); config.distributions.$distro`.
+
+
+How the package version is set
+==============================
+
+The version of the package can be explicitely set with a command line
+option (`--version [version]`) or in the configuration. If the version
+is not explicitely set, then it is determined automatically in the
+following way :
+
+- If the *version_command* option is set, then the value of this option
+  is run in the checked out source tree, and the output is used as the
+  version.
+
+- If the *version_command* is not set, or if running the command failed,
+  then the most recent tag (as returned by git-describe) is used as
+  version.
 
 
 Examples
