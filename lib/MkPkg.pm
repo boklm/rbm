@@ -224,9 +224,7 @@ sub rpmspec {
         project => $project,
         p       => $config->{projects}{$project},
         d       => $config->{distributions}{$distribution},
-        f       => {
-            config => sub { project_config($_[0], $project) },
-        },
+        c       => sub { project_config($_[0], $project) },
     };
     $template->process("$project.spec", $vars, "$project.spec",
                         binmode => ':utf8')
