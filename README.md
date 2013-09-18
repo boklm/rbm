@@ -160,7 +160,8 @@ TODO: description of the variables that can be used.
 Examples
 ========
 
-TODO
+An example of package templates and configuration is available in this
+git repository : https://github.com/boklm/mkpkg-templates
 
 
 TODO
