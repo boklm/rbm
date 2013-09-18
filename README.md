@@ -139,6 +139,8 @@ The following configuration options are available :
 
 In addition to the configuration options listed here, you are free to
 add any other options that you want, and use them in the template files.
+Unfortunately this also means that you won't have an error message in
+case of typo in an option name.
 
 
 Template files
