@@ -224,7 +224,8 @@ sub rpmspec {
         },
     };
     $template->process("$project.spec", $vars, "$project.spec",
-                        binmode => ':utf8');
+                        binmode => ':utf8')
+                    || exit_error $template->error;
 }
 
 sub projectslist {
