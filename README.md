@@ -119,20 +119,20 @@ The following configuration options are available :
 - **distribution** :
         The name of the distribution for which you wish to build a package.
 
-- **commit-gpg-id** :
+- **commit_gpg_id** :
         If set, the commit selected with *git_hash* will have its
         signature checked. The tarball will not be created if there is
         no valid signature, and if the key used to sign it does not
-        match the key id from *commit-gpg-id*. The option can be set to
+        match the key id from *commit_gpg_id*. The option can be set to
         a single gpg id, or to a list of gpg ids. The format is like
         this: 1B678A63. For this to work, the GPG keys should be present
         in the GPG public keyring.
 
-- **tag-gpg-id** :
+- **tag_gpg_id** :
         If set, the commit selected with *git_hash* should be a tag and
         will have its signature checked. The tarball will not be created
         if the tag doesn't have a valid signature, and if the key used
-        to sign it does not match the key id from *tag-gpg-id*. The
+        to sign it does not match the key id from *tag_gpg_id*. The
         option can be set to a single gpg id, or to a list of gpg ids.
         The format is like this: 1B678A63. For this to work, the GPG
         keys should be present in the GPG public keyring.
