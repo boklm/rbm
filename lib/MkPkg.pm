@@ -232,16 +232,17 @@ sub projectslist {
     keys %{$config->{projects}};
 }
 
-sub makesrpm {
-    my ($project, $dest_dir) = @_;
+sub rpmbuild {
+    my ($project, $action, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config('output_dir', $project)));
     valid_project($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
     rpmspec($project, $tmpdir->dirname);
-    system('rpmbuild', '-bs', '--define', "_topdir $tmpdir",
+    system('rpmbuild', $action, '--define', "_topdir $tmpdir",
         '--define', "_sourcedir $tmpdir",
-        '--define', "_srcrpmdir $dest_dir", "$tmpdir/$project.spec") == 0
+        '--define', "_srcrpmdir $dest_dir", '--define', "_rpmdir $dest_dir",
+        "$tmpdir/$project.spec") == 0
         || exit_error "Error running rpmbuild";
 }
 

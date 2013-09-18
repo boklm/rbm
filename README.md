@@ -29,6 +29,9 @@ The following commands are available :
  - **tar** :
         create a source tarball for a project
  
+ - **rpm** :
+        build an rpm package
+
  - **srpm** :
         create a source rpm package
  
@@ -163,5 +166,9 @@ TODO
 TODO
 ====
 
-TODO: add list of things to do.
+- Add support for building packages inside a chroot, with [Mock][mock]
+  or [Iurt][iurt].
+
+[mock]: http://fedoraproject.org/wiki/Projects/Mock
+[iurt]: http://gitweb.mageia.org/software/build-system/iurt/
 

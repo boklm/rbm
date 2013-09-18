@@ -34,8 +34,16 @@ $0 rpmspec [options] [project]
 
 END
     },
+    rpm => {
+        run => \&makerpm,
+        descr => 'Build an rpm package',
+        usage => <<END,
+$0 rpm [options] [project]
+
+END
+    },
     srpm => {
-        run => \&srpm,
+        run => \&makerpm,
         descr => 'Create source rpm file',
         usage => <<END,
 $0 srpm [options] [project]
@@ -118,12 +126,13 @@ sub print_projects {
     print join("\n", MkPkg::projectslist()), "\n";
 }
 
-sub srpm {
+sub makerpm {
     usageexit('usage', $_[0]) unless @_ >= 2;
-    shift;
+    my $cmd = shift;
     my $args = set_options(@_);
-    usageexit('usage', 'srpm') unless @$args == 1;
-    MkPkg::makesrpm($args->[0]);
+    usageexit('usage', $cmd) unless @$args == 1;
+    my %actions = ( srpm => '-bs', rpm  => '-ba' );
+    MkPkg::rpmbuild($args->[0], $actions{$cmd});
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {
