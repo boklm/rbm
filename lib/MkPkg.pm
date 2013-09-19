@@ -103,7 +103,7 @@ sub git_describe {
     return if $config->{projects}{$project}{describe};
     $config->{projects}{$project}{describe} = {};
     my $old_cwd = getcwd;
-    git_clone_pull_chdir($project);
+    git_clone_fetch_chdir($project);
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'describe', '--long', $git_hash);
     if ($success) {
@@ -132,7 +132,7 @@ sub valid_project {
         || exit_error "Unknown project $project";
 }
 
-sub git_clone_pull_chdir {
+sub git_clone_fetch_chdir {
     my $project = shift;
     my $clonedir = path(project_config('git_clone_dir', $project));
     if (!chdir path("$clonedir/$project")) {
@@ -143,9 +143,14 @@ sub git_clone_pull_chdir {
         }
         chdir($project) || exit_error "Error entering $project directory";
     }
-    if (!$config->{projects}{$project}{pulled}) {
-        system('git', 'pull') == 0 || exit_error "Error running git pull on $project";
-        $config->{projects}{$project}{pulled} = 1;
+    if (!$config->{projects}{$project}{fetched}) {
+        system('git', 'checkout', '--detach', 'master') == 0
+                || exit_error "Error checking out master";
+        system('git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*') == 0
+                || exit_error "Error fetching git repository";
+        system('git', 'fetch', 'origin', '+refs/tags/*:refs/tags/*') == 0
+                || exit_error "Error fetching git repository";
+        $config->{projects}{$project}{fetched} = 1;
     }
 }
 
@@ -154,7 +159,7 @@ sub version_command {
     my $version_cmd = project_config('version_command', $project);
     return undef unless $version_cmd;
     my $old_cwd = getcwd;
-    git_clone_pull_chdir($project);
+    git_clone_fetch_chdir($project);
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'checkout', $git_hash);
     exit_error "Cannot checkout $git_hash" unless $success;
@@ -182,7 +187,7 @@ sub maketar {
     my $git_hash = project_config('git_hash', $project)
         || exit_error 'No git_hash specified';
     my $old_cwd = getcwd;
-    git_clone_pull_chdir($project);
+    git_clone_fetch_chdir($project);
     git_describe($project, $git_hash);
     set_project_version($project, $git_hash);
     my $version = project_config('version', $project);
