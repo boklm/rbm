@@ -14,6 +14,9 @@ Some of the uses can be :
  - regular maintainance of packages. This automates the creation of
    tarballs, with verification of gpg signature on tags and / or commits.
 
+ - maintance of built tarballs. You can build packages, but it's also
+   possible to use custom build scripts.
+
 
 How it works
 ============
@@ -35,6 +38,9 @@ The following commands are available :
  - **srpm** :
         create a source rpm package
  
+ - **build** :
+        build the project, using a template build script
+
  - **showconf** :
         print the configuration
  
@@ -172,6 +178,16 @@ where *projects_dir* is the projects directory (the default is
 can be added in the directory *projects_dir/common*, to be included
 from any of the other templates.
 
+There are different template files :
+
+- the rpm spec file is named *project.spec* (replacing *project* with
+  the project's name). This is used when you use the *rpmspec*, *srpm*
+  *rpm*, or *build* commands.
+
+- the build script template is named *build*. This template is used to
+  create a build script, that is executed when you use the *build*
+  command.
+
 The following variables can be used in the template files :
 
 - **config** :
@@ -195,6 +211,12 @@ The following variables can be used in the template files :
 - **d** :
         The selected distribution configuration. This is a shortcut for
         `distro = c('distribution'); config.distributions.$distro`.
+
+- **dest_dir** :
+        The destination directory, where the resulting files will be
+        stored at the end of the build. This is mainly useful in build
+        script templates, and probably not useful in package template
+        files.
 
 
 How the package version is set

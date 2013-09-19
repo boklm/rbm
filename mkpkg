@@ -79,6 +79,15 @@ $0 srpm [options] [project]
 $options_help
 END
     },
+    build => {
+        run => \&build,
+        descr => 'Build project with a custom build script',
+        usage => <<END,
+$0 build [options] [project]
+
+$options_help
+END
+    },
     showconf => {
         run => \&show_conf,
         descr => 'Show configuration',
@@ -162,6 +171,14 @@ sub makerpm {
     usageexit('usage', $cmd) unless @$args == 1;
     my %actions = ( srpm => '-bs', rpm  => '-ba' );
     MkPkg::rpmbuild($args->[0], $actions{$cmd});
+}
+
+sub build {
+    usageexit('usage', $_[0]) unless @_ >= 2;
+    shift;
+    my $args = set_options(@_);
+    usageexit('usage', 'build') unless @$args == 1;
+    MkPkg::build($args->[0]);
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {

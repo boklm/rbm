@@ -72,6 +72,15 @@ sub exit_error {
     exit (exists $_[1] ? $_[1] : 1);
 }
 
+sub get_distribution {
+    my ($project) = @_;
+    my $distribution = project_config('distribution', $project)
+                || exit_error 'No distribution specified';
+    exists $config->{distributions}{$distribution}
+                || exit_error "Unknown distribution $distribution";
+    return $distribution;
+}
+
 sub git_commit_sign_id {
     my $chash = shift;
     open(my $g = IO::Handle->new, '-|') 
@@ -238,21 +247,19 @@ sub rpmspec {
     my $git_hash = project_config('git_hash', $project);
     git_describe($project, $git_hash) if $git_hash;
     set_project_version($project, $git_hash);
-    my $distribution = project_config('distribution', $project)
-                || exit_error 'No distribution specified';
-    exists $config->{distributions}{$distribution}
-                || exit_error "Unknown distribution $distribution";
+    my $distribution = get_distribution($project);
     my $template = Template->new(
         ENCODING        => 'utf8',
         INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
         OUTPUT_PATH     => $dest_dir,
     );
     my $vars = {
-        config  => $config,
-        project => $project,
-        p       => $config->{projects}{$project},
-        d       => $config->{distributions}{$distribution},
-        c       => sub { project_config($_[0], $project) },
+        config   => $config,
+        project  => $project,
+        p        => $config->{projects}{$project},
+        d        => $config->{distributions}{$distribution},
+        c        => sub { project_config($_[0], $project) },
+        dest_dir => $dest_dir,
     };
     $template->process("$project.spec", $vars, "$project.spec",
                         binmode => ':utf8')
@@ -287,6 +294,41 @@ sub rpmbuild {
         '--define', "_srcrpmdir $dest_dir", '--define', "_rpmdir $dest_dir",
         "$tmpdir/$project.spec") == 0
         || exit_error "Error running rpmbuild";
+}
+
+sub build {
+    my ($project, $dest_dir) = @_;
+    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    valid_project($project);
+    my $projects_dir = abs_path(path(project_config('projects_dir', $project)));
+    -f "$projects_dir/$project/build" || -f "$projects_dir/common/build"
+        || exit_error "Cannot find build template";
+    my $distribution = get_distribution($project);
+    my $tmpdir = File::Temp->newdir;
+    maketar($project, $tmpdir->dirname);
+    copy_files($project, $tmpdir->dirname);
+    rpmspec($project, $tmpdir->dirname);
+    my $template = Template->new(
+        ENCODING        => 'utf8',
+        INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
+        OUTPUT_PATH     => $tmpdir->dirname,
+    );
+    my $vars = {
+        config   => $config,
+        project  => $project,
+        p        => $config->{projects}{$project},
+        d        => $config->{distributions}{$distribution},
+        c        => sub { project_config($_[0], $project) },
+        dest_dir => $dest_dir,
+    };
+    $template->process('build', $vars, 'build', binmode => ':utf8')
+                    || exit_error $template->error;
+    my $old_cwd = getcwd;
+    chdir $tmpdir->dirname;
+    chmod 0700, 'build';
+    my $res = system("$tmpdir/build");
+    chdir $old_cwd;
+    exit_error "Error running build script" unless $res == 0;
 }
 
 1;
