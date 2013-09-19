@@ -221,6 +221,28 @@ An example of package templates and configuration is available in this
 git repository : https://github.com/boklm/mkpkg-templates
 
 
+Installation
+============
+
+It is recommended to install *mkpkg* using packages. If you cannot
+install with packages, it's also possible to clone this git repository
+somewhere, and add a script similar to this one in your $PATH :
+
+
+```
+#!/bin/sh
+mkpkg_dir=/some/directory
+export PERL5LIB=$mkpkg_dir/lib
+exec $mkpkg_dir/mkpkg "$*"
+```
+
+You will also need perl and the following perl modules installed :
+ - YAML
+ - Getopt::Long
+ - Template
+ - IO::CaptureOutput
+
+
 TODO
 ====
 
