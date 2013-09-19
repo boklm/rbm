@@ -122,7 +122,7 @@ sub set_options {
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options);
     foreach my $k (keys %val) {
         my $l = $k;
-        $l =~ s/-/_/;
+        $l =~ s/-/_/g;
         $MkPkg::config->{run}{$l} = $val{$k};
     }
     return $MkPkg::config->{run}{args} = \@_;
