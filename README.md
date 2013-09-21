@@ -276,6 +276,25 @@ TODO
 - Update file modification time of all created files to be the date of
   the commit used (to allow reproducible builds)
 
+- Make all configuration options overwritable by the output of a shell
+  command. You should be able to define the command to overwrite option
+  *[option_name]* for project *[project]* in the option
+  *projects/[project]/execute/[option_name]*. We can then remove the
+  *version_command* option, which is replaced by *execute/version*.
+
+- Make all configuration options overwritable by the output of a
+  template file. You should be able to define the name of the template
+  file to overwrite option *[option_name]* for project *project* in the
+  option *projects/[project]/tmpl/[option_name]*. Instead of having
+  special cases for rpm spec and build script templates, they just
+  become normal options, with a default template.
+
+- Write default templates for perl, python, ruby modules, and plugins
+  to generate config file for modules with infos from CPAN, Python
+  package index, Ruby gems, etc ... This should make it possible to
+  create a package for any supported distribution, for a perl, python,
+  ruby module with a single command.
+
 [mock]: http://fedoraproject.org/wiki/Projects/Mock
 [iurt]: http://gitweb.mageia.org/software/build-system/iurt/
 
