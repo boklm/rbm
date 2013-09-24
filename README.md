@@ -295,6 +295,14 @@ TODO
   create a package for any supported distribution, for a perl, python,
   ruby module with a single command.
 
+- Add option to use a specified gnupg keyring, instead of the default
+  one. This would allow including a keyring file in the package
+  templates and configuration repository, so that it's not needed to
+  manually import keys. This can be done by making a small gpg wrapper
+  that run `gpg --keyring [path] --no-default-keyring` if some environment
+  variable is set, and set *gpg.program* to the path of this wrapper in
+  *git-config* for all repos.
+
 [mock]: http://fedoraproject.org/wiki/Projects/Mock
 [iurt]: http://gitweb.mageia.org/software/build-system/iurt/
 
