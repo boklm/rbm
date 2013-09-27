@@ -160,35 +160,67 @@ The following configuration options are available :
         A list of files that should be copied when building the package.
         Path is relative to the project's template directory.
 
+- **notmpl** :
+        An array containing a list of options that should not be
+        processed as template (see the *template* section below for
+        details).
+
+- **rpmspec** :
+        This is the content of the rpm spec file, used by the *rpm* and
+        *srpm* commands. The default is to include the template file named
+        *project.spec* (with *project* replaced by the project's name).
+
+- **build** :
+        This is the content of the build script used by the *build*
+        command. The default is to include the template file named
+        *build*.
+
 In addition to the configuration options listed here, you are free to
 add any other options that you want, and use them in the template files.
 Unfortunately this also means that you won't have an error message in
 case of typo in an option name.
 
 
-Template files
-==============
+Templates
+=========
 
-The template files are made using perl Template Toolkit. You can read
-more about the syntax on the [Template Toolkit website][perltt].
+All configuration options are actually templates. So you can use
+template directives in any of the option. There are a few exceptions
+however, for the options that are needed to process templates, so they
+can't be templated themself. The following options are not templated :
+
+ - distribution
+ - output_dir
+ - projects_dir
+
+If you want to make other options not templated, add them to the
+*notmpl* config option, which is an array. All the other options are
+automatically processed as template.
+
+The template are made using perl Template Toolkit. You can read more
+about the syntax on the [Template Toolkit website][perltt].
 
 [perltt]: http://www.template-toolkit.org/
 
-The template files are added to the directory *projects_dir/project*
-where *projects_dir* is the projects directory (the default is
-*projects*) and *project* the name of the project. Other template files
-can be added in the directory *projects_dir/common*, to be included
-from any of the other templates.
+From any template, it is possible to include other template files using
+the *INCLUDE* directive. The template files are added to the directory
+*projects_dir/project* where *projects_dir* is the projects directory
+(the default is *projects*) and *project* the name of the project. Other
+template files can be added in the directory *projects_dir/common*, to
+be included from any of the other templates.
 
 There are different template files :
+By default, the following template files are used :
 
-- the rpm spec file is named *project.spec* (replacing *project* with
-  the project's name). This is used when you use the *rpmspec*, *srpm*
-  *rpm*, or *build* commands.
+- the rpm spec file template, named *project.spec* (replacing *project*
+  with the project's name). This is used when you use the *rpmspec*,
+  *srpm* *rpm*, or *build* commands. This creates the *rpmspec* option.
+  If you don't want to use this file, just replace the *rpmspec* option
+  by something else.
 
-- the build script template is named *build*. This template is used to
+- the build script template, named *build*. This template is used to
   create a build script, that is executed when you use the *build*
-  command.
+  command. This creates the *build* option.
 
 The following variables can be used in the template files :
 
@@ -283,13 +315,6 @@ TODO
   *[option_name]* for project *[project]* in the option
   *projects/[project]/execute/[option_name]*. We can then remove the
   *version_command* option, which is replaced by *execute/version*.
-
-- Make all configuration options overwritable by the output of a
-  template file. You should be able to define the name of the template
-  file to overwrite option *[option_name]* for project *project* in the
-  option *projects/[project]/tmpl/[option_name]*. Instead of having
-  special cases for rpm spec and build script templates, they just
-  become normal options, with a default template.
 
 - Write default templates for perl, python, ruby modules, and plugins
   to generate config file for modules with infos from CPAN, Python

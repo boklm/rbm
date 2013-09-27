@@ -10,12 +10,16 @@ use IO::Handle;
 use IO::CaptureOutput qw(capture_exec);
 use File::Temp;
 use File::Copy;
+use File::Slurp;
 #use Data::Dump qw/dd/;
 
 my %default_config = (
     projects_dir  => 'projects',
     output_dir    => 'out',
     git_clone_dir => 'git_clones',
+    rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
+    build         => '[% INCLUDE build -%]',
+    notmpl        => [ qw(distribution output_dir projects_dir) ],
 );
 
 our $config;
@@ -64,8 +68,20 @@ sub config {
     return config_p(@$name);
 }
 
+sub notmpl {
+    my ($name, $project) = @_;
+    return 1 if $name eq 'notmpl';
+    my @n = (@{$config->{notmpl}}, @{project_config('notmpl', $project)});
+    return grep { $name eq $_ } @n;
+}
+
 sub project_config {
-    config($_[0], ['run'], ['projects', $_[1]]);
+    my ($name, $project) = @_;
+    my $res = config($name, ['run'], ['projects', $project]);
+    if (ref $res || notmpl($name, $project)) {
+        return $res;
+    }
+    return process_template($project, $res);
 }
 
 sub exit_error {
@@ -238,21 +254,14 @@ sub maketar {
     chdir($old_cwd);
 }
 
-sub rpmspec {
-    my ($project, $dest_dir) = @_;
+sub process_template {
+    my ($project, $tmpl, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config('output_dir', $project)));
-    my $projects_dir = abs_path(path(project_config('projects_dir', $project)));
-    valid_project($project);
-    -f "$projects_dir/$project/$project.spec"
-        || exit_error "Template for $project.spec is missing";
-    my $git_hash = project_config('git_hash', $project);
-    git_describe($project, $git_hash) if $git_hash;
-    set_project_version($project, $git_hash);
     my $distribution = get_distribution($project);
+    my $projects_dir = abs_path(path(project_config('projects_dir', $project)));
     my $template = Template->new(
         ENCODING        => 'utf8',
         INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
-        OUTPUT_PATH     => $dest_dir,
     );
     my $vars = {
         config   => $config,
@@ -262,9 +271,22 @@ sub rpmspec {
         c        => sub { project_config($_[0], $project) },
         dest_dir => $dest_dir,
     };
-    $template->process("$project.spec", $vars, "$project.spec",
-                        binmode => ':utf8')
-                    || exit_error $template->error;
+    my $output;
+    $template->process(\$tmpl, $vars, \$output, binmode => ':utf8')
+                    || exit_error "Template Error:\n" . $template->error;
+    return $output;
+}
+
+sub rpmspec {
+    my ($project, $dest_dir) = @_;
+    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    valid_project($project);
+    my $git_hash = project_config('git_hash', $project);
+    git_describe($project, $git_hash) if $git_hash;
+    set_project_version($project, $git_hash);
+    my $rpmspec = process_template($project,
+                        project_config('rpmspec', $project), $dest_dir);
+    write_file("$dest_dir/$project.spec", $rpmspec);
 }
 
 sub projectslist {
@@ -309,21 +331,8 @@ sub build {
     maketar($project, $tmpdir->dirname);
     copy_files($project, $tmpdir->dirname);
     rpmspec($project, $tmpdir->dirname);
-    my $template = Template->new(
-        ENCODING        => 'utf8',
-        INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
-        OUTPUT_PATH     => $tmpdir->dirname,
-    );
-    my $vars = {
-        config   => $config,
-        project  => $project,
-        p        => $config->{projects}{$project},
-        d        => $config->{distributions}{$distribution},
-        c        => sub { project_config($_[0], $project) },
-        dest_dir => $dest_dir,
-    };
-    $template->process('build', $vars, 'build', binmode => ':utf8')
-                    || exit_error $template->error;
+    my $build = project_config('build', $project);
+    write_file("$tmpdir/build", $build);
     my $old_cwd = getcwd;
     chdir $tmpdir->dirname;
     chmod 0700, 'build';
