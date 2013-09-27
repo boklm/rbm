@@ -17,6 +17,7 @@ my %default_config = (
     projects_dir  => 'projects',
     output_dir    => 'out',
     git_clone_dir => 'git_clones',
+    fetch         => 1,
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(distribution output_dir projects_dir) ],
@@ -180,7 +181,8 @@ sub git_clone_fetch_chdir {
         }
         chdir($project) || exit_error "Error entering $project directory";
     }
-    if (!$config->{projects}{$project}{fetched}) {
+    if (!$config->{projects}{$project}{fetched} && project_config('fetch', $project)) {
+        print "fetching\n";
         system('git', 'checkout', '-q', '--detach', 'master') == 0
                 || exit_error "Error checking out master";
         system('git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*') == 0

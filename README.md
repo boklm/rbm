@@ -115,6 +115,10 @@ The following configuration options are available :
         The directory where output files (tarballs, spec files or
         packages) are created. The default value is *out*.
 
+- **fetch** :
+        The value should be 0 or 1, depending on whether the commits
+        from the remote git repository should be fetched automatically.
+
 - **compress_tar** :
         If set, the tarball created will be compressed in the select
         format. Possible values: xz, gz, bz2.

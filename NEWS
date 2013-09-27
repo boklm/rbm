@@ -10,6 +10,8 @@
   version option which was handled as a special case in the source code
   to execute the command defined in version_command if it is defined is
   now a normal option thanks to the exec function.
+- Add the fetch option, to tell whether new commits from remote git
+  repository should be fetched automatically.
 
 Version 0.1
 

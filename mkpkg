@@ -32,6 +32,10 @@ Main options:
  --tag-gpg-id [GPG ID]
      Check if the selected git hash is a tag and is signed by select
      GPG key ID.
+ 
+ --fetch
+ --no-fetch
+     Whether latest commits should be fetched from remote git repository.
 END
 
 my %actions = (
@@ -144,7 +148,7 @@ sub usageexit {
 sub set_options {
     my @options = qw(distribution=s version=s tag-gpg-id=s commit-gpg-id=s
                      projects-dir=s git-clone-dir=s git-hash=s output-dir=s
-                     compress_tar=s pkg-rel=s);
+                     compress_tar=s pkg-rel=s fetch!);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options);
     foreach my $k (keys %val) {
