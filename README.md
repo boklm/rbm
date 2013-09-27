@@ -29,6 +29,9 @@ The following commands are available :
  - **projects** :
         print the list of defined projects
  
+ - **fetch** :
+        fetch new commits from the git repository of a project
+
  - **tar** :
         create a source tarball for a project
  

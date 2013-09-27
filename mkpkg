@@ -47,6 +47,16 @@ $0 projects
 
 END
     },
+    fetch => {
+        run => \&fetch,
+        descr => 'Fetch commits from remote git repository',
+        usage => <<END,
+$0 fetch [project]
+
+Fetch commits from remote git repository for the select project(s).
+If no project is selected, fetch commits for all projects.
+END
+    },
     tar  => {
         run   => \&tar,
         descr => 'Create source tarball',
@@ -172,6 +182,17 @@ sub show_conf {
                 : $MkPkg::config->{projects}{$project};
     MkPkg::exit_error "Undefined" unless $r;
     print ref $r ? YAML::Dump($r) : "$r\n";
+}
+
+sub fetch {
+    shift;
+    $MkPkg::config->{run}{fetch} = 1;
+    my @l = @_ ? @_ : (MkPkg::projectslist());
+    foreach my $project (@l) {
+        MkPkg::valid_project($project);
+        print "Fetching commits for $project\n";
+        MkPkg::git_clone_fetch_chdir($project);
+    }
 }
 
 sub tar {

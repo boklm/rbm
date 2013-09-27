@@ -12,6 +12,7 @@
   now a normal option thanks to the exec function.
 - Add the fetch option, to tell whether new commits from remote git
   repository should be fetched automatically.
+- Add the fetch command, to fetch new commits from a git repository
 
 Version 0.1
 
