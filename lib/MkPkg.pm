@@ -21,6 +21,7 @@ my %default_config = (
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(distribution output_dir projects_dir) ],
+    opt           => {},
     version       => <<END,
 [%-
     IF c('version_command');
@@ -88,12 +89,15 @@ sub notmpl {
 }
 
 sub project_config {
-    my ($name, $project) = @_;
-    my $res = config($name, ['run'], ['projects', $project]);
-    if (ref $res || notmpl($name, $project)) {
-        return $res;
+    my ($name, $project, $options) = @_;
+    my $opt_save = $config->{opt};
+    $config->{opt} = { %{$config->{opt}}, %$options } if $options;
+    my $res = config($name, ['opt'], ['run'], ['projects', $project]);
+    if (!ref $res && !notmpl($name, $project)) {
+        $res = process_template($project, $res);
     }
-    return process_template($project, $res);
+    $config->{opt} = $opt_save;
+    return $res;
 }
 
 sub exit_error {
