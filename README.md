@@ -257,6 +257,11 @@ The following variables can be used in the template files :
         argument is an error message. The second argument is an optional
         exit code (default is 1).
 
+- **exec** :
+        A function taking a command line as argument, to be executed in
+        the sources tree. The output of the command is returned, if the
+        exit code was 0.
+
 
 How the package version is set
 ==============================
@@ -314,12 +319,6 @@ TODO
 
 - Update file modification time of all created files to be the date of
   the commit used (to allow reproducible builds)
-
-- Make all configuration options overwritable by the output of a shell
-  command. You should be able to define the command to overwrite option
-  *[option_name]* for project *[project]* in the option
-  *projects/[project]/execute/[option_name]*. We can then remove the
-  *version_command* option, which is replaced by *execute/version*.
 
 - Write default templates for perl, python, ruby modules, and plugins
   to generate config file for modules with infos from CPAN, Python

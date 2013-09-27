@@ -20,6 +20,17 @@ my %default_config = (
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(distribution output_dir projects_dir) ],
+    version       => <<END,
+[%-
+    IF c('version_command');
+        exec(c('version_command'));
+    ELSIF c(['describe', 'tag']);
+        c(['describe', 'tag']);
+    ELSE;
+        exit_error('No version specified');
+    END;
+-%]
+END
 );
 
 our $config;
@@ -180,30 +191,20 @@ sub git_clone_fetch_chdir {
     }
 }
 
-sub version_command {
-    my ($project, $git_hash) = @_;
-    my $version_cmd = project_config('version_command', $project);
-    return undef unless $version_cmd;
+sub execute {
+    my ($project, $cmd) = @_;
+    my $git_hash = project_config('git_hash', $project)
+        || exit_error 'No git_hash specified';
     my $old_cwd = getcwd;
     git_clone_fetch_chdir($project);
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'checkout', $git_hash);
     exit_error "Cannot checkout $git_hash" unless $success;
     ($stdout, $stderr, $success, $exit_code)
-        = capture_exec($version_cmd);
+        = capture_exec($cmd);
     chdir($old_cwd);
     chomp $stdout;
     return $success ? $stdout : undef;
-}
-
-sub set_project_version {
-    my ($project, $git_hash) = @_;
-    return if project_config('version', $project);
-    exit_error "No version or git_hash specified" unless $git_hash;
-    $config->{projects}{$project}{version} = 
-           version_command($project, $git_hash)
-        || $config->{projects}{$project}{describe}{tag}
-        || exit_error "No version specified";
 }
 
 sub maketar {
@@ -215,7 +216,6 @@ sub maketar {
     my $old_cwd = getcwd;
     git_clone_fetch_chdir($project);
     git_describe($project, $git_hash);
-    set_project_version($project, $git_hash);
     my $version = project_config('version', $project);
     if (my $tag_gpg_id = project_config('tag_gpg_id', $project)) {
         my $id = git_tag_sign_id($git_hash) ||
@@ -271,6 +271,7 @@ sub process_template {
         c          => sub { project_config($_[0], $project) },
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
+        exec       => sub { execute($project, $_[0]) },
     };
     my $output;
     $template->process(\$tmpl, $vars, \$output, binmode => ':utf8')
@@ -284,7 +285,6 @@ sub rpmspec {
     valid_project($project);
     my $git_hash = project_config('git_hash', $project);
     git_describe($project, $git_hash) if $git_hash;
-    set_project_version($project, $git_hash);
     my $rpmspec = process_template($project,
                         project_config('rpmspec', $project), $dest_dir);
     write_file("$dest_dir/$project.spec", $rpmspec);
