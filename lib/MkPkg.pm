@@ -192,6 +192,22 @@ sub git_clone_fetch_chdir {
     }
 }
 
+sub run_script {
+    my ($cmd, $f) = @_;
+    $f //= \&capture_exec;
+    my @res;
+    if ($cmd =~ m/^#/) {
+        my (undef, $tmp) = File::Temp::tempfile();
+        write_file($tmp, $cmd);
+        chmod 0700, $tmp;
+        @res = $f->($tmp);
+        unlink $tmp;
+    } else {
+        @res = $f->($cmd);
+    }
+    return @res;
+}
+
 sub execute {
     my ($project, $cmd) = @_;
     my $git_hash = project_config('git_hash', $project)
@@ -201,15 +217,8 @@ sub execute {
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'checkout', $git_hash);
     exit_error "Cannot checkout $git_hash" unless $success;
-    if ($cmd =~ m/^#/) {
-        my (undef, $tmp) = File::Temp::tempfile();
-        write_file($tmp, $cmd);
-        chmod 0700, $tmp;
-        ($stdout, $stderr, $success, $exit_code) = capture_exec($tmp);
-        unlink $tmp;
-    } else {
-        ($stdout, $stderr, $success, $exit_code) = capture_exec($cmd);
-    }
+    ($stdout, $stderr, $success, $exit_code)
+                = run_script($cmd, \&capture_exec);
     chdir($old_cwd);
     chomp $stdout;
     return $success ? $stdout : undef;
