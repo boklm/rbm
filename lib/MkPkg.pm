@@ -182,7 +182,6 @@ sub git_clone_fetch_chdir {
         chdir($project) || exit_error "Error entering $project directory";
     }
     if (!$config->{projects}{$project}{fetched} && project_config('fetch', $project)) {
-        print "fetching\n";
         system('git', 'checkout', '-q', '--detach', 'master') == 0
                 || exit_error "Error checking out master";
         system('git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*') == 0
