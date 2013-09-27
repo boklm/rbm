@@ -13,6 +13,9 @@
 - Add the fetch option, to tell whether new commits from remote git
   repository should be fetched automatically.
 - Add the fetch command, to fetch new commits from a git repository
+- rpm build is now done using a script, with template in the rpmbuild
+  option, which can be customized if necessary.
+
 
 Version 0.1
 

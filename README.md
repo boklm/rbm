@@ -177,6 +177,9 @@ The following configuration options are available :
         *srpm* commands. The default is to include the template file named
         *project.spec* (with *project* replaced by the project's name).
 
+- **rpmbuild** :
+        This is the content of the script to build a rpm.
+
 - **build** :
         This is the content of the build script used by the *build*
         command. The default is to include the template file named

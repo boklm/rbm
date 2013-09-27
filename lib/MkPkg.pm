@@ -33,6 +33,16 @@ my %default_config = (
     END;
 -%]
 END
+    rpmbuild      => <<END,
+#!/bin/sh
+set -e -x
+[% SET srcdir = c('rpmbuild_srcdir') -%]
+rpmbuild [% c('rpmbuild_action') %] --define '_topdir [% srcdir %]' \\
+        --define '_sourcedir [% srcdir %]' \\
+        --define '_srcrpmdir [% dest_dir %]' \\
+        --define '_rpmdir [% dest_dir %]' \\
+        '[% srcdir %]/[% project %].spec'
+END
 );
 
 our $config;
@@ -334,11 +344,14 @@ sub rpmbuild {
     maketar($project, $tmpdir->dirname);
     copy_files($project, $tmpdir->dirname);
     rpmspec($project, $tmpdir->dirname);
-    system('rpmbuild', $action, '--define', "_topdir $tmpdir",
-        '--define', "_sourcedir $tmpdir",
-        '--define', "_srcrpmdir $dest_dir", '--define', "_rpmdir $dest_dir",
-        "$tmpdir/$project.spec") == 0
-        || exit_error "Error running rpmbuild";
+    my $options = {
+        rpmbuild_action => $action,
+        output_dir      => $dest_dir,
+        rpmbuild_srcdir => $tmpdir->dirname,
+    };
+    my $rpmbuild = project_config('rpmbuild', $project, $options);
+    run_script($rpmbuild, sub { system(@_) })
+                || exit_error "Error running rpmbuild";
 }
 
 sub build {
