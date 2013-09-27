@@ -252,6 +252,11 @@ The following variables can be used in the template files :
         script templates, and probably not useful in package template
         files.
 
+- **exit_error** :
+        A function that you can use to exit with an error. The first
+        argument is an error message. The second argument is an optional
+        exit code (default is 1).
+
 
 How the package version is set
 ==============================

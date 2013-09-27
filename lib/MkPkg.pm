@@ -264,12 +264,13 @@ sub process_template {
         INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
     );
     my $vars = {
-        config   => $config,
-        project  => $project,
-        p        => $config->{projects}{$project},
-        d        => $config->{distributions}{$distribution},
-        c        => sub { project_config($_[0], $project) },
-        dest_dir => $dest_dir,
+        config     => $config,
+        project    => $project,
+        p          => $config->{projects}{$project},
+        d          => $config->{distributions}{$distribution},
+        c          => sub { project_config($_[0], $project) },
+        dest_dir   => $dest_dir,
+        exit_error => \&exit_error,
     };
     my $output;
     $template->process(\$tmpl, $vars, \$output, binmode => ':utf8')

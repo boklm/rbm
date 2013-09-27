@@ -4,6 +4,7 @@
 - All configuration options are now templates. The content of the rpm
   spec file, and the build scripts are now configuration options which
   by default use an include directive to include a template file.
+- Add the exit_error function in templates
 
 Version 0.1
 
