@@ -42,7 +42,9 @@ The following commands are available :
         build the project, using a template build script
 
  - **showconf** :
-        print the configuration
+        print the configuration. This can display all the configuration,
+        or only select values. Using this command can help understand
+        how configuration works.
  
  - **rpmspec** :
         create an rpm spec file, from the template file

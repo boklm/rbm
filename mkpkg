@@ -92,9 +92,26 @@ END
         run => \&show_conf,
         descr => 'Show configuration',
         usage => <<END,
-$0 showconf
+$0 showconf [project] [config name]
 
-Show the configuration.
+Without argument, dumps all configuration. With one argument, shows the
+configuration for the selected project. With two or more arguments, show
+the project's config for a specific value.
+
+
+$options_help
+
+Examples:
+  
+  Show all configuration :
+  \$ mkpkg showconf
+
+  Show configuration for mkpkg project :
+  \$ mkpkg showconf mkpkg
+
+  Show git_url value for the mkpkg project :
+  \$ mkpkg showconf mkpkg git_url
+
 END
     },
     usage => {
@@ -140,8 +157,17 @@ sub set_options {
 
 sub show_conf {
     shift;
-    set_options(@_);
-    print YAML::Dump($MkPkg::config);
+    my $args = set_options(@_);
+    if (@$args == 0) {
+        print YAML::Dump($MkPkg::config);
+        return;
+    }
+    my $project = shift @$args;
+    MkPkg::valid_project($project);
+    my $r = @$args ? MkPkg::project_config(\@$args, $project)
+                : $MkPkg::config->{projects}{$project};
+    MkPkg::exit_error "Undefined" unless $r;
+    print ref $r ? YAML::Dump($r) : "$r\n";
 }
 
 sub tar {

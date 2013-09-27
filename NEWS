@@ -1,3 +1,7 @@
+
+- The showconf command can now be used to display specific config for
+  a project.
+
 Version 0.1
 
 - first version
