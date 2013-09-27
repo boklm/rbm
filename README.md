@@ -14,7 +14,7 @@ Some of the uses can be :
  - regular maintainance of packages. This automates the creation of
    tarballs, with verification of gpg signature on tags and / or commits.
 
- - maintance of built tarballs. You can build packages, but it's also
+ - maintainance of built tarballs. You can build packages, but it's also
    possible to use custom build scripts.
 
 
