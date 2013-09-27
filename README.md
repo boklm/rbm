@@ -264,7 +264,9 @@ The following variables can be used in the template files :
 - **exec** :
         A function taking a command line as argument, to be executed in
         the sources tree. The output of the command is returned, if the
-        exit code was 0.
+        exit code was 0. If the argument starts with '#', then it is
+        considered to be a script, which will be written to a temporary
+        file and executed.
 
 
 How the package version is set

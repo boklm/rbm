@@ -202,8 +202,15 @@ sub execute {
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'checkout', $git_hash);
     exit_error "Cannot checkout $git_hash" unless $success;
-    ($stdout, $stderr, $success, $exit_code)
-        = capture_exec($cmd);
+    if ($cmd =~ m/^#/) {
+        my (undef, $tmp) = File::Temp::tempfile();
+        write_file($tmp, $cmd);
+        chmod 0700, $tmp;
+        ($stdout, $stderr, $success, $exit_code) = capture_exec($tmp);
+        unlink $tmp;
+    } else {
+        ($stdout, $stderr, $success, $exit_code) = capture_exec($cmd);
+    }
     chdir($old_cwd);
     chomp $stdout;
     return $success ? $stdout : undef;
