@@ -55,12 +55,13 @@ sub config_p {
 
 sub config {
     my $name = shift;
+    $name = [ $name ] unless ref $name eq 'ARRAY';
     foreach my $path (@_) {
-        if (my $r = config_p(@$path, $name)) {
+        if (my $r = config_p(@$path, @$name)) {
             return $r;
         }
     }
-    return $config->{$name};
+    return config_p(@$name);
 }
 
 sub project_config {
