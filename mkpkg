@@ -110,7 +110,8 @@ END
 
 sub usage {
     if ($_[1] && $actions{$_[1]}) {
-        print STDERR $actions{$_[1]}->{usage};
+        print STDERR $_[1], ': ', $actions{$_[1]}->{descr}, "\n\n";
+        print STDERR "Usage:\n", $actions{$_[1]}->{usage};
     } else {
         print STDERR "$0 [action] [options]\n";
         print STDERR "$0 usage [action]\n\n";
