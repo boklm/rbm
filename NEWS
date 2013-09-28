@@ -1,20 +1,27 @@
 
 - The showconf command can now be used to display specific config for
   a project.
+
 - All configuration options are now templates. The content of the rpm
   spec file, and the build scripts are now configuration options which
   by default use an include directive to include a template file.
+
 - Add the exit_error function in templates
+
 - Add the exec function in templates. This function takes a command as
   argument, run it inside the sources tree and return the output. The
   version option which was handled as a special case in the source code
   to execute the command defined in version_command if it is defined is
   now a normal option thanks to the exec function.
+
 - Add the fetch option, to tell whether new commits from remote git
   repository should be fetched automatically.
+
 - Add the fetch command, to fetch new commits from a git repository
+
 - rpm build is now done using a script, with template in the rpmbuild
   option, which can be customized if necessary.
+
 - Use commit time as modification time on source tarball and rpm spec
   files. The timestamp option can be used to set this to an other value.
 
