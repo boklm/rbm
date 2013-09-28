@@ -22,7 +22,7 @@ my %default_config = (
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(distribution output_dir projects_dir) ],
     opt           => {},
-    timestamp     => '[% exec("git show --format=format:%ct " _ c("git_hash") _ "^{commit} | head -1") %]',
+    timestamp     => '[% exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}") %]',
     version       => <<END,
 [%-
     IF c('version_command');
