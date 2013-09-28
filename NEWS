@@ -15,6 +15,8 @@
 - Add the fetch command, to fetch new commits from a git repository
 - rpm build is now done using a script, with template in the rpmbuild
   option, which can be customized if necessary.
+- Use commit time as modification time on source tarball and rpm spec
+  files. The timestamp option can be used to set this to an other value.
 
 
 Version 0.1

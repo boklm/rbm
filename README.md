@@ -167,6 +167,12 @@ The following configuration options are available :
         A list of files that should be copied when building the package.
         Path is relative to the project's template directory.
 
+- **timestamp** :
+        This is the UNIX timestamp, set as modification time on files
+        created such as the sources tarball and rpm spec file. The
+        default is to use the commit time of the commit used. If set to
+        0 it will use the current time.
+
 - **notmpl** :
         An array containing a list of options that should not be
         processed as template (see the *template* section below for
@@ -328,9 +334,6 @@ TODO
   or [Iurt][iurt].
 
 - Add support for Debian packages
-
-- Update file modification time of all created files to be the date of
-  the commit used (to allow reproducible builds)
 
 - Write default templates for perl, python, ruby modules, and plugins
   to generate config file for modules with infos from CPAN, Python

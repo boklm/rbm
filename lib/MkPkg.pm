@@ -22,6 +22,7 @@ my %default_config = (
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(distribution output_dir projects_dir) ],
     opt           => {},
+    timestamp     => '[% exec("git show --format=format:%ct " _ c("git_hash") _ " | head -1") %]',
     version       => <<END,
 [%-
     IF c('version_command');
@@ -281,6 +282,8 @@ sub maketar {
                 || exit_error "Error compressing $tar_file with $compress{$c}->[0]";
         $tar_file .= ".$c";
     }
+    my $timestamp = project_config('timestamp', $project);
+    utime $timestamp, $timestamp, "$dest_dir/$tar_file" if $timestamp;
     print "Created $dest_dir/$tar_file\n";
     chdir($old_cwd);
 }
@@ -316,9 +319,11 @@ sub rpmspec {
     valid_project($project);
     my $git_hash = project_config('git_hash', $project);
     git_describe($project, $git_hash) if $git_hash;
+    my $timestamp = project_config('timestamp', $project);
     my $rpmspec = process_template($project,
                         project_config('rpmspec', $project), $dest_dir);
     write_file("$dest_dir/$project.spec", $rpmspec);
+    utime $timestamp, $timestamp, "$dest_dir/$project.spec" if $timestamp;
 }
 
 sub projectslist {
