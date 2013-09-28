@@ -130,7 +130,7 @@ sub git_commit_sign_id {
     return undef unless $success;
     my @l = split /\n/, $stdout;
     return undef unless @l >= 2;
-    return undef if ($l[0] ne 'G');
+    return undef unless $l[0] =~ m/^[GU]$/;
     return ($l[1] =~ m/^gpg: Signature made .+ using .+ key ID ([\dA-F]+)$/)
         ? $1 : undef;
 }
