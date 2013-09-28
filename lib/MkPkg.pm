@@ -65,7 +65,9 @@ sub find_config_file {
 }
 
 sub path {
-    ( $_[0] =~ m|^/| ) ? $_[0] : "$config->{basedir}/$_[0]";
+    my ($path, $basedir) = @_;
+    $basedir //= $config->{basedir};
+    return ( $path =~ m|^/| ) ? $path : "$basedir/$path";
 }
 
 sub config_p {
