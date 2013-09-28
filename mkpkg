@@ -160,7 +160,7 @@ sub set_options {
                      projects-dir=s git-clone-dir=s git-hash=s output-dir=s
                      compress_tar=s pkg-rel=s timestamp=i fetch!);
     my %val;
-    Getopt::Long::GetOptionsFromArray(\@_, \%val, @options);
+    Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
     foreach my $k (keys %val) {
         my $l = $k;
         $l =~ s/-/_/g;
