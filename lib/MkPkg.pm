@@ -304,6 +304,7 @@ sub process_template {
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
         exec       => sub { execute($project, $_[0]) },
+        path       => \&path,
     };
     my $output;
     $template->process(\$tmpl, $vars, \$output, binmode => ':utf8')

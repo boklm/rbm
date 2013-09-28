@@ -280,6 +280,15 @@ The following variables can be used in the template files :
         considered to be a script, which will be written to a temporary
         file and executed.
 
+- **path** :
+        A function to return an absolute path. It takes a path as first
+        argument. If the path is already an absolute path, then it
+        returns the same thing. If the path is a relative path, it
+        returns the path concatenated with *basedir* which is the
+        directory where the main configuration file is located.
+        Optionally it can take a second argument to set an other value
+        for the *basedir*.
+
 
 How the package version is set
 ==============================

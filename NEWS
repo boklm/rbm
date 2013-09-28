@@ -25,6 +25,8 @@
 - Use commit time as modification time on source tarball and rpm spec
   files. The timestamp option can be used to set this to an other value.
 
+- Add the path function in templates
+
 
 Version 0.1
 
