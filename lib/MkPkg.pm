@@ -125,10 +125,13 @@ sub get_distribution {
 
 sub git_commit_sign_id {
     my $chash = shift;
-    open(my $g = IO::Handle->new, '-|') 
-        || exec 'git', 'log', "--format=format:%G?\n%GG", -1, $chash;
-    return undef if (<$g> ne "G\n");
-    return (<$g> =~ m/^gpg: Signature made .+ using .+ key ID ([\dA-F]+)$/)
+    my ($stdout, $stderr, $success, $exit_code) =
+        capture_exec('git', 'log', "--format=format:%G?\n%GG", -1, $chash);
+    return undef unless $success;
+    my @l = split /\n/, $stdout;
+    return undef unless @l >= 2;
+    return undef if ($l[0] ne 'G');
+    return ($l[1] =~ m/^gpg: Signature made .+ using .+ key ID ([\dA-F]+)$/)
         ? $1 : undef;
 }
 
