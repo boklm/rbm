@@ -58,12 +58,8 @@ sub load_config {
 }
 
 sub find_config_file {
-    my $dir = getcwd;
-    while ($dir ne '/') {
-        if (-f "$dir/mkpkg.conf") {
-            return "$dir/mkpkg.conf";
-        }
-        $dir = dirname($dir);
+    for (my $dir = getcwd; $dir ne '/'; $dir = dirname($dir)) {
+        return "$dir/mkpkg.conf" if -f "$dir/mkpkg.conf";
     }
     exit_error("Can't find config file");
 }
