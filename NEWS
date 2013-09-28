@@ -27,6 +27,10 @@
 
 - Add the path function in templates
 
+- Use a wrapper to run gpg from git. This allow us to use specific
+  keyring files for some projects. While doing this we add the
+  gpg_wrapper, gpg_keyring, gpg_keyring_dir, gpg_args, gpg_bin options.
+
 
 Version 0.1
 

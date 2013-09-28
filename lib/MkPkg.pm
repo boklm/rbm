@@ -44,6 +44,18 @@ rpmbuild [% c('rpmbuild_action') %] --define '_topdir [% srcdir %]' \\
         --define '_rpmdir [% dest_dir %]' \\
         '[% srcdir %]/[% project %].spec'
 END
+    gpg_bin         => 'gpg',
+    gpg_args        => '',
+    gpg_keyring_dir => '[% config.basedir %]/keyring',
+    gpg_wrapper     => <<GPGEND,
+#!/bin/sh
+[%
+    IF c('gpg_keyring');
+        SET gpg_kr = '--keyring ' _ path(c('gpg_keyring'), path(c('gpg_keyring_dir'))) _ ' --no-default-keyring';
+    END;
+-%]
+exec [% c('gpg_bin') %] [% c('gpg_args') %] [% gpg_kr %] "\$@"
+GPGEND
 );
 
 our $config;
@@ -123,10 +135,29 @@ sub get_distribution {
     return $distribution;
 }
 
+sub set_git_gpg_wrapper {
+    my ($project) = @_;
+    my $w = project_config('gpg_wrapper', $project);
+    my (undef, $tmp) = File::Temp::tempfile();
+    write_file($tmp, $w);
+    chmod 0700, $tmp;
+    system('git', 'config', 'gpg.program', $tmp) == 0
+        || exit_error 'Error setting gpg.program';
+    return $tmp;
+}
+
+sub unset_git_gpg_wrapper {
+    unlink $_[0];
+    system('git', 'config', '--unset', 'gpg.program') == 0
+        || exit_error 'Error unsetting gpg.program';
+}
+
 sub git_commit_sign_id {
-    my $chash = shift;
+    my ($project, $chash) = @_;
+    my $w = set_git_gpg_wrapper($project);
     my ($stdout, $stderr, $success, $exit_code) =
         capture_exec('git', 'log', "--format=format:%G?\n%GG", -1, $chash);
+    unset_git_gpg_wrapper($w);
     return undef unless $success;
     my @l = split /\n/, $stdout;
     return undef unless @l >= 2;
@@ -136,9 +167,11 @@ sub git_commit_sign_id {
 }
 
 sub git_tag_sign_id {
-    my $tag = shift;
+    my ($project, $tag) = @_;
+    my $w = set_git_gpg_wrapper($project);
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'tag', '-v', $tag);
+    unset_git_gpg_wrapper($w);
     return undef unless $success;
     my $id;
     foreach my $l (split /\n/, $stderr) {
@@ -251,7 +284,7 @@ sub maketar {
     git_describe($project, $git_hash);
     my $version = project_config('version', $project);
     if (my $tag_gpg_id = project_config('tag_gpg_id', $project)) {
-        my $id = git_tag_sign_id($git_hash) ||
+        my $id = git_tag_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed tag";
         if (!valid_id($id, $tag_gpg_id)) {
             exit_error "$git_hash is not signed with a valid key";
@@ -259,7 +292,7 @@ sub maketar {
         print "Tag $git_hash is signed with key $id\n";
     }
     if (my $commit_gpg_id = project_config('commit_gpg_id', $project)) {
-        my $id = git_commit_sign_id($git_hash) ||
+        my $id = git_commit_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed commit";
         if (!valid_id($id, $commit_gpg_id)) {
             exit_error "$git_hash is not signed with a valid key";

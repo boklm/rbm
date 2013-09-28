@@ -163,6 +163,26 @@ The following configuration options are available :
         The format is like this: 1B678A63. For this to work, the GPG
         keys should be present in the GPG public keyring.
 
+- **gpg_wrapper** :
+        This is a template for a gpg wrapper script. The default wrapper
+        will call gpg with the keyring specified by option *gpg_keyring*
+        if defined.
+
+- **gpg_keyring** :
+        The filename of the gpg keyring to use. Path is relative to the
+        *gpg_keyring_dir* directory. This can also be an absolute path.
+
+- **gpg_keyring_dir** :
+        The directory containing gpg keyring files. The default is
+        *$basedir/keyring* (with $basedir the directory where the main
+        config file is located).
+
+- **gpg_bin** :
+        The gpg command to be used. The default is *gpg*.
+
+- **gpg_args** :
+        Optional gpg arguments. The default is empty.
+
 - **copy_files** :
         A list of files that should be copied when building the package.
         Path is relative to the project's template directory.
@@ -336,6 +356,23 @@ You will also need perl and the following perl modules installed :
  - IO::CaptureOutput
 
 
+Git Version
+===========
+
+If you are going to use gpg signed commits, it is recommended to use
+git >= 1.8.3.
+
+ - git < 1.7.9 does not support signed commits. It only supports signed
+   tags.
+
+ - git < 1.8.3 does not use the *git-config* option *gpg.program* in
+   `git log --show-signature` and `git show --show-signatures` commands
+   used to check commits signatures. This means you won't be able to
+   use the *gpg_keyring* option for commits signature verification (but
+   it will work for tag signature verification). This was fixed in git
+   commit *6005dbb9*, included in version 1.8.3.
+
+
 TODO
 ====
 
@@ -349,14 +386,6 @@ TODO
   package index, Ruby gems, etc ... This should make it possible to
   create a package for any supported distribution, for a perl, python,
   ruby module with a single command.
-
-- Add option to use a specified gnupg keyring, instead of the default
-  one. This would allow including a keyring file in the package
-  templates and configuration repository, so that it's not needed to
-  manually import keys. This can be done by making a small gpg wrapper
-  that run `gpg --keyring [path] --no-default-keyring` if some environment
-  variable is set, and set *gpg.program* to the path of this wrapper in
-  *git-config* for all repos.
 
 [mock]: http://fedoraproject.org/wiki/Projects/Mock
 [iurt]: http://gitweb.mageia.org/software/build-system/iurt/
