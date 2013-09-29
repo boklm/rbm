@@ -401,6 +401,20 @@ TODO
   config it should be possible to add an url and an sha256sum of a
   tarball that will be downloaded, and can be used to build the package.
 
+- Make the *d* template variable a function that returns the distro
+  config option value. Make it possible to override distro config in a
+  project's config.
+
+- Add a pkg template function that take a generic package name as
+  argument, and return a distro specific package name. To do this, it
+  will use the first undef value after trying in the following order :
+   * if the config option *distributions/[distro]/packages* is a hash,
+     then return the value with generic package name as key
+   * if the config option *distributions/[distro]/packages* is a string,
+     then use it as the package name. You could do an exec in this option,
+     if you want to use a script to convert the package name.
+   * return the same package name
+
 - Write default templates for perl, python, ruby modules, and plugins
   to generate config file for modules with infos from CPAN, Python
   package index, Ruby gems, etc ... This should make it possible to
