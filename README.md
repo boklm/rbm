@@ -392,10 +392,15 @@ TODO
   giving a list of key IDs, meaning any signature from a key in the
   selected keyring is good.
 
+- Add a test command. After building packages, this run some integration
+  tests on the packages. This works on packages, or other files created
+  by the build command.
+
 - Add an upload command, with a default upload template script.
-  Depending on selected distro the template will decide if it should
-  build an rpm or deb, where to upload it and how to update repo
-  metadata.
+  This will build packages, run the tests if any, and upload/copy the
+  packages to a repository. Depending on selected distro the template
+  will decide if it should build an rpm or deb, where to upload it and
+  how to update repo metadata.
 
 - Add an option to download a tarball, instead of creating it. In the
   config it should be possible to add an url and an sha256sum of a
