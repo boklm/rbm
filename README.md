@@ -155,6 +155,8 @@ The following configuration options are available :
         work, the GPG keys should be present in the selected keyring
         (see *keyring* option). If the option is set to 1 or an array
         containing 1 then any key from the selected keyring is accepted.
+        On command line, the *--commit-gpg-id* option can be listed
+        multiple times to define a list of keys.
 
 - **tag_gpg_id** :
         If set, the commit selected with *git_hash* should be a tag and
@@ -166,7 +168,8 @@ The following configuration options are available :
         spaces). For this to work, the GPG keys should be present in
         the selected keyring (see *keyring* option). If the option is
         set to 1 or an array containing 1 then any key from the selected
-        keyring is accepted.
+        keyring is accepted. On command line, the *--tag-gpg-id* option
+        can be listed multiple times to define a list of keys.
 
 - **gpg_wrapper** :
         This is a template for a gpg wrapper script. The default wrapper
