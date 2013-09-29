@@ -35,6 +35,9 @@
   commit_gpg_id with short or long IDs, or full fingerprint. Previously
   it was done using short IDs only.
 
+- tag_gpg_id and commit_gpg_id can be set to 1 to accept signature from
+  any key in the keyring.
+
 
 Version 0.1
 

@@ -153,7 +153,8 @@ The following configuration options are available :
         a single gpg ID, or to a list of gpg IDs. The IDs can be short
         or long IDs, or full fingerprint (with no spaces). For this to
         work, the GPG keys should be present in the selected keyring
-        (see *keyring* option).
+        (see *keyring* option). If the option is set to 1 or an array
+        containing 1 then any key from the selected keyring is accepted.
 
 - **tag_gpg_id** :
         If set, the commit selected with *git_hash* should be a tag and
@@ -163,7 +164,9 @@ The following configuration options are available :
         option can be set to a single gpg ID, or to a list of gpg IDs.
         The IDs can be short or long IDs, or full fingerprint (with no
         spaces). For this to work, the GPG keys should be present in
-        the selected keyring (see *keyring* option).
+        the selected keyring (see *keyring* option). If the option is
+        set to 1 or an array containing 1 then any key from the selected
+        keyring is accepted.
 
 - **gpg_wrapper** :
         This is a template for a gpg wrapper script. The default wrapper

@@ -212,6 +212,10 @@ sub git_describe {
 
 sub valid_id {
     my ($fp, $valid_id) = @_;
+    if ($valid_id eq '1' || (ref $valid_id eq 'ARRAY' && @$valid_id == 1
+            && $valid_id->[0] eq '1')) {
+        return 1;
+    }
     if (ref $valid_id eq 'ARRAY') {
         foreach my $v (@$valid_id) {
             return 1 if $fp =~ m/$v$/;
