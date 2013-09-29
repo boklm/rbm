@@ -114,7 +114,8 @@ sub project_config {
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
     my $res = config($name, ['opt'], ['run'], ['projects', $project]);
-    if (defined($res) && !ref $res && !notmpl($name, $project)) {
+    if (!$options->{no_tmpl} && defined($res) && !ref $res
+        && !notmpl($name, $project)) {
         $res = process_template($project, $res);
     }
     $config->{opt} = $opt_save;
