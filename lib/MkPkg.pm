@@ -118,6 +118,9 @@ sub project_config {
         $res = process_template($project, $res);
     }
     $config->{opt} = $opt_save;
+    if (!defined($res) && $options->{error_if_undef}) {
+        exit_error($options->{error_if_undef});
+    }
     return $res;
 }
 

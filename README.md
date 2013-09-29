@@ -381,9 +381,6 @@ TODO
 
 - Add support for Debian packages
 
-- *project_config* function should have an option *error_if_undef* to
-  exit with an error message if the selected value is undef.
-
 - We are currently matching gpg keys from options *commit_gpg_id* and
   *tag_gpg_id* using short key IDs. We should match them with full
   fingerprint so it's possible to use long key IDs.
