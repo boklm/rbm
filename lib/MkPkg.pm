@@ -291,7 +291,7 @@ sub maketar {
         my $id = git_tag_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed tag";
         if (!valid_id($id, $tag_gpg_id)) {
-            exit_error "$git_hash is not signed with a valid key";
+            exit_error "Tag $git_hash is not signed with a valid key";
         }
         print "Tag $git_hash is signed with key $id\n";
     }
@@ -299,7 +299,7 @@ sub maketar {
         my $id = git_commit_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed commit";
         if (!valid_id($id, $commit_gpg_id)) {
-            exit_error "$git_hash is not signed with a valid key";
+            exit_error "Commit $git_hash is not signed with a valid key";
         }
         print "Commit $git_hash is signed with key $id\n";
     }
