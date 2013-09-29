@@ -381,6 +381,26 @@ TODO
 
 - Add support for Debian packages
 
+- *project_config* function should have an option *error_if_undef* to
+  exit with an error message if the selected value is undef.
+
+- We are currently matching gpg keys from options *commit_gpg_id* and
+  *tag_gpg_id* using short key IDs. We should match them with full
+  fingerprint so it's possible to use long key IDs.
+
+- We should be able to enable *commit_gpg_id* or *tag_gpg_id* without
+  giving a list of key IDs, meaning any signature from a key in the
+  selected keyring is good.
+
+- Add an upload command, with a default upload template script.
+  Depending on selected distro the template will decide if it should
+  build an rpm or deb, where to upload it and how to update repo
+  metadata.
+
+- Add an option to download a tarball, instead of creating it. In the
+  config it should be possible to add an url and an sha256sum of a
+  tarball that will be downloaded, and can be used to build the package.
+
 - Write default templates for perl, python, ruby modules, and plugins
   to generate config file for modules with infos from CPAN, Python
   package index, Ruby gems, etc ... This should make it possible to
