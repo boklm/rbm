@@ -182,11 +182,9 @@ sub git_tag_sign_id {
         next unless $l =~ m/^gpg:/;
         if ($l =~ m/^gpg: Signature made .+ using .+ key ID ([\dA-F]+)$/) {
             $id = $1;
-        } elsif ($l =~ m/^gpg: Good signature from/) {
-            return $id;
         }
     }
-    return undef;
+    return $id;
 }
 
 sub git_describe {
