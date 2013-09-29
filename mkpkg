@@ -191,7 +191,7 @@ sub show_conf {
     }
     my $project = shift @$args;
     MkPkg::valid_project($project);
-    my $r = @$args ? MkPkg::project_config(\@$args, $project)
+    my $r = @$args ? MkPkg::project_config($project, \@$args)
                 : $MkPkg::config->{projects}{$project};
     MkPkg::exit_error "Undefined" unless $r;
     print ref $r ? YAML::Dump($r) : "$r\n";

@@ -105,12 +105,12 @@ sub config {
 sub notmpl {
     my ($name, $project) = @_;
     return 1 if $name eq 'notmpl';
-    my @n = (@{$config->{notmpl}}, @{project_config('notmpl', $project)});
+    my @n = (@{$config->{notmpl}}, @{project_config($project, 'notmpl')});
     return grep { $name eq $_ } @n;
 }
 
 sub project_config {
-    my ($name, $project, $options) = @_;
+    my ($project, $name, $options) = @_;
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
     my $res = config($name, ['opt'], ['run'], ['projects', $project]);
@@ -131,7 +131,7 @@ sub exit_error {
 
 sub get_distribution {
     my ($project) = @_;
-    my $distribution = project_config('distribution', $project)
+    my $distribution = project_config($project, 'distribution')
                 || exit_error 'No distribution specified';
     exists $config->{distributions}{$distribution}
                 || exit_error "Unknown distribution $distribution";
@@ -140,7 +140,7 @@ sub get_distribution {
 
 sub set_git_gpg_wrapper {
     my ($project) = @_;
-    my $w = project_config('gpg_wrapper', $project);
+    my $w = project_config($project, 'gpg_wrapper');
     my (undef, $tmp) = File::Temp::tempfile();
     write_file($tmp, $w);
     chmod 0700, $tmp;
@@ -224,7 +224,7 @@ sub valid_project {
 
 sub git_clone_fetch_chdir {
     my $project = shift;
-    my $clonedir = path(project_config('git_clone_dir', $project));
+    my $clonedir = path(project_config($project, 'git_clone_dir'));
     if (!chdir path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
         if (system('git', 'clone',
@@ -233,7 +233,7 @@ sub git_clone_fetch_chdir {
         }
         chdir($project) || exit_error "Error entering $project directory";
     }
-    if (!$config->{projects}{$project}{fetched} && project_config('fetch', $project)) {
+    if (!$config->{projects}{$project}{fetched} && project_config($project, 'fetch')) {
         system('git', 'checkout', '-q', '--detach', 'master') == 0
                 || exit_error "Error checking out master";
         system('git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*') == 0
@@ -262,7 +262,7 @@ sub run_script {
 
 sub execute {
     my ($project, $cmd) = @_;
-    my $git_hash = project_config('git_hash', $project)
+    my $git_hash = project_config($project, 'git_hash')
         || exit_error 'No git_hash specified';
     my $old_cwd = getcwd;
     git_clone_fetch_chdir($project);
@@ -278,15 +278,15 @@ sub execute {
 
 sub maketar {
     my ($project, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
     valid_project($project);
-    my $git_hash = project_config('git_hash', $project)
+    my $git_hash = project_config($project, 'git_hash')
         || exit_error 'No git_hash specified';
     my $old_cwd = getcwd;
     git_clone_fetch_chdir($project);
     git_describe($project, $git_hash);
-    my $version = project_config('version', $project);
-    if (my $tag_gpg_id = project_config('tag_gpg_id', $project)) {
+    my $version = project_config($project, 'version');
+    if (my $tag_gpg_id = project_config($project, 'tag_gpg_id')) {
         my $id = git_tag_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed tag";
         if (!valid_id($id, $tag_gpg_id)) {
@@ -294,7 +294,7 @@ sub maketar {
         }
         print "Tag $git_hash is signed with key $id\n";
     }
-    if (my $commit_gpg_id = project_config('commit_gpg_id', $project)) {
+    if (my $commit_gpg_id = project_config($project, 'commit_gpg_id')) {
         my $id = git_commit_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed commit";
         if (!valid_id($id, $commit_gpg_id)) {
@@ -311,7 +311,7 @@ sub maketar {
         gz  => ['gzip', '-f'],
         bz2 => ['bzip2', '-f'],
     );
-    if (my $c = project_config('compress_tar', $project)) {
+    if (my $c = project_config($project, 'compress_tar')) {
         if (!defined $compress{$c}) {
             exit_error "Unknow compression $c";
         }
@@ -319,7 +319,7 @@ sub maketar {
                 || exit_error "Error compressing $tar_file with $compress{$c}->[0]";
         $tar_file .= ".$c";
     }
-    my $timestamp = project_config('timestamp', $project);
+    my $timestamp = project_config($project, 'timestamp');
     utime $timestamp, $timestamp, "$dest_dir/$tar_file" if $timestamp;
     print "Created $dest_dir/$tar_file\n";
     chdir($old_cwd);
@@ -327,9 +327,9 @@ sub maketar {
 
 sub process_template {
     my ($project, $tmpl, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
     my $distribution = get_distribution($project);
-    my $projects_dir = abs_path(path(project_config('projects_dir', $project)));
+    my $projects_dir = abs_path(path(project_config($project, 'projects_dir')));
     my $template = Template->new(
         ENCODING        => 'utf8',
         INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
@@ -339,7 +339,7 @@ sub process_template {
         project    => $project,
         p          => $config->{projects}{$project},
         d          => $config->{distributions}{$distribution},
-        c          => sub { project_config($_[0], $project) },
+        c          => sub { project_config($project, $_[0]) },
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
         exec       => sub { execute($project, $_[0]) },
@@ -353,13 +353,13 @@ sub process_template {
 
 sub rpmspec {
     my ($project, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
     valid_project($project);
-    my $git_hash = project_config('git_hash', $project);
+    my $git_hash = project_config($project, 'git_hash');
     git_describe($project, $git_hash) if $git_hash;
-    my $timestamp = project_config('timestamp', $project);
+    my $timestamp = project_config($project, 'timestamp');
     my $rpmspec = process_template($project,
-                        project_config('rpmspec', $project), $dest_dir);
+                        project_config($project, 'rpmspec'), $dest_dir);
     write_file("$dest_dir/$project.spec", $rpmspec);
     utime $timestamp, $timestamp, "$dest_dir/$project.spec" if $timestamp;
 }
@@ -370,9 +370,9 @@ sub projectslist {
 
 sub copy_files {
     my ($project, $dest_dir) = @_;
-    my $copy_files = project_config('copy_files', $project);
+    my $copy_files = project_config($project, 'copy_files');
     return unless $copy_files;
-    my $proj_dir = abs_path(path(project_config('projects_dir', $project)));
+    my $proj_dir = abs_path(path(project_config($project, 'projects_dir')));
     my $src_dir = "$proj_dir/$project";
     foreach my $file (@$copy_files) {
         copy("$src_dir/$file", "$dest_dir/$file");
@@ -381,7 +381,7 @@ sub copy_files {
 
 sub rpmbuild {
     my ($project, $action, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
@@ -392,16 +392,16 @@ sub rpmbuild {
         output_dir      => $dest_dir,
         rpmbuild_srcdir => $tmpdir->dirname,
     };
-    my $rpmbuild = project_config('rpmbuild', $project, $options);
+    my $rpmbuild = project_config($project, 'rpmbuild', $options);
     run_script($rpmbuild, sub { system(@_) })
                 || exit_error "Error running rpmbuild";
 }
 
 sub build {
     my ($project, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config('output_dir', $project)));
+    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
     valid_project($project);
-    my $projects_dir = abs_path(path(project_config('projects_dir', $project)));
+    my $projects_dir = abs_path(path(project_config($project, 'projects_dir')));
     -f "$projects_dir/$project/build" || -f "$projects_dir/common/build"
         || exit_error "Cannot find build template";
     my $distribution = get_distribution($project);
@@ -409,7 +409,7 @@ sub build {
     maketar($project, $tmpdir->dirname);
     copy_files($project, $tmpdir->dirname);
     rpmspec($project, $tmpdir->dirname);
-    my $build = project_config('build', $project);
+    my $build = project_config($project, 'build');
     write_file("$tmpdir/build", $build);
     my $old_cwd = getcwd;
     chdir $tmpdir->dirname;
