@@ -149,19 +149,21 @@ The following configuration options are available :
         If set, the commit selected with *git_hash* will have its
         signature checked. The tarball will not be created if there is
         no valid signature, and if the key used to sign it does not
-        match the key id from *commit_gpg_id*. The option can be set to
-        a single gpg id, or to a list of gpg ids. The format is like
-        this: 1B678A63. For this to work, the GPG keys should be present
-        in the GPG public keyring.
+        match the key ID from *commit_gpg_id*. The option can be set to
+        a single gpg ID, or to a list of gpg IDs. The IDs can be short
+        or long IDs, or full fingerprint (with no spaces). For this to
+        work, the GPG keys should be present in the selected keyring
+        (see *keyring* option).
 
 - **tag_gpg_id** :
         If set, the commit selected with *git_hash* should be a tag and
         will have its signature checked. The tarball will not be created
         if the tag doesn't have a valid signature, and if the key used
-        to sign it does not match the key id from *tag_gpg_id*. The
-        option can be set to a single gpg id, or to a list of gpg ids.
-        The format is like this: 1B678A63. For this to work, the GPG
-        keys should be present in the GPG public keyring.
+        to sign it does not match the key ID from *tag_gpg_id*. The
+        option can be set to a single gpg ID, or to a list of gpg IDs.
+        The IDs can be short or long IDs, or full fingerprint (with no
+        spaces). For this to work, the GPG keys should be present in
+        the selected keyring (see *keyring* option).
 
 - **gpg_wrapper** :
         This is a template for a gpg wrapper script. The default wrapper
@@ -387,10 +389,6 @@ TODO
   or [Iurt][iurt].
 
 - Add support for Debian packages
-
-- We are currently matching gpg keys from options *commit_gpg_id* and
-  *tag_gpg_id* using short key IDs. We should match them with full
-  fingerprint so it's possible to use long key IDs.
 
 - We should be able to enable *commit_gpg_id* or *tag_gpg_id* without
   giving a list of key IDs, meaning any signature from a key in the

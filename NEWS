@@ -31,6 +31,10 @@
   keyring files for some projects. While doing this we add the
   gpg_wrapper, gpg_keyring, gpg_keyring_dir, gpg_args, gpg_bin options.
 
+- It's now possible to filter good gpg keys IDs with tag_gpg_id and
+  commit_gpg_id with short or long IDs, or full fingerprint. Previously
+  it was done using short IDs only.
+
 
 Version 0.1
 
