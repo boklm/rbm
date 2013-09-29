@@ -340,7 +340,7 @@ sub process_template {
         project    => $project,
         p          => $config->{projects}{$project},
         d          => $config->{distributions}{$distribution},
-        c          => sub { project_config($project, $_[0]) },
+        c          => sub { project_config($project, @_) },
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
         exec       => sub { execute($project, $_[0]) },

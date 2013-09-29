@@ -270,6 +270,13 @@ The following variables can be used in the template files :
         will look at the command line parameters, the project specific
         configuration then the global configuration and return the first
         defined one. The syntax to use this function is `c('option-name')`.
+        Optionally it can take as a second argument a hash table
+        containing options to override temporarily (in template processing).
+        Additionally the 2nd argument can contain the following options :
+        *no_tmpl* : set this to 1 if you want to disable template processing
+        for this option lookup. *error_if_undef* : set this to a string
+        containing an error message if you want to exit with an error
+        when the selected option is undefined.
 
 - **project** :
         The name of the project for which we are processing a template.
