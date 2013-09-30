@@ -396,10 +396,6 @@ TODO
 
 - Add support for Debian packages
 
-- We should be able to enable *commit_gpg_id* or *tag_gpg_id* without
-  giving a list of key IDs, meaning any signature from a key in the
-  selected keyring is good.
-
 - Add a test command. After building packages, this run some integration
   tests on the packages. This works on packages, or other files created
   by the build command.
