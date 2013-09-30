@@ -37,8 +37,8 @@ END
     rpmbuild      => <<END,
 #!/bin/sh
 set -e -x
-[% SET srcdir = c('rpmbuild_srcdir') -%]
-rpmbuild [% c('rpmbuild_action') %] --define '_topdir [% srcdir %]' \\
+[% SET srcdir = c('rpmbuild_srcdir', { error_if_undef => 'rpmbuild_srcdir is undef'}) -%]
+rpmbuild [% c('rpmbuild_action', {error_if_undef => 'rpmbuild_action is undef'}) %] --define '_topdir [% srcdir %]' \\
         --define '_sourcedir [% srcdir %]' \\
         --define '_srcrpmdir [% dest_dir %]' \\
         --define '_rpmdir [% dest_dir %]' \\
