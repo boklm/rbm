@@ -282,9 +282,10 @@ The following variables can be used in the template files :
         containing options to override temporarily (in template processing).
         Additionally the 2nd argument can contain the following options :
         *no_tmpl* : set this to 1 if you want to disable template processing
-        for this option lookup. *error_if_undef* : set this to a string
-        containing an error message if you want to exit with an error
-        when the selected option is undefined.
+        for this option lookup. *error_if_undef* : set this to 1 (for
+        default error message) or a string containing an error message
+        if you want to exit with an error when the selected option is
+        undefined.
 
 - **project** :
         The name of the project for which we are processing a template.

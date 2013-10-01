@@ -37,8 +37,8 @@ END
     rpmbuild      => <<END,
 #!/bin/sh
 set -e -x
-[% SET srcdir = c('rpmbuild_srcdir', { error_if_undef => 'rpmbuild_srcdir is undef'}) -%]
-rpmbuild [% c('rpmbuild_action', {error_if_undef => 'rpmbuild_action is undef'}) %] --define '_topdir [% srcdir %]' \\
+[% SET srcdir = c('rpmbuild_srcdir', { error_if_undef => 1}) -%]
+rpmbuild [% c('rpmbuild_action', {error_if_undef => 1}) %] --define '_topdir [% srcdir %]' \\
         --define '_sourcedir [% srcdir %]' \\
         --define '_srcrpmdir [% dest_dir %]' \\
         --define '_rpmdir [% dest_dir %]' \\
@@ -109,6 +109,10 @@ sub notmpl {
     return grep { $name eq $_ } @n;
 }
 
+sub confkey_str {
+    ref $_[0] eq 'ARRAY' ? join '/', @{$_[0]} : $_[0];
+}
+
 sub project_config {
     my ($project, $name, $options) = @_;
     my $opt_save = $config->{opt};
@@ -120,7 +124,10 @@ sub project_config {
     }
     $config->{opt} = $opt_save;
     if (!defined($res) && $options->{error_if_undef}) {
-        exit_error($options->{error_if_undef});
+        my $msg = $options->{error_if_undef} eq '1' ?
+                "Option " . confkey_str($name) . " is undefined"
+                : $options->{error_if_undef};
+        exit_error($msg);
     }
     return $res;
 }
