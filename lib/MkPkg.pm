@@ -20,7 +20,7 @@ my %default_config = (
     fetch         => 1,
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
-    notmpl        => [ qw(distribution output_dir projects_dir) ],
+    notmpl        => [ qw(distribution projects_dir) ],
     opt           => {},
     timestamp     => '[% exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}") %]',
     version       => <<END,
@@ -120,7 +120,8 @@ sub project_config {
     my $res = config($name, ['opt'], ['run'], ['projects', $project]);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
-        $res = process_template($project, $res);
+        $res = process_template($project, $res,
+            confkey_str($name) eq 'output_dir' ? '.' : undef);
     }
     $config->{opt} = $opt_save;
     if (!defined($res) && $options->{error_if_undef}) {

@@ -234,7 +234,6 @@ however, for the options that are needed to process templates, so they
 can't be templated themself. The following options are not templated :
 
  - distribution
- - output_dir
  - projects_dir
 
 If you want to make other options not templated, add them to the

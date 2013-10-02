@@ -1,3 +1,7 @@
+
+- make it possible to use templating in output_dir option
+
+
 Version 0.2
 
 - The showconf command can now be used to display specific config for
