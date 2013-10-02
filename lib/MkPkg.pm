@@ -93,7 +93,6 @@ sub config_p {
 
 sub config {
     my $name = shift;
-    $name = [ $name ] unless ref $name eq 'ARRAY';
     foreach my $path (@_) {
         if (my $r = config_p(@$path, @$name)) {
             return $r;
@@ -115,11 +114,12 @@ sub confkey_str {
 
 sub project_config {
     my ($project, $name, $options) = @_;
+    $name = [ split '/', $name ] unless ref $name eq 'ARRAY';
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
     my $res = config($name, ['opt'], ['run'], ['projects', $project]);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
-        && !notmpl($name, $project)) {
+        && !notmpl(confkey_str($name), $project)) {
         $res = process_template($project, $res);
     }
     $config->{opt} = $opt_save;
