@@ -3,7 +3,7 @@ package MkPkg;
 use warnings;
 use strict;
 use Cwd qw(abs_path getcwd);
-use YAML qw(LoadFile);
+use YAML::XS qw(LoadFile);
 use Template;
 use File::Basename;
 use IO::Handle;

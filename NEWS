@@ -1,5 +1,7 @@
 
-- make it possible to use templating in output_dir option
+- Make it possible to use templating in output_dir option
+
+- Use YAML::XS rather than YAML perl module
 
 
 Version 0.2

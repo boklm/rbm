@@ -4,7 +4,7 @@ use strict;
 use File::Basename;
 use lib dirname($0) . '/lib';
 use MkPkg;
-use YAML;
+use YAML::XS;
 use Getopt::Long;
 #use Data::Dump qw/dd/;
 
@@ -186,7 +186,7 @@ sub show_conf {
     shift;
     my $args = set_options(@_);
     if (@$args == 0) {
-        print YAML::Dump($MkPkg::config);
+        print YAML::XS::Dump($MkPkg::config);
         return;
     }
     my $project = shift @$args;
@@ -195,7 +195,7 @@ sub show_conf {
                         @$args == 1 ? $args->[0] : \@$args)
                 : $MkPkg::config->{projects}{$project};
     MkPkg::exit_error "Undefined" unless $r;
-    print ref $r ? YAML::Dump($r) : "$r\n";
+    print ref $r ? YAML::XS::Dump($r) : "$r\n";
 }
 
 sub fetch {

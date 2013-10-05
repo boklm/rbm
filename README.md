@@ -365,7 +365,7 @@ exec $mkpkg_dir/mkpkg "$*"
 ```
 
 You will also need perl and the following perl modules installed :
- - YAML
+ - YAML::XS
  - Getopt::Long
  - Template
  - IO::CaptureOutput
