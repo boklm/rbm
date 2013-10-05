@@ -3,6 +3,8 @@
 
 - Use YAML::XS rather than YAML perl module
 
+- Add the tmpl function in templates
+
 
 Version 0.2
 

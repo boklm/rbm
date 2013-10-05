@@ -324,6 +324,10 @@ The following variables can be used in the template files :
         Optionally it can take a second argument to set an other value
         for the *basedir*.
 
+- **tmpl** :
+        A function taking a template text as argument, and returning it
+        processed.
+
 
 How the package version is set
 ==============================
