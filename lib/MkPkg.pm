@@ -384,8 +384,8 @@ sub rpmspec {
     my $git_hash = project_config($project, 'git_hash');
     git_describe($project, $git_hash) if $git_hash;
     my $timestamp = project_config($project, 'timestamp');
-    my $rpmspec = process_template($project,
-                        project_config($project, 'rpmspec'), $dest_dir);
+    my $rpmspec = project_config($project, 'rpmspec')
+                || exit_error "Undefined config for rpmspec";
     write_file("$dest_dir/$project.spec", $rpmspec);
     utime $timestamp, $timestamp, "$dest_dir/$project.spec" if $timestamp;
 }
