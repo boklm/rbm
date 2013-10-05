@@ -59,13 +59,22 @@ GPGEND
 );
 
 our $config;
+
+sub load_config_file {
+    eval {
+        LoadFile($_[0]);
+    } or do {
+        exit_error("Error reading file $_[0] :\n" . $@);
+    }
+}
+
 sub load_config {
     my $config_file = shift // find_config_file();
-    $config = { %default_config, %{ LoadFile($config_file) } };
+    $config = { %default_config, %{ load_config_file($config_file) } };
     $config->{basedir} = dirname($config_file);
     foreach my $p (glob path($config->{projects_dir}) . '/*') {
         next unless -f "$p/config";
-        $config->{projects}{basename($p)} = LoadFile("$p/config");
+        $config->{projects}{basename($p)} = load_config_file("$p/config");
     }
 }
 
