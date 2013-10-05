@@ -369,6 +369,7 @@ You will also need perl and the following perl modules installed :
  - Getopt::Long
  - Template
  - IO::CaptureOutput
+ - File::Slurp
 
 
 Git Version
