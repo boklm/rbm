@@ -428,14 +428,13 @@ sub build {
     $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $projects_dir = abs_path(path(project_config($project, 'projects_dir')));
-    -f "$projects_dir/$project/build" || -f "$projects_dir/common/build"
-        || exit_error "Cannot find build template";
     my $distribution = get_distribution($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
     copy_files($project, $tmpdir->dirname);
     rpmspec($project, $tmpdir->dirname);
-    my $build = project_config($project, 'build');
+    my $build = project_config($project, 'build')
+                || exit_error "Missing build config";
     write_file("$tmpdir/build", $build);
     my $old_cwd = getcwd;
     chdir $tmpdir->dirname;
