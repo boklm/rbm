@@ -432,7 +432,6 @@ sub build {
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
     copy_files($project, $tmpdir->dirname);
-    rpmspec($project, $tmpdir->dirname);
     my $build = project_config($project, 'build')
                 || exit_error "Missing build config";
     write_file("$tmpdir/build", $build);
