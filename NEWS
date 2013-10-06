@@ -14,6 +14,12 @@
   takes as first argument the project's name, and on other arguments
   the path to the config option.
 
+- The describe option is now a perl function. This allows us to remove
+  some explicit calls to the git_describe function, and make sure that
+  it is called any time the describe values are used. This makes the
+  "mkpkg showconf [project] rpmspec" command work in all cases (before
+  that there could be problems as the describe option was not set).
+
 
 Version 0.2
 

@@ -22,6 +22,7 @@ my %default_config = (
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(distribution projects_dir) ],
     opt           => {},
+    describe      => \&git_describe,
     timestamp     => '[% exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}") %]',
     version       => <<END,
 [%-
@@ -213,20 +214,20 @@ sub git_tag_sign_id {
 }
 
 sub git_describe {
-    my ($project, $git_hash) = @_;
-    return if $config->{projects}{$project}{describe};
+    my $project = shift;
+    my $git_hash = project_config($project, 'git_hash')
+                || exit_error 'No git_hash specified';
+    my %res;
     $config->{projects}{$project}{describe} = {};
     my $old_cwd = getcwd;
     git_clone_fetch_chdir($project);
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'describe', '--long', $git_hash);
     if ($success) {
-        (   $config->{projects}{$project}{describe}{tag},
-            $config->{projects}{$project}{describe}{tag_reach},
-            $config->{projects}{$project}{describe}{hash}
-        ) = $stdout =~ m/^(.+)-(\d+)-g([^-]+)$/;
+        @res{qw(tag tag_reach hash)} = $stdout =~ m/^(.+)-(\d+)-g([^-]+)$/;
     }
     chdir($old_cwd);
+    return $success ? \%res : undef;
 }
 
 sub valid_id {
@@ -312,7 +313,6 @@ sub maketar {
         || exit_error 'No git_hash specified';
     my $old_cwd = getcwd;
     git_clone_fetch_chdir($project);
-    git_describe($project, $git_hash);
     my $version = project_config($project, 'version');
     if (my $tag_gpg_id = project_config($project, 'tag_gpg_id')) {
         my $id = git_tag_sign_id($project, $git_hash) ||
@@ -385,7 +385,6 @@ sub rpmspec {
     $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $git_hash = project_config($project, 'git_hash');
-    git_describe($project, $git_hash) if $git_hash;
     my $timestamp = project_config($project, 'timestamp');
     my $rpmspec = project_config($project, 'rpmspec')
                 || exit_error "Undefined config for rpmspec";
