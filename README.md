@@ -41,6 +41,9 @@ The following commands are available :
  - **srpm** :
         create a source rpm package
  
+ - **deb-src** :
+        create a debian source package
+
  - **build** :
         build the project, using a template build script
 
@@ -218,6 +221,21 @@ The following configuration options are available :
         This is the content of the build script used by the *build*
         command. The default is to include the template file named
         *build*.
+
+- **deb_src** :
+        This is the script that is used to create the debian source
+        package. By default it will use the debian files listed in the
+        option *debian_files* and create the source package with
+        dpkg-source.
+
+- **debian_files** :
+        This is an array containing the files to create in the debian
+        directory. Each item in the array is an hash, with the following
+        two keys : *name* is the file name in the debian directory of
+        the file to create, and *content* is the content of the file.
+        The filename and content are processed as template, so for
+        instance if you want to store the content of a file in a separate
+        file, you can use the INCLUDE directive.
 
 In addition to the configuration options listed here, you are free to
 add any other options that you want, and use them in the template files.

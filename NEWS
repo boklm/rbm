@@ -20,6 +20,8 @@
   "mkpkg showconf [project] rpmspec" command work in all cases (before
   that there could be problems as the describe option was not set).
 
+- Add the deb-src command, to create a debian source package
+
 
 Version 0.2
 

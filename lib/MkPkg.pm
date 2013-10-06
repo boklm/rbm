@@ -57,6 +57,29 @@ END
 -%]
 exec [% c('gpg_bin') %] [% c('gpg_args') %] [% gpg_kr %] "\$@"
 GPGEND
+    debian_create => <<DEBEND,
+[%-
+    FOREACH f IN c('debian_files');
+      GET 'cat > ' _ tmpl(f.name) _ " << 'END_DEBIAN_FILE'\n";
+      GET tmpl(f.content);
+      GET "\nEND_DEBIAN_FILE\n\n";
+    END;
+-%]
+DEBEND
+    deb_src => <<DEBEND,
+#!/bin/sh
+set -e -x
+[% SET tarfile = project _ '-' _ c('version') _ '.tar.' _ c('compress_tar') -%]
+tar xvf [% tarfile %]
+mv [% tarfile %] [% dest_dir %]/[% project %]_[% c('version') %].orig.tar.[% c('compress_tar') %]
+cd [% project %]-[% c('version') %]
+builddir=\$(pwd)
+mkdir debian debian/source
+cd debian
+[% c('debian_create') %]
+cd [% dest_dir %]
+dpkg-source -b "\$builddir"
+DEBEND
 );
 
 our $config;
@@ -425,22 +448,22 @@ sub rpmbuild {
                 || exit_error "Error running rpmbuild";
 }
 
-sub build {
-    my ($project, $dest_dir) = @_;
+sub build_run {
+    my ($project, $script_name, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
     copy_files($project, $tmpdir->dirname);
-    my $build = project_config($project, 'build')
-                || exit_error "Missing build config";
-    write_file("$tmpdir/build", $build);
+    my $build_script = project_config($project, $script_name)
+                || exit_error "Missing $script_name config";
+    write_file("$tmpdir/build", $build_script);
     my $old_cwd = getcwd;
     chdir $tmpdir->dirname;
     chmod 0700, 'build';
     my $res = system("$tmpdir/build");
     chdir $old_cwd;
-    exit_error "Error running build script" unless $res == 0;
+    exit_error "Error running $script_name" unless $res == 0;
 }
 
 1;
