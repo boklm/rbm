@@ -5,6 +5,13 @@
 
 - Add the tmpl function in templates
 
+- It is now possible to put a function reference in the default
+  configuration. When accessing a configuration option (or one of the
+  elements in the path) that is a function, the function is executed
+  and the return of the function is used as the value. The function
+  takes as first argument the project's name, and on other arguments
+  the path to the config option.
+
 
 Version 0.2
 

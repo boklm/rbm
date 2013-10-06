@@ -92,22 +92,25 @@ sub path {
 }
 
 sub config_p {
+    my $project = shift;
     my $c = $config;
     foreach my $p (@_) {
         return undef unless $c->{$p};
+        $c->{$p} = $c->{$p}->($project, @_) if ref $c->{$p} eq 'CODE';
         $c = $c->{$p};
     }
     return $c;
 }
 
 sub config {
+    my $project = shift;
     my $name = shift;
     foreach my $path (@_) {
-        if (my $r = config_p(@$path, @$name)) {
+        if (my $r = config_p($project, @$path, @$name)) {
             return $r;
         }
     }
-    return config_p(@$name);
+    return config_p($project, @$name);
 }
 
 sub notmpl {
@@ -126,7 +129,7 @@ sub project_config {
     $name = [ split '/', $name ] unless ref $name eq 'ARRAY';
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
-    my $res = config($name, ['opt'], ['run'], ['projects', $project]);
+    my $res = config($project, $name, ['opt'], ['run'], ['projects', $project]);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
         $res = process_template($project, $res,
