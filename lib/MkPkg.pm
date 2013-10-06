@@ -247,7 +247,7 @@ sub git_describe {
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'describe', '--long', $git_hash);
     if ($success) {
-        @res{qw(tag tag_reach hash)} = $stdout =~ m/^(.+)-(\d+)-g([^-]+)$/;
+        @res{qw(tag tag_reach hash)} = $stdout =~ m/^(.+)-(\d+)-g([^-\n]+)$/;
     }
     chdir($old_cwd);
     return $success ? \%res : undef;
