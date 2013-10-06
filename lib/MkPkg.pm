@@ -95,7 +95,7 @@ sub config_p {
     my $project = shift;
     my $c = $config;
     foreach my $p (@_) {
-        return undef unless $c->{$p};
+        return undef unless defined $c->{$p};
         $c->{$p} = $c->{$p}->($project, @_) if ref $c->{$p} eq 'CODE';
         $c = $c->{$p};
     }
@@ -106,9 +106,8 @@ sub config {
     my $project = shift;
     my $name = shift;
     foreach my $path (@_) {
-        if (my $r = config_p($project, @$path, @$name)) {
-            return $r;
-        }
+        my $r = config_p($project, @$path, @$name);
+        return $r if defined $r;
     }
     return config_p($project, @$name);
 }

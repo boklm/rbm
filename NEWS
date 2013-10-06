@@ -5,6 +5,8 @@
 
 - Add the tmpl function in templates
 
+- Fix lookup of '0' or empty options
+
 - It is now possible to put a function reference in the default
   configuration. When accessing a configuration option (or one of the
   elements in the path) that is a function, the function is executed
