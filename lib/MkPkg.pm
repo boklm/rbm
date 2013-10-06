@@ -428,8 +428,6 @@ sub build {
     my ($project, $dest_dir) = @_;
     $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
     valid_project($project);
-    my $projects_dir = abs_path(path(project_config($project, 'projects_dir')));
-    my $distribution = get_distribution($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
     copy_files($project, $tmpdir->dirname);
