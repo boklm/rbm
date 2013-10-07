@@ -2,7 +2,7 @@ package MkPkg;
 
 use warnings;
 use strict;
-use Cwd qw(abs_path getcwd);
+use Cwd qw(getcwd);
 use YAML::XS qw(LoadFile);
 use Template;
 use File::Basename;
@@ -338,7 +338,7 @@ sub execute {
 
 sub maketar {
     my ($project, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
+    $dest_dir //= path(project_config($project, 'output_dir'));
     valid_project($project);
     my $git_hash = project_config($project, 'git_hash')
         || exit_error 'No git_hash specified';
@@ -386,9 +386,9 @@ sub maketar {
 
 sub process_template {
     my ($project, $tmpl, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
+    $dest_dir //= path(project_config($project, 'output_dir'));
     my $distribution = get_distribution($project);
-    my $projects_dir = abs_path(path(project_config($project, 'projects_dir')));
+    my $projects_dir = path(project_config($project, 'projects_dir'));
     my $template = Template->new(
         ENCODING        => 'utf8',
         INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
@@ -413,7 +413,7 @@ sub process_template {
 
 sub rpmspec {
     my ($project, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
+    $dest_dir //= path(project_config($project, 'output_dir'));
     valid_project($project);
     my $git_hash = project_config($project, 'git_hash');
     my $timestamp = project_config($project, 'timestamp');
@@ -431,7 +431,7 @@ sub copy_files {
     my ($project, $dest_dir) = @_;
     my $copy_files = project_config($project, 'copy_files');
     return unless $copy_files;
-    my $proj_dir = abs_path(path(project_config($project, 'projects_dir')));
+    my $proj_dir = path(project_config($project, 'projects_dir'));
     my $src_dir = "$proj_dir/$project";
     foreach my $file (@$copy_files) {
         copy("$src_dir/$file", "$dest_dir/$file");
@@ -440,7 +440,7 @@ sub copy_files {
 
 sub rpmbuild {
     my ($project, $action, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
+    $dest_dir //= path(project_config($project, 'output_dir'));
     valid_project($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
@@ -458,7 +458,7 @@ sub rpmbuild {
 
 sub build_run {
     my ($project, $script_name, $dest_dir) = @_;
-    $dest_dir //= abs_path(path(project_config($project, 'output_dir')));
+    $dest_dir //= path(project_config($project, 'output_dir'));
     valid_project($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
