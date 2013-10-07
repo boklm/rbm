@@ -11,6 +11,9 @@ use Getopt::Long;
 my $options_help = <<END;
 Main options:
 
+ --sysconf-file [file]
+     Set the optional system configuration file path
+
  --output-dir [directory]
      Set the output directory
 
@@ -180,7 +183,8 @@ sub set_options {
     my @options = qw(distribution=s version=s tag-gpg-id=s@ commit-gpg-id=s@
                      projects-dir=s git-clone-dir=s git-hash=s output-dir=s
                      compress_tar=s pkg-rel=s timestamp=i fetch!
-                     gpg-keyring=s gpg-keyring-dir=s gpg-args=s gpg-bin=s);
+                     gpg-keyring=s gpg-keyring-dir=s gpg-args=s gpg-bin=s
+                     sysconf-file=s);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
     foreach my $k (keys %val) {
@@ -188,6 +192,7 @@ sub set_options {
         $l =~ s/-/_/g;
         $MkPkg::config->{run}{$l} = $val{$k};
     }
+    MkPkg::load_system_config(@_);
     return $MkPkg::config->{run}{args} = \@_;
 }
 

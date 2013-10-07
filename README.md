@@ -64,20 +64,29 @@ Configuration
 
 All configuration options can be defined in 3 different places :
 
-- in the main configuration
+- in the main configuration in your working directory
+
+- in the global system configuration
 
 - in a project configuration
 
 - with a command line option
 
 The command line options override the project configuration which
-override the main configuration.
+override the main configuration, which override the system
+configuration.
+
+The system configuration is by default located at */etc/mkpkg.conf*, or
+the path defined in the *sysconf_file* option. If the path does not
+exists, it is ignored. This is where you will put configuration only
+relevant to your local use of mkpkg.
 
 The main configuration file is *mkpkg.conf*, in YAML format. It can be
 located anywhere on your filesystem, but you will need to run the
 *mkpkg* commands from the same directory, or one of its subdirectories.
-All relative paths used in the configuration are relative from the
-*mkpkg.conf* location.
+This is where you will put configuration relevant to all projects under
+this working directory. All relative paths used in the configuration
+are relative from the *mkpkg.conf* location.
 
 An example *mkpkg.conf* file will look like this :
 
@@ -108,6 +117,11 @@ Configuration options
 =====================
 
 The following configuration options are available :
+
+- **sysconf_file** :
+        The path to an optional system configuration file. The default
+        is */etc/mkpkg.conf*. This can also be set with the --sysconf-file
+        command line parameter.
 
 - **projects_dir** :
         The directory containing the projects definitions. The default

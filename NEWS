@@ -22,6 +22,8 @@
 
 - Add the deb-src command, to create a debian source package
 
+- Add optional system configuration file /etc/mkpkg.conf
+
 
 Version 0.2
 

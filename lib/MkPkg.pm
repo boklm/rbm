@@ -14,6 +14,7 @@ use File::Slurp;
 #use Data::Dump qw/dd/;
 
 my %default_config = (
+    sysconf_file  => '/etc/mkpkg.conf',
     projects_dir  => 'projects',
     output_dir    => 'out',
     git_clone_dir => 'git_clones',
@@ -102,6 +103,12 @@ sub load_config {
     }
 }
 
+sub load_system_config {
+    my ($project) = @_;
+    my $cfile = project_config($project ? $project : 'undef', 'sysconf_file');
+    $config->{system} = -f $cfile ? load_config_file($cfile) : {};
+}
+
 sub find_config_file {
     for (my $dir = getcwd; $dir ne '/'; $dir = dirname($dir)) {
         return "$dir/mkpkg.conf" if -f "$dir/mkpkg.conf";
@@ -152,7 +159,8 @@ sub project_config {
     $name = [ split '/', $name ] unless ref $name eq 'ARRAY';
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
-    my $res = config($project, $name, ['opt'], ['run'], ['projects', $project]);
+    my $res = config($project, $name, ['opt'], ['run'],
+                        ['projects', $project], [], ['system']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
         $res = process_template($project, $res,
