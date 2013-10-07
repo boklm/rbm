@@ -11,6 +11,7 @@ use IO::CaptureOutput qw(capture_exec);
 use File::Temp;
 use File::Copy;
 use File::Slurp;
+use File::Path qw(make_path);
 #use Data::Dump qw/dd/;
 
 my %default_config = (
@@ -282,9 +283,17 @@ sub valid_project {
         || exit_error "Unknown project $project";
 }
 
+sub create_dir {
+    my ($directory) = @_;
+    return $directory if -d $directory;
+    my @res = make_path($directory);
+    exit_error "Error creating $directory" unless @res;
+    return $directory;
+}
+
 sub git_clone_fetch_chdir {
     my $project = shift;
-    my $clonedir = path(project_config($project, 'git_clone_dir'));
+    my $clonedir = create_dir(path(project_config($project, 'git_clone_dir')));
     if (!chdir path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
         if (system('git', 'clone',
@@ -338,7 +347,7 @@ sub execute {
 
 sub maketar {
     my ($project, $dest_dir) = @_;
-    $dest_dir //= path(project_config($project, 'output_dir'));
+    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $git_hash = project_config($project, 'git_hash')
         || exit_error 'No git_hash specified';
@@ -386,7 +395,7 @@ sub maketar {
 
 sub process_template {
     my ($project, $tmpl, $dest_dir) = @_;
-    $dest_dir //= path(project_config($project, 'output_dir'));
+    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
     my $distribution = get_distribution($project);
     my $projects_dir = path(project_config($project, 'projects_dir'));
     my $template = Template->new(
@@ -413,7 +422,7 @@ sub process_template {
 
 sub rpmspec {
     my ($project, $dest_dir) = @_;
-    $dest_dir //= path(project_config($project, 'output_dir'));
+    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $git_hash = project_config($project, 'git_hash');
     my $timestamp = project_config($project, 'timestamp');
@@ -440,7 +449,7 @@ sub copy_files {
 
 sub rpmbuild {
     my ($project, $action, $dest_dir) = @_;
-    $dest_dir //= path(project_config($project, 'output_dir'));
+    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);
@@ -458,7 +467,7 @@ sub rpmbuild {
 
 sub build_run {
     my ($project, $script_name, $dest_dir) = @_;
-    $dest_dir //= path(project_config($project, 'output_dir'));
+    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $tmpdir = File::Temp->newdir;
     maketar($project, $tmpdir->dirname);

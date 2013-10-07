@@ -24,6 +24,9 @@
 
 - Add optional system configuration file /etc/mkpkg.conf
 
+- Automatically create output_dir and git_clone_dir if they don't
+  already exist.
+
 
 Version 0.2
 
