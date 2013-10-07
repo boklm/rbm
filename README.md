@@ -419,6 +419,9 @@ TODO
 
 - Add support for Debian packages
 
+- Make it possible to run the package build inside a chroot, a VM or
+  remote node
+
 - Add a test command. After building packages, this run some integration
   tests on the packages. This works on packages, or other files created
   by the build command.
