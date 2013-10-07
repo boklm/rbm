@@ -82,6 +82,41 @@ cd debian
 cd [% dest_dir %]
 dpkg-source -b "\$builddir"
 DEBEND
+    deb => <<DEBEND,
+#!/bin/sh
+set -e -x
+[% SET tarfile = project _ '-' _ c('version') _ '.tar.' _ c('compress_tar') -%]
+tar xvf [% tarfile %]
+mv [% tarfile %] [% project %]_[% c('version') %].orig.tar.[% c('compress_tar') %]
+cd [% project %]-[% c('version') %]
+builddir=\$(pwd)
+mkdir debian debian/source
+cd debian
+[% c('debian_create') %]
+cd ..
+ls ..
+[% IF c('debsign_keyid');
+    pdebuild_sign = '--debsign-k ' _ c('debsign_keyid');
+    debuild_sign = '-k' _ c('debsign_keyid');
+ELSE;
+    pdebuild_sign = '';
+    debuild_sign = '-uc -us';
+END -%]
+[% IF c('use_pbuilder') -%]
+pdebuild [% pdebuild_sign %] --buildresult [% dest_dir %]
+[% ELSE -%]
+debuild [% debuild_sign %]
+cd ..
+rm -f build
+for file in *
+do
+        if [ -f "\$file" ]
+        then
+                mv "\$file" [% dest_dir %]
+        fi
+done
+[% END -%]
+DEBEND
 );
 
 our $config;

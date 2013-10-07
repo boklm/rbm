@@ -27,6 +27,10 @@
 - Automatically create output_dir and git_clone_dir if they don't
   already exist.
 
+- Add the deb command, to create a debian package. With the debsign_keyid
+  option to select the gpg id to sign the packages, and the use_pbuilder
+  option to select whether pbuilder should be used.
+
 
 Version 0.2
 

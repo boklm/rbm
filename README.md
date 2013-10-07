@@ -44,6 +44,9 @@ The following commands are available :
  - **deb-src** :
         create a debian source package
 
+ - **deb** :
+        create a debian package
+
  - **build** :
         build the project, using a template build script
 
@@ -242,6 +245,14 @@ The following configuration options are available :
         option *debian_files* and create the source package with
         dpkg-source.
 
+- **deb** :
+        This is the script that is used to create the debian packages.
+        By default it will use the debian files listed in the option
+        *debian_files* and build the package using debuild or pdebuild
+        depending on whether the *use_pbuilder* option is set. The
+        packages will be signed using the key defined in the option
+        *debsign_keyid*.
+
 - **debian_files** :
         This is an array containing the files to create in the debian
         directory. Each item in the array is an hash, with the following
@@ -250,6 +261,14 @@ The following configuration options are available :
         The filename and content are processed as template, so for
         instance if you want to store the content of a file in a separate
         file, you can use the INCLUDE directive.
+
+- **use_pbuilder** :
+        If set to a true value, pbuilder will be used to build the
+        debian packages.
+
+- **debsign_keyid** :
+        This is the gpg key that will be used to sign the debian packages.
+        Set to 0 if you don't want to sign the packages.
 
 In addition to the configuration options listed here, you are free to
 add any other options that you want, and use them in the template files.
@@ -430,8 +449,6 @@ TODO
 
 - Add support for building packages inside a chroot, with [Mock][mock]
   or [Iurt][iurt].
-
-- Add support for Debian packages
 
 - Make it possible to run the package build inside a chroot, a VM or
   remote node

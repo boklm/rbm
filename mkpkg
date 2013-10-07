@@ -51,6 +51,15 @@ Main options:
  --fetch
  --no-fetch
      Whether latest commits should be fetched from remote git repository.
+
+ --use-pbuilder
+ --no-use-pbuilder
+     Whether to use pbuilder when building debian packages
+
+ --debsign-keyid [key id]
+     The id of the key to sign debian packages with. Set to 0 for no
+     signature.
+
 END
 
 my %actions = (
@@ -113,6 +122,15 @@ END
         descr => 'Create debian source package',
         usage => <<END,
 $0 deb-src [options] [project]
+
+$options_help
+END
+    },
+    'deb' => {
+        run => sub { build_script('deb', @_) },
+        descr => 'Create debian package',
+        usage => <<END,
+$0 deb [options] [project]
 
 $options_help
 END
@@ -184,7 +202,7 @@ sub set_options {
                      projects-dir=s git-clone-dir=s git-hash=s output-dir=s
                      compress_tar=s pkg-rel=s timestamp=i fetch!
                      gpg-keyring=s gpg-keyring-dir=s gpg-args=s gpg-bin=s
-                     sysconf-file=s);
+                     sysconf-file=s debsign-keyid=s use-pbuilder!);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
     foreach my $k (keys %val) {
