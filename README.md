@@ -158,6 +158,12 @@ The following configuration options are available :
 - **pkg_rel** :
         Package release number.
 
+- **debian_revision** :
+        The package revision used in debian packages. By default, when
+        the option *pkg_rel* is defined, this is what is used. Otherwise
+        a revision containing the number of commits since the last git
+        tag, and the hash of the commit is used.
+
 - **git_hash** :
         A git hash, branch name or tag. This is what is used to create
         the tarball.

@@ -117,6 +117,17 @@ do
 done
 [% END -%]
 DEBEND
+    debian_revision => <<OPT_END,
+[%-
+IF c('pkg_rel');
+        GET c('pkg_rel').defined;
+ELSIF c('describe/tag_reach');
+        GET '1.' _ c('describe/tag_reach') _ '~g' _ c('describe/hash');
+ELSE;
+        GET '1';
+END;
+-%]
+OPT_END
 );
 
 our $config;
