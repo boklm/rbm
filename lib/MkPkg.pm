@@ -391,6 +391,15 @@ sub execute {
     return $success ? $stdout : undef;
 }
 
+sub gpg_id {
+    my ($id) = @_;
+    return $id unless $id;
+    if (ref $id eq 'ARRAY' && @$id == 1 && !$id->[0]) {
+        return 0;
+    }
+    return $id;
+}
+
 sub maketar {
     my ($project, $dest_dir) = @_;
     $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
@@ -400,7 +409,7 @@ sub maketar {
     my $old_cwd = getcwd;
     git_clone_fetch_chdir($project);
     my $version = project_config($project, 'version');
-    if (my $tag_gpg_id = project_config($project, 'tag_gpg_id')) {
+    if (my $tag_gpg_id = gpg_id(project_config($project, 'tag_gpg_id'))) {
         my $id = git_tag_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed tag";
         if (!valid_id($id, $tag_gpg_id)) {
@@ -408,7 +417,7 @@ sub maketar {
         }
         print "Tag $git_hash is signed with key $id\n";
     }
-    if (my $commit_gpg_id = project_config($project, 'commit_gpg_id')) {
+    if (my $commit_gpg_id = gpg_id(project_config($project, 'commit_gpg_id'))) {
         my $id = git_commit_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed commit";
         if (!valid_id($id, $commit_gpg_id)) {
