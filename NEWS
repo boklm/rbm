@@ -1,3 +1,7 @@
+
+- Move %default_config into a separate file
+
+
 Version 0.3
 
 - Make it possible to use templating in output_dir option
