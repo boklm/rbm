@@ -158,6 +158,12 @@ The following configuration options are available :
 - **pkg_rel** :
         Package release number.
 
+- **rpm_rel** :
+        RPM package release number. The default is to use the option
+        *pkg_rel* if defined, otherwise use a release number containing
+        the number of commits since the last git tag, and the hash of
+        the commit used.
+
 - **debian_revision** :
         The package revision used in debian packages. By default, when
         the option *pkg_rel* is defined, this is what is used. Otherwise

@@ -47,6 +47,17 @@ rpmbuild [% c('rpmbuild_action', {error_if_undef => 1}) %] --define '_topdir [% 
         --define '_rpmdir [% dest_dir %]' \\
         '[% srcdir %]/[% project %].spec'
 END
+    rpm_rel         => <<OPT_END,
+[%-
+  IF c('pkg_rel').defined;
+        GET c('pkg_rel');
+  ELSIF c('describe/tag_reach');
+        GET '1.' _ c('describe/tag_reach') _ '.g' _ c('describe/hash');
+  ELSE;
+        GET '1';
+  END;
+-%]
+OPT_END
     gpg_bin         => 'gpg',
     gpg_args        => '',
     gpg_keyring_dir => '[% config.basedir %]/keyring',

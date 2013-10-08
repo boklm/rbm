@@ -31,6 +31,8 @@
   option to select the gpg id to sign the packages, and the use_pbuilder
   option to select whether pbuilder should be used.
 
+- Add the rpm_rel option
+
 
 Version 0.2
 
