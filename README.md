@@ -282,6 +282,10 @@ The following configuration options are available :
         This is the gpg key that will be used to sign the debian packages.
         Set to 0 if you don't want to sign the packages.
 
+- **remote/deb_src**, **remote/deb** :
+        The options to configure build on an external node. See the
+        section about remote build for details.
+
 In addition to the configuration options listed here, you are free to
 add any other options that you want, and use them in the template files.
 Unfortunately this also means that you won't have an error message in
@@ -413,6 +417,74 @@ following way :
   version.
 
 
+Building on a remote host
+=========================
+
+It can be useful to run the build of your package on an external server,
+a VM or a chroot. For instance if you are running an rpm based
+distribution and want to build a Debian package.
+
+To do do this, you can set any of the *remote* options :
+
+- *remote/deb* for the build of Debian packages
+
+- *remote/deb_src* for the build of Debian source packages
+
+The *remote* option is an hash containing the following options :
+
+- **exec** :
+        the template of a command used to execute a command on a remote
+        host. The command to be executed is available in the option
+        *exec_cmd*.
+
+- **put** :
+        the template of a command used to upload a file or directory on
+        the remote host. The source file path is available in option
+        *put_src* and destiration path in option *put_dst*.
+
+- **get** :
+        the template of a command used to download a file or directory
+        from the remote host. The source file path is available in
+        option *get_src* and destination path in option *get_dst*.
+
+- **mktmpdir** :
+        the template of a command to create a temporary directory. If
+        undefined, `mktemp -d` will be used.
+
+
+Remote build with ssh
+---------------------
+
+Some predefined *remote* templates are available in the option
+*remote_ssh*. For instance if you want to build your debian packages on
+a remote node with ssh, add the following lines to your configuration :
+
+```
+ssh_host: some_hostname
+remote:
+  deb_src:
+     exec: "[% c('remote_ssh/exec') %]"
+     put: "[% c('remote_ssh/put') %]"
+     get: "[% c('remote_ssh/get') %]"
+```
+
+The *remote_ssh* options will use the following options :
+
+- **ssh_host** :
+        The hostname where to connect. It can also contain a username.
+
+- **ssh_port** :
+        Optionally you can set a port using this option. You could also
+        do it by editing your *.ssh/config* file.
+
+- **ssh_options** :
+        Optionally you can set some ssh options, for the exec command.
+
+- **scp_options** :
+        Optionally you can set some scp options, for the put or get
+        commands.
+
+
 Examples
 ========
 
@@ -466,9 +538,6 @@ TODO
 
 - Add support for building packages inside a chroot, with [Mock][mock]
   or [Iurt][iurt].
-
-- Make it possible to run the package build inside a chroot, a VM or
-  remote node
 
 - Add a test command. After building packages, this run some integration
   tests on the packages. This works on packages, or other files created

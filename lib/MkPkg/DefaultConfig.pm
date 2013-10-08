@@ -155,6 +155,17 @@ ELSE;
 END;
 -%]
 OPT_END
+    remote_ssh => {
+        get => <<OPT_END,
+scp [% GET c('scp_options') IF c('scp_options') %] [% GET '-P ' _ c('ssh_port') IF c('ssh_port') %] -r -p [% c('ssh_host') %]:[% c('get_src') %] [% c('get_dst') -%]
+OPT_END
+        put => <<OPT_END,
+scp [% GET c('scp_options') IF c('scp_options') %] [% GET '-P ' _ c('ssh_port') IF c('ssh_port') %] -r -p [% c('put_src') %] [% c('ssh_host') %]:[% c('put_dst') %]
+OPT_END
+        exec => <<OPT_END,
+ssh [% GET c('ssh_options') IF c('ssh_options') %] [% GET '-p ' _ c('ssh_port') IF c('ssh_port') %] [% c('ssh_host') %] [% shell_quote(c('exec_cmd')) -%]
+OPT_END
+    },
 );
 
 1;

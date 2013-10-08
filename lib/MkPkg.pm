@@ -315,6 +315,7 @@ sub maketar {
     utime $timestamp, $timestamp, "$dest_dir/$tar_file" if $timestamp;
     print "Created $dest_dir/$tar_file\n";
     chdir($old_cwd);
+    return $tar_file;
 }
 
 sub process_template {
@@ -363,13 +364,16 @@ sub projectslist {
 
 sub copy_files {
     my ($project, $dest_dir) = @_;
+    my @r;
     my $copy_files = project_config($project, 'copy_files');
     return unless $copy_files;
     my $proj_dir = path(project_config($project, 'projects_dir'));
     my $src_dir = "$proj_dir/$project";
     foreach my $file (@$copy_files) {
         copy("$src_dir/$file", "$dest_dir/$file");
+        push @r, $file;
     }
+    return @r;
 }
 
 sub rpmbuild {
@@ -392,20 +396,78 @@ sub rpmbuild {
 
 sub build_run {
     my ($project, $script_name, $dest_dir) = @_;
+    my $error;
     $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $tmpdir = File::Temp->newdir;
-    maketar($project, $tmpdir->dirname);
-    copy_files($project, $tmpdir->dirname);
-    my $build_script = project_config($project, $script_name)
-                || exit_error "Missing $script_name config";
+    my $tarfile = maketar($project, $tmpdir->dirname);
+    my @cfiles = copy_files($project, $tmpdir->dirname);
+    my ($remote_tmp_src, $remote_tmp_dst, $build_script);
+    if (project_config($project, "remote/$script_name")) {
+        foreach my $remote_tmp ($remote_tmp_src, $remote_tmp_dst) {
+            my $cmd = project_config($project, "remote/$script_name/exec", {
+                    exec_cmd => project_config($project,
+                        "remote/$script_name/mktmpdir") || 'mktemp -d',
+                });
+            my ($stdout, $stderr, $success, $exit_code)
+                = run_script($cmd, \&capture_exec);
+            if (!$success) {
+                $error = "Error connecting to remote";
+                goto EXIT;
+            }
+            $remote_tmp = (split("\n", $stdout))[0];
+        }
+        $build_script = project_config($project, $script_name, {
+                output_dir => $remote_tmp_dst,
+            });
+    } else {
+        $build_script = project_config($project, $script_name);
+    }
+    if (!$build_script) {
+        $error = "Missing $script_name config";
+        goto EXIT;
+    }
     write_file("$tmpdir/build", $build_script);
     my $old_cwd = getcwd;
     chdir $tmpdir->dirname;
     chmod 0700, 'build';
-    my $res = system("$tmpdir/build");
+    my $res;
+    if ($remote_tmp_src && $remote_tmp_dst) {
+        foreach my $file ($tarfile, 'build', @cfiles) {
+            my $cmd = project_config($project, "remote/$script_name/put", {
+                    put_src => "$tmpdir/$file",
+                    put_dst => $remote_tmp_src,
+                });
+            if (run_script($cmd, sub { system(@_) }) != 0) {
+                $error = "Error uploading $file";
+                goto EXIT;
+            }
+        }
+        my $cmd = project_config($project, "remote/$script_name/exec", {
+                exec_cmd => "cd $remote_tmp_src; ./build",
+            });
+        if (run_script($cmd, sub { system(@_) }) != 0) {
+            $error = "Error running $script_name";
+            goto EXIT;
+        }
+        $cmd = project_config($project, "remote/$script_name/get", {
+                get_src => "$remote_tmp_dst/*",
+                get_dst => $dest_dir,
+            });
+        if (run_script($cmd, sub { system(@_) }) != 0) {
+            $error = "Error downloading build result";
+        }
+        run_script(project_config($project, "remote/$script_name/exec", {
+                exec_cmd => "rm -Rf $remote_tmp_src $remote_tmp_dst",
+            }), \&capture_exec);
+    } else {
+        if (system("$tmpdir/build") != 0) {
+            $error = "Error running $script_name";
+        }
+    }
+    EXIT:
     chdir $old_cwd;
-    exit_error "Error running $script_name" unless $res == 0;
+    exit_error $error if $error;
 }
 
 1;

@@ -3,6 +3,9 @@
 
 - Add the shell_quote function in templates
 
+- It is now possible to run debian package builds on a remote host with
+  ssh.
+
 
 Version 0.3
 
