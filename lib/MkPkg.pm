@@ -240,7 +240,7 @@ sub run_script {
     } else {
         @res = $f->($cmd);
     }
-    return @res;
+    return @res == 1 ? $res[0] : @res;
 }
 
 sub execute {
@@ -384,7 +384,7 @@ sub rpmbuild {
         rpmbuild_srcdir => $tmpdir->dirname,
     };
     my $rpmbuild = project_config($project, 'rpmbuild', $options);
-    run_script($rpmbuild, sub { system(@_) })
+    run_script($rpmbuild, sub { system(@_) }) == 0
                 || exit_error "Error running rpmbuild";
 }
 
