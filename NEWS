@@ -1,6 +1,8 @@
 
 - Move %default_config into a separate file
 
+- Add the shell_quote function in templates
+
 
 Version 0.3
 

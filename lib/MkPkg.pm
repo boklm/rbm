@@ -12,6 +12,7 @@ use File::Temp;
 use File::Copy;
 use File::Slurp;
 use File::Path qw(make_path);
+use String::ShellQuote;
 use MkPkg::DefaultConfig;
 #use Data::Dump qw/dd/;
 
@@ -336,6 +337,7 @@ sub process_template {
         exec       => sub { execute($project, $_[0]) },
         path       => \&path,
         tmpl       => sub { process_template($project, $_[0], $dest_dir) },
+        shell_quote => \&shell_quote,
     };
     my $output;
     $template->process(\$tmpl, $vars, \$output, binmode => ':utf8')

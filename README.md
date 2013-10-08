@@ -391,6 +391,10 @@ The following variables can be used in the template files :
         A function taking a template text as argument, and returning it
         processed.
 
+- **shell_quote** :
+        A function to quote strings to use them as argument in command
+        lines. This is the function from String::ShellQuote perl module.
+
 
 How the package version is set
 ==============================
@@ -437,6 +441,7 @@ You will also need perl and the following perl modules installed :
  - Template
  - IO::CaptureOutput
  - File::Slurp
+ - String::ShellQuote
 
 
 Git Version
