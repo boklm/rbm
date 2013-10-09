@@ -9,6 +9,10 @@ webdir = /tmp/www
 
 INSTALL ?= install
 ASCIIDOC = asciidoc
+ASCIIDOC_ARGS =
+ifdef ASCIIDOC_THEME
+    ASCIIDOC_ARGS += --theme $(ASCIIDOC_THEME)
+endif
 A2X      = a2x
 
 MAN1_ASC =
@@ -51,7 +55,7 @@ PAGES_HTML = $(patsubst %.asc,%.html,$(PAGES_ASC))
 all: man
 
 %.html: %.asc
-	$(ASCIIDOC) -b xhtml11 $<
+	$(ASCIIDOC) $(ASCIIDOC_ARGS) -b xhtml11 $<
 
 %.1: %.asc
 	$(A2X) -f manpage $<
