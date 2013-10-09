@@ -1,0 +1,41 @@
+
+- Add support for building packages inside a chroot, with Mock or Iurt.
+
+- Add a test command. After building packages, this run some integration
+  tests on the packages. This works on packages, or other files created
+  by the build command.
+
+- Add an upload command, with a default upload template script.
+  This will build packages, run the tests if any, and upload/copy the
+  packages to a repository. Depending on selected distro the template
+  will decide if it should build an rpm or deb, where to upload it and
+  how to update repo metadata.
+
+- Add an option to download a tarball, instead of creating it. In the
+  config it should be possible to add an url and an sha256sum of a
+  tarball that will be downloaded, and can be used to build the package.
+
+- Make the +d+ template variable a function that returns the distro
+  config option value. Make it possible to override distro config in a
+  project's config.
+
+- Make it possible to use perl config files (probably named +config.pl+)
+  in addition to the yaml config files. That would allow to use a perl
+  function for some of the options.
+
+- Add a pkg template function that take a generic package name as
+  argument, and return a distro specific package name. To do this, it
+  will use the first undef value after trying in the following order :
+   * if the config option +distributions/[distro]/packages+ is a hash,
+     then return the value with generic package name as key
+   * if the config option +distributions/[distro]/packages+ is a string,
+     then use it as the package name. You could do an exec in this option,
+     if you want to use a script to convert the package name.
+   * return the same package name
+
+- Write default templates for perl, python, ruby modules, and plugins
+  to generate config file for modules with infos from CPAN, Python
+  package index, Ruby gems, etc ... This should make it possible to
+  create a package for any supported distribution, for a perl, python,
+  ruby module with a single command.
+

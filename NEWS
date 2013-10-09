@@ -6,6 +6,8 @@
 - It is now possible to run debian package builds on a remote host with
   ssh.
 
+- Move all documentation to man pages
+
 
 Version 0.3
 

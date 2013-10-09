@@ -9,9 +9,10 @@ sysconfdir=/etc
 bindir=/usr/bin
 perldir=/usr/lib/perl5/site_perl
 
-.PHONY: all install
+.PHONY: all install clean
 
 all:
+	$(MAKE) -C doc
 
 install:
 	install -d $(DESTDIR)$(bindir) $(DESTDIR)$(sysconfdir)
@@ -19,4 +20,8 @@ install:
 	install -d $(DESTDIR)$(perldir) $(DESTDIR)$(perldir)/MkPkg
 	install -m 644 $(PERL_MODULE_MAIN) $(DESTDIR)$(perldir)
 	install -m 644 $(PERL_MODULES) $(DESTDIR)$(perldir)/MkPkg
+	$(MAKE) -C doc install
+
+clean:
+	$(MAKE) -C doc clean
 
