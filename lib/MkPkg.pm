@@ -20,11 +20,20 @@ use MkPkg::DefaultConfig;
 our $config;
 
 sub load_config_file {
+    my $res = {};
+    my @conf;
     eval {
-        LoadFile($_[0]);
+        @conf = LoadFile($_[0]);
     } or do {
         exit_error("Error reading file $_[0] :\n" . $@);
+    };
+    foreach my $c (@conf) {
+        local $@ = '';
+        $res = { %$res, %$c } if ref $c eq 'HASH';
+        $res = { %$res, eval $c } if !ref $c;
+        exit_error("Error executing perl config from $_[0] :\n" . $@) if $@;
     }
+    return $res;
 }
 
 sub load_config {

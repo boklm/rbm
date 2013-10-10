@@ -10,6 +10,9 @@
 
 - Add versioncmp function in templates
 
+- Make it possible to use perl syntax to define configuration, in any
+  of the configuration files
+
 
 Version 0.3
 
