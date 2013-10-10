@@ -8,6 +8,8 @@
 
 - Move all documentation to man pages
 
+- Add versioncmp function in templates
+
 
 Version 0.3
 

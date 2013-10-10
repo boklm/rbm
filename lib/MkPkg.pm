@@ -13,6 +13,7 @@ use File::Copy;
 use File::Slurp;
 use File::Path qw(make_path);
 use String::ShellQuote;
+use Sort::Versions;
 use MkPkg::DefaultConfig;
 #use Data::Dump qw/dd/;
 
@@ -339,6 +340,7 @@ sub process_template {
         path       => \&path,
         tmpl       => sub { process_template($project, $_[0], $dest_dir) },
         shell_quote => \&shell_quote,
+        versioncmp  => \&versioncmp,
     };
     my $output;
     $template->process(\$tmpl, $vars, \$output, binmode => ':utf8')
