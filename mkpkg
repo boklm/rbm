@@ -52,6 +52,7 @@ my %actions = (
     usage => {
         run => \&usage,
         descr => 'Show usage information for an action',
+        no_config => 1,
     },
 );
 
@@ -160,6 +161,6 @@ if (@ARGV == 0 || !$actions{$ARGV[0]}) {
     usage();
     exit 1;
 }
-MkPkg::load_config;
+MkPkg::load_config unless $actions{$ARGV[0]}->{no_config};
 $actions{$ARGV[0]}->{run}->(@ARGV);
 
