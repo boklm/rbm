@@ -30,6 +30,41 @@ sub git_describe {
     return $success ? \%res : undef;
 }
 
+sub lsb_release {
+    my ($project) = shift;
+    my $distribution = MkPkg::project_config($project, 'distribution',
+                                                        {no_distro => 1});
+    if ($distribution) {
+        my @distributions = map { @$_ }
+                @{MkPkg::project_config($project, 'distributions',
+                        { as_array => 1, no_distro => 1 })};
+        my ($id, $release) = split '-', $distribution;
+        foreach my $d (@distributions) {
+            if ($id eq $d->{lsb_release}{id} && $release
+                        && $d->{lsb_release}{release}
+                        && $release eq $d->{lsb_release}{release}) {
+                return {
+                    id => $id,
+                    release => $release,
+                    codename => $d->{lsb_release}{codename},
+                };
+            }
+        }
+        return { id => $id, release => $release };
+    }
+    my $res = {};
+    my $u = "Unknown distribution. Check mkpkg_distributions(7) man page.";
+    my ($stdout, $stderr, $success, $exit_code)
+        = capture_exec('lsb_release', '-irc');
+    exit_error $u unless $success;
+    foreach (split "\n", $stdout) {
+        $res->{id} = $1 if (m/^Distributor ID:\s+(.+)$/);
+        $res->{release} = $1 if (m/^Release:\s+(.+)$/);
+        $res->{codename} = $1 if (m/^Codename:\s+(.+)$/);
+    }
+    return $res;
+}
+
 our %default_config = (
     sysconf_file  => '/etc/mkpkg.conf',
     projects_dir  => 'projects',
@@ -38,7 +73,7 @@ our %default_config = (
     fetch         => 1,
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
-    notmpl        => [ qw(distribution projects_dir) ],
+    notmpl        => [ qw(projects_dir) ],
     describe      => \&git_describe,
     timestamp     => '[% exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}") %]',
     version       => <<END,
@@ -165,6 +200,15 @@ OPT_END
 ssh [% GET c('ssh_options') IF c('ssh_options') %] [% GET '-p ' _ c('ssh_port') IF c('ssh_port') %] [% c('ssh_host') %] [% shell_quote(c('exec_cmd')) -%]
 OPT_END
     },
+    lsb_release => \&lsb_release,
+    distributions => [
+        { lsb_release => { id => 'Mageia'}, package_type => 'rpm', },
+        { lsb_release => { id => 'Fedora'}, package_type => 'rpm', },
+        { lsb_release => { id => 'openSuSe'}, package_type => 'rpm', },
+        { lsb_release => { id => 'MandrivaLinux'}, package_type => 'rpm', },
+        { lsb_release => { id => 'Debian'}, package_type => 'deb', },
+        { lsb_release => { id => 'Ubuntu'}, package_type => 'deb', },
+    ],
 );
 
 1;

@@ -39,6 +39,7 @@ MAN7_ASC += mkpkg_layout.asc
 MAN7_ASC += mkpkg_config.asc
 MAN7_ASC += mkpkg_templates.asc
 MAN7_ASC += mkpkg_remote.asc
+MAN7_ASC += mkpkg_distributions.asc
 
 MAN_ASC = $(MAN1_ASC) $(MAN5_ASC) $(MAN7_ASC)
 MAN_MAN = $(MAN1_MAN) $(MAN5_MAN) $(MAN7_MAN)

@@ -69,8 +69,8 @@ sub path {
 }
 
 sub config_p {
+    my $c = shift;
     my $project = shift;
-    my $c = $config;
     foreach my $p (@_) {
         return undef unless defined $c->{$p};
         $c->{$p} = $c->{$p}->($project, @_) if ref $c->{$p} eq 'CODE';
@@ -79,25 +79,55 @@ sub config_p {
     return $c;
 }
 
+sub match_distro {
+    my ($project, $path, $name, $options) = @_;
+    return () if $options->{no_distro};
+    my $nodis = { no_distro => 1 };
+    my $distros = config_p($config, $project, @$path, 'distributions');
+    return () unless $distros;
+    my (@res1, @res2, @res3, @res4);
+    my $id = project_config($project, 'lsb_release/id', $nodis);
+    my $release = project_config($project, 'lsb_release/release', $nodis);
+    my $codename = project_config($project, 'lsb_release/codename', $nodis);
+    foreach my $d (@$distros) {
+        my %l = %{$d->{lsb_release}};
+        next unless $l{id} eq $id;
+        if (defined($l{release}) && $l{release} eq $release) {
+            if (defined($l{codename}) && $l{codename} eq $codename) {
+                push @res1, $d;
+            } elsif (!defined($l{codename})) {
+                push @res2, $d;
+            }
+        } elsif (!defined $l{release}) {
+            if (defined($l{codename}) && $l{codename} eq $codename) {
+                push @res3, $d;
+            } elsif (!defined $l{codename}) {
+                push @res4, $d;
+            }
+        }
+    }
+    return @res1, @res2, @res3, @res4;
+}
+
 sub config {
     my $project = shift;
     my $name = shift;
     my $options = shift;
     my $res;
     foreach my $path (@_) {
-        my $r = config_p($project, @$path, @$name);
-        if (defined $r) {
-            return $r if !$options->{as_array};
-            push @$res, $r;
-        }
+        my @l = map { config_p($_, $project, @$name) } match_distro($project, $path, $name, $options);
+        push @l, config_p($config, $project, @$path, @$name);
+        @l = grep { defined $_ } @l;
+        push @$res, @l if @l;
     }
-    return $options->{as_array} ? $res : config_p($project, @$name);
+    return $options->{as_array} ? $res : $res->[0];
 }
 
 sub notmpl {
     my ($name, $project) = @_;
     return 1 if $name eq 'notmpl';
-    my @n = (@{$config->{default}{notmpl}}, @{project_config($project, 'notmpl')});
+    my @n = (@{$config->{default}{notmpl}},
+        @{project_config($project, 'notmpl', { no_distro => 1 })});
     return grep { $name eq $_ } @n;
 }
 
@@ -130,15 +160,6 @@ sub project_config {
 sub exit_error {
     print STDERR "Error: ", $_[0], "\n";
     exit (exists $_[1] ? $_[1] : 1);
-}
-
-sub get_distribution {
-    my ($project) = @_;
-    my $distribution = project_config($project, 'distribution')
-                || exit_error 'No distribution specified';
-    exists $config->{distributions}{$distribution}
-                || exit_error "Unknown distribution $distribution";
-    return $distribution;
 }
 
 sub set_git_gpg_wrapper {
@@ -289,7 +310,7 @@ sub gpg_id {
 
 sub maketar {
     my ($project, $dest_dir) = @_;
-    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
+    $dest_dir //= create_dir(path(project_config($project, 'output_dir', { no_distro => 1 })));
     valid_project($project);
     my $git_hash = project_config($project, 'git_hash')
         || exit_error 'No git_hash specified';
@@ -338,9 +359,8 @@ sub maketar {
 
 sub process_template {
     my ($project, $tmpl, $dest_dir) = @_;
-    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
-    my $distribution = get_distribution($project);
-    my $projects_dir = path(project_config($project, 'projects_dir'));
+    $dest_dir //= create_dir(path(project_config($project, 'output_dir', { no_distro => 1 })));
+    my $projects_dir = path(project_config($project, 'projects_dir', { no_distro => 1 }));
     my $template = Template->new(
         ENCODING        => 'utf8',
         INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
@@ -349,7 +369,6 @@ sub process_template {
         config     => $config,
         project    => $project,
         p          => $config->{projects}{$project},
-        d          => $config->{distributions}{$distribution},
         c          => sub { project_config($project, @_) },
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,

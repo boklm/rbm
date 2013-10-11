@@ -16,6 +16,11 @@
 - Add the 'as_array' option to the project_config function, which will
   return all matching results as an array instead of only the first one.
 
+- Add automatic detection of running distribution using lsb_release
+
+- Add support for distributions configuration. It's now possible to
+  define options depending on the selected distributions.
+
 
 Version 0.3
 
