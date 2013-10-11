@@ -8,192 +8,68 @@ use YAML::XS;
 use Getopt::Long;
 #use Data::Dump qw/dd/;
 
-my $options_help = <<END;
-Main options:
-
- --sysconf-file [file]
-     Set the optional system configuration file path
-
- --output-dir [directory]
-     Set the output directory
-
- --version [version]
-     Set the package version
-
- --pkg-rel [rel]
-     Set package release number
-
- --git-hash [hash]
-     The git hash of the commit / tag to use.
- 
- --distribution [distribution]
-     The name of the linux distribution to build package for.
- 
- --commit-gpg-id [GPG ID]
-     Check the commit to be signed by this GPG key ID.
- 
- --tag-gpg-id [GPG ID]
-     Check if the selected git hash is a tag and is signed by select
-     GPG key ID.
-
- --gpg-keyring [file]
-     GPG keyring filename.
-
- --gpg-keyring-dir [directory]
-     Directory containing GPG keyring files
-
- --gpg-args [args]
-     Optional gpg arguments.
-
- --gpg-bin [path]
-     Path to gpg binary.
- 
- --fetch
- --no-fetch
-     Whether latest commits should be fetched from remote git repository.
-
- --use-pbuilder
- --no-use-pbuilder
-     Whether to use pbuilder when building debian packages
-
- --debsign-keyid [key id]
-     The id of the key to sign debian packages with. Set to 0 for no
-     signature.
-
-END
-
 my %actions = (
     projects => {
         run   => \&print_projects,
         descr => 'Print projects list',
-        usage => <<END,
-$0 projects
-
-END
     },
     fetch => {
         run => \&fetch,
         descr => 'Fetch commits from remote git repository',
-        usage => <<END,
-$0 fetch [project]
-
-Fetch commits from remote git repository for the select project(s).
-If no project is selected, fetch commits for all projects.
-END
     },
     tar  => {
         run   => \&tar,
         descr => 'Create source tarball',
-        usage => <<END,
-$0 tar [options] [project]
-
-$options_help
-END
     },
     rpmspec => {
         run => \&rpmspec,
         descr => 'Create rpm spec file',
-        usage => <<END,
-$0 rpmspec [options] [project]
-
-$options_help
-END
     },
     rpm => {
         run => \&makerpm,
         descr => 'Build an rpm package',
-        usage => <<END,
-$0 rpm [options] [project]
-
-$options_help
-END
     },
     srpm => {
         run => \&makerpm,
         descr => 'Create source rpm file',
-        usage => <<END,
-$0 srpm [options] [project]
-
-$options_help
-END
     },
     'deb-src' => {
         run => sub { build_script('deb_src', @_) },
         descr => 'Create debian source package',
-        usage => <<END,
-$0 deb-src [options] [project]
-
-$options_help
-END
     },
     'deb' => {
         run => sub { build_script('deb', @_) },
         descr => 'Create debian package',
-        usage => <<END,
-$0 deb [options] [project]
-
-$options_help
-END
     },
     build => {
         run => sub { build_script('build', @_) },
         descr => 'Build project with a custom build script',
-        usage => <<END,
-$0 build [options] [project]
-
-$options_help
-END
     },
     showconf => {
         run => \&show_conf,
         descr => 'Show configuration',
-        usage => <<END,
-$0 showconf [project] [config name]
-
-Without argument, dumps all configuration. With one argument, shows the
-configuration for the selected project. With two or more arguments, show
-the project's config for a specific value.
-
-
-$options_help
-
-Examples:
-  
-  Show all configuration :
-  \$ mkpkg showconf
-
-  Show configuration for mkpkg project :
-  \$ mkpkg showconf mkpkg
-
-  Show git_url value for the mkpkg project :
-  \$ mkpkg showconf mkpkg git_url
-
-END
     },
     usage => {
         run => \&usage,
         descr => 'Show usage information for an action',
-        usage => <<END,
-$0 usage [action]
-
-Show action usage
-END
     },
 );
 
 sub usage {
     if ($_[1] && $actions{$_[1]}) {
-        print STDERR $_[1], ': ', $actions{$_[1]}->{descr}, "\n\n";
-        print STDERR "Usage:\n", $actions{$_[1]}->{usage};
+        system('man', "mkpkg-$_[1]");
     } else {
-        print STDERR "$0 [action] [options]\n";
+        print STDERR "$0 <action> [options]\n";
         print STDERR "$0 usage [action]\n\n";
         print STDERR "Available actions:\n";
         print STDERR map { " - $_ : $actions{$_}->{descr}\n" } keys %actions;
+        print STDERR "\nSee '$0 usage <action>' for usage informations\n";
     }
 }
 sub usageexit {
-    usage(@_);
+    my $cmd = shift;
+    print STDERR "Incorrect argument(s).\n";
+    print STDERR "See '$0 usage $cmd' for usage informations\n";
     exit 1;
 }
 
@@ -242,46 +118,47 @@ sub fetch {
 }
 
 sub tar {
-    usageexit('usage', $_[0]) unless @_ >= 2;
+    usageexit($_[0]) unless @_ >= 2;
     shift;
     my $args = set_options(@_);
-    usageexit('usage', 'tar') unless @$args == 1;
+    usageexit('tar') unless @$args == 1;
     MkPkg::maketar($args->[0]);
 }
 
 sub rpmspec {
-    usageexit('usage', $_[0]) unless @_ >= 2;
+    usageexit($_[0]) unless @_ >= 2;
     shift;
     my $args = set_options(@_);
-    usageexit('usage', 'rpmspec') unless @$args == 1;
+    usageexit('rpmspec') unless @$args == 1;
     MkPkg::rpmspec($args->[0]);
 }
 
 sub print_projects {
-    usageexit('usage', $_[0]) unless @_ == 1;
+    usageexit($_[0]) unless @_ == 1;
     print join("\n", MkPkg::projectslist()), "\n";
 }
 
 sub makerpm {
-    usageexit('usage', $_[0]) unless @_ >= 2;
+    usageexit($_[0]) unless @_ >= 2;
     my $cmd = shift;
     my $args = set_options(@_);
-    usageexit('usage', $cmd) unless @$args == 1;
+    usageexit($cmd) unless @$args == 1;
     my %actions = ( srpm => '-bs', rpm  => '-ba' );
     MkPkg::rpmbuild($args->[0], $actions{$cmd});
 }
 
 sub build_script {
     my $script_name = shift;
-    usageexit('usage', $_[0]) unless @_ >= 2;
+    usageexit($_[0]) unless @_ >= 2;
     my $cmd = shift;
     my $args = set_options(@_);
-    usageexit('usage', $cmd) unless @$args == 1;
+    usageexit($cmd) unless @$args == 1;
     MkPkg::build_run($args->[0], $script_name);
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {
-    usageexit();
+    usage();
+    exit 1;
 }
 MkPkg::load_config;
 $actions{$ARGV[0]}->{run}->(@ARGV);

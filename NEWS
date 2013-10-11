@@ -21,6 +21,8 @@
 - Add support for distributions configuration. It's now possible to
   define options depending on the selected distributions.
 
+- Usage command now opens the corresponding man page
+
 
 Version 0.3
 
