@@ -13,6 +13,9 @@
 - Make it possible to use perl syntax to define configuration, in any
   of the configuration files
 
+- Add the 'as_array' option to the project_config function, which will
+  return all matching results as an array instead of only the first one.
+
 
 Version 0.3
 

@@ -82,11 +82,16 @@ sub config_p {
 sub config {
     my $project = shift;
     my $name = shift;
+    my $options = shift;
+    my $res;
     foreach my $path (@_) {
         my $r = config_p($project, @$path, @$name);
-        return $r if defined $r;
+        if (defined $r) {
+            return $r if !$options->{as_array};
+            push @$res, $r;
+        }
     }
-    return config_p($project, @$name);
+    return $options->{as_array} ? $res : config_p($project, @$name);
 }
 
 sub notmpl {
@@ -105,7 +110,7 @@ sub project_config {
     $name = [ split '/', $name ] unless ref $name eq 'ARRAY';
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
-    my $res = config($project, $name, ['opt'], ['run'],
+    my $res = config($project, $name, $options, ['opt'], ['run'],
                         ['projects', $project], [], ['default'], ['system']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
