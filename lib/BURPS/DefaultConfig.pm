@@ -1,4 +1,4 @@
-package MkPkg::DefaultConfig;
+package BURPS::DefaultConfig;
 
 use strict;
 use warnings;
@@ -9,18 +9,18 @@ BEGIN {
     our @EXPORT = qw(%default_config);
 }
 
-use MkPkg;
+use BURPS;
 use Cwd qw(getcwd);
 use IO::CaptureOutput qw(capture_exec);
 
 sub git_describe {
     my $project = shift;
-    my $git_hash = MkPkg::project_config($project, 'git_hash')
-                || MkPkg::exit_error('No git_hash specified');
+    my $git_hash = BURPS::project_config($project, 'git_hash')
+                || BURPS::exit_error('No git_hash specified');
     my %res;
-    $MkPkg::config->{projects}{$project}{describe} = {};
+    $BURPS::config->{projects}{$project}{describe} = {};
     my $old_cwd = getcwd;
-    MkPkg::git_clone_fetch_chdir($project);
+    BURPS::git_clone_fetch_chdir($project);
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'describe', '--long', $git_hash);
     if ($success) {
@@ -32,11 +32,11 @@ sub git_describe {
 
 sub lsb_release {
     my ($project) = shift;
-    my $distribution = MkPkg::project_config($project, 'distribution',
+    my $distribution = BURPS::project_config($project, 'distribution',
                                                         {no_distro => 1});
     if ($distribution) {
         my @distributions = map { @$_ }
-                @{MkPkg::project_config($project, 'distributions',
+                @{BURPS::project_config($project, 'distributions',
                         { as_array => 1, no_distro => 1 })};
         my ($id, $release) = split '-', $distribution;
         foreach my $d (@distributions) {
@@ -53,7 +53,7 @@ sub lsb_release {
         return { id => $id, release => $release };
     }
     my $res = {};
-    my $u = "Unknown distribution. Check mkpkg_distributions(7) man page.";
+    my $u = "Unknown distribution. Check burps_distributions(7) man page.";
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('lsb_release', '-irc');
     exit_error $u unless $success;
@@ -66,7 +66,7 @@ sub lsb_release {
 }
 
 our %default_config = (
-    sysconf_file  => '/etc/mkpkg.conf',
+    sysconf_file  => '/etc/burps.conf',
     projects_dir  => 'projects',
     output_dir    => 'out',
     git_clone_dir => 'git_clones',

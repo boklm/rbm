@@ -1,4 +1,4 @@
-package MkPkg;
+package BURPS;
 
 use warnings;
 use strict;
@@ -14,7 +14,7 @@ use File::Slurp;
 use File::Path qw(make_path);
 use String::ShellQuote;
 use Sort::Versions;
-use MkPkg::DefaultConfig;
+use BURPS::DefaultConfig;
 #use Data::Dump qw/dd/;
 
 our $config;
@@ -57,7 +57,7 @@ sub load_system_config {
 
 sub find_config_file {
     for (my $dir = getcwd; $dir ne '/'; $dir = dirname($dir)) {
-        return "$dir/mkpkg.conf" if -f "$dir/mkpkg.conf";
+        return "$dir/burps.conf" if -f "$dir/burps.conf";
     }
     exit_error("Can't find config file");
 }

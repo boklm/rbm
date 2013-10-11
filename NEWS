@@ -1,3 +1,7 @@
+
+- Rename mkpkg to burps: build & update repository packaging system
+
+
 Version 0.4
 
 - Move %default_config into a separate file

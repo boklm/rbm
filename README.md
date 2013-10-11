@@ -1,11 +1,11 @@
-mkpkg
-=====
+burps: build and update repository packaging system
+===================================================
 
-mkpkg is a packaging tool that help you create and build packages for
+burps is a packaging tool that help you create and build packages for
 multiple linux distributions, and automate the parts that can be
 automated.
 
 For more information, visit the website :
 
-  http://mkpkg.boklm.eu/
+  http://burps.boklm.eu/
 

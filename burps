@@ -3,7 +3,7 @@
 use strict;
 use File::Basename;
 use lib dirname($0) . '/lib';
-use MkPkg;
+use BURPS;
 use YAML::XS;
 use Getopt::Long;
 #use Data::Dump qw/dd/;
@@ -58,7 +58,7 @@ my %actions = (
 
 sub usage {
     if ($_[1] && $actions{$_[1]}) {
-        system('man', "mkpkg-$_[1]");
+        system('man', "burps-$_[1]");
     } else {
         print STDERR "$0 <action> [options]\n";
         print STDERR "$0 usage [action]\n\n";
@@ -86,36 +86,36 @@ sub set_options {
     foreach my $k (keys %val) {
         my $l = $k;
         $l =~ s/-/_/g;
-        $MkPkg::config->{run}{$l} = $val{$k};
+        $BURPS::config->{run}{$l} = $val{$k};
     }
-    MkPkg::load_system_config(@_);
-    return $MkPkg::config->{run}{args} = \@_;
+    BURPS::load_system_config(@_);
+    return $BURPS::config->{run}{args} = \@_;
 }
 
 sub show_conf {
     shift;
     my $args = set_options(@_);
     if (@$args == 0) {
-        print YAML::XS::Dump($MkPkg::config);
+        print YAML::XS::Dump($BURPS::config);
         return;
     }
     my $project = shift @$args;
-    MkPkg::valid_project($project);
-    my $r = @$args ? MkPkg::project_config($project,
+    BURPS::valid_project($project);
+    my $r = @$args ? BURPS::project_config($project,
                         @$args == 1 ? $args->[0] : \@$args)
-                : $MkPkg::config->{projects}{$project};
-    MkPkg::exit_error "Undefined" unless defined $r;
+                : $BURPS::config->{projects}{$project};
+    BURPS::exit_error "Undefined" unless defined $r;
     print ref $r ? YAML::XS::Dump($r) : "$r\n";
 }
 
 sub fetch {
     shift;
-    $MkPkg::config->{run}{fetch} = 1;
-    my @l = @_ ? @_ : (MkPkg::projectslist());
+    $BURPS::config->{run}{fetch} = 1;
+    my @l = @_ ? @_ : (BURPS::projectslist());
     foreach my $project (@l) {
-        MkPkg::valid_project($project);
+        BURPS::valid_project($project);
         print "Fetching commits for $project\n";
-        MkPkg::git_clone_fetch_chdir($project);
+        BURPS::git_clone_fetch_chdir($project);
     }
 }
 
@@ -124,7 +124,7 @@ sub tar {
     shift;
     my $args = set_options(@_);
     usageexit('tar') unless @$args == 1;
-    MkPkg::maketar($args->[0]);
+    BURPS::maketar($args->[0]);
 }
 
 sub rpmspec {
@@ -132,12 +132,12 @@ sub rpmspec {
     shift;
     my $args = set_options(@_);
     usageexit('rpmspec') unless @$args == 1;
-    MkPkg::rpmspec($args->[0]);
+    BURPS::rpmspec($args->[0]);
 }
 
 sub print_projects {
     usageexit($_[0]) unless @_ == 1;
-    print join("\n", MkPkg::projectslist()), "\n";
+    print join("\n", BURPS::projectslist()), "\n";
 }
 
 sub makerpm {
@@ -146,7 +146,7 @@ sub makerpm {
     my $args = set_options(@_);
     usageexit($cmd) unless @$args == 1;
     my %actions = ( srpm => '-bs', rpm  => '-ba' );
-    MkPkg::rpmbuild($args->[0], $actions{$cmd});
+    BURPS::rpmbuild($args->[0], $actions{$cmd});
 }
 
 sub build_script {
@@ -155,7 +155,7 @@ sub build_script {
     my $cmd = shift;
     my $args = set_options(@_);
     usageexit($cmd) unless @$args == 1;
-    MkPkg::build_run($args->[0], $script_name);
+    BURPS::build_run($args->[0], $script_name);
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {
@@ -163,6 +163,6 @@ if (@ARGV == 0 || !$actions{$ARGV[0]}) {
     exit 1;
 }
 usage('usage', $ARGV[0]) if grep { $_ eq '--help' } @ARGV;
-MkPkg::load_config unless $actions{$ARGV[0]}->{no_config};
+BURPS::load_config unless $actions{$ARGV[0]}->{no_config};
 $actions{$ARGV[0]}->{run}->(@ARGV);
 
