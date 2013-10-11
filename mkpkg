@@ -66,6 +66,7 @@ sub usage {
         print STDERR map { " - $_ : $actions{$_}->{descr}\n" } keys %actions;
         print STDERR "\nSee '$0 usage <action>' for usage informations\n";
     }
+    exit 0;
 }
 sub usageexit {
     my $cmd = shift;
@@ -161,6 +162,7 @@ if (@ARGV == 0 || !$actions{$ARGV[0]}) {
     usage();
     exit 1;
 }
+usage('usage', $ARGV[0]) if grep { $_ eq '--help' } @ARGV;
 MkPkg::load_config unless $actions{$ARGV[0]}->{no_config};
 $actions{$ARGV[0]}->{run}->(@ARGV);
 
