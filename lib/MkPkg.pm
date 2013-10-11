@@ -38,9 +38,12 @@ sub load_config_file {
 
 sub load_config {
     my $config_file = shift // find_config_file();
-    $config = { %default_config, %{ load_config_file($config_file) } };
+    $config = load_config_file($config_file);
+    $config->{default} = \%default_config;
     $config->{basedir} = dirname($config_file);
-    foreach my $p (glob path($config->{projects_dir}) . '/*') {
+    $config->{opt} = {};
+    my $pdir = $config->{projects_dir} || $config->{default}{projects_dir};
+    foreach my $p (glob path($pdir) . '/*') {
         next unless -f "$p/config";
         $config->{projects}{basename($p)} = load_config_file("$p/config");
     }
@@ -89,7 +92,7 @@ sub config {
 sub notmpl {
     my ($name, $project) = @_;
     return 1 if $name eq 'notmpl';
-    my @n = (@{$config->{notmpl}}, @{project_config($project, 'notmpl')});
+    my @n = (@{$config->{default}{notmpl}}, @{project_config($project, 'notmpl')});
     return grep { $name eq $_ } @n;
 }
 
@@ -103,7 +106,7 @@ sub project_config {
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
     my $res = config($project, $name, ['opt'], ['run'],
-                        ['projects', $project], [], ['system']);
+                        ['projects', $project], [], ['default'], ['system']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
         $res = process_template($project, $res,

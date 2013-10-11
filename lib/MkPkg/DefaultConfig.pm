@@ -39,7 +39,6 @@ our %default_config = (
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(distribution projects_dir) ],
-    opt           => {},
     describe      => \&git_describe,
     timestamp     => '[% exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}") %]',
     version       => <<END,
