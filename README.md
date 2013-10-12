@@ -1,4 +1,4 @@
-burps: build and update repository packaging system
+burps: build & upload reproducible packaging system
 ===================================================
 
 burps is a packaging tool that help you create and build packages for
