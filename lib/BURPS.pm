@@ -141,7 +141,7 @@ sub project_config {
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
     my $res = config($project, $name, $options, ['opt'], ['run'],
-                        ['projects', $project], [], ['default'], ['system']);
+                        ['projects', $project], [], ['system'], ['default']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
         $res = process_template($project, $res,
