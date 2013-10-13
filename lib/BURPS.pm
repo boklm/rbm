@@ -250,9 +250,10 @@ sub git_clone_fetch_chdir {
     my $clonedir = create_dir(path(project_config($project, 'git_clone_dir')));
     if (!chdir path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
-        if (system('git', 'clone',
-                $config->{projects}{$project}{git_url}, $project) != 0) {
-            exit_error "Error cloning $config->{projects}{$project}{git_url}";
+        my $git_url = project_config($project, 'git_url')
+                || exit_error "git_url is undefined";
+        if (system('git', 'clone', $git_url, $project) != 0) {
+            exit_error "Error cloning $git_url";
         }
         chdir($project) || exit_error "Error entering $project directory";
     }
