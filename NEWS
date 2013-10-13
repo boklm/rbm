@@ -1,6 +1,8 @@
 
 - Rename mkpkg to burps: build & upload reproducible packaging system
 
+- Add an options argument to the exec function
+
 
 Version 0.4
 

@@ -246,18 +246,20 @@ sub create_dir {
 }
 
 sub git_clone_fetch_chdir {
-    my $project = shift;
-    my $clonedir = create_dir(path(project_config($project, 'git_clone_dir')));
+    my ($project, $options) = @_;
+    my $clonedir = create_dir(path(project_config($project,
+                                'git_clone_dir', $options)));
     if (!chdir path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
-        my $git_url = project_config($project, 'git_url')
+        my $git_url = project_config($project, 'git_url', $options)
                 || exit_error "git_url is undefined";
         if (system('git', 'clone', $git_url, $project) != 0) {
             exit_error "Error cloning $git_url";
         }
         chdir($project) || exit_error "Error entering $project directory";
     }
-    if (!$config->{projects}{$project}{fetched} && project_config($project, 'fetch')) {
+    if (!$config->{projects}{$project}{fetched}
+                && project_config($project, 'fetch', $options)) {
         system('git', 'checkout', '-q', '--detach', 'master') == 0
                 || exit_error "Error checking out master";
         system('git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*') == 0
@@ -285,11 +287,11 @@ sub run_script {
 }
 
 sub execute {
-    my ($project, $cmd) = @_;
-    my $git_hash = project_config($project, 'git_hash')
+    my ($project, $cmd, $options) = @_;
+    my $git_hash = project_config($project, 'git_hash', $options)
         || exit_error 'No git_hash specified';
     my $old_cwd = getcwd;
-    git_clone_fetch_chdir($project);
+    git_clone_fetch_chdir($project, $options);
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'checkout', $git_hash);
     exit_error "Cannot checkout $git_hash" unless $success;
@@ -373,7 +375,7 @@ sub process_template {
         c          => sub { project_config($project, @_) },
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
-        exec       => sub { execute($project, $_[0]) },
+        exec       => sub { execute($project, @_) },
         path       => \&path,
         tmpl       => sub { process_template($project, $_[0], $dest_dir) },
         shell_quote => \&shell_quote,
