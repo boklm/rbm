@@ -54,16 +54,21 @@ my %actions = (
         descr => 'Show usage information for an action',
         no_config => 1,
     },
+    '--help' => {
+        run => \&usage,
+        no_config => 1,
+    },
 );
 
 sub usage {
-    if ($_[1] && $actions{$_[1]}) {
+    if ($_[1] && $actions{$_[1]} && $actions{$_[1]}->{descr}) {
         system('man', "burps-$_[1]");
     } else {
         print STDERR "$0 <action> [options]\n";
         print STDERR "$0 usage [action]\n\n";
         print STDERR "Available actions:\n";
-        print STDERR map { " - $_ : $actions{$_}->{descr}\n" } keys %actions;
+        my @actions = grep { $actions{$_}->{descr} } keys %actions;
+        print STDERR map { " - $_ : $actions{$_}->{descr}\n" } @actions;
         print STDERR "\nSee '$0 usage <action>' for usage informations\n";
     }
     exit 0;
@@ -163,7 +168,7 @@ if (@ARGV == 0 || !$actions{$ARGV[0]}) {
     usage();
     exit 1;
 }
-usage('usage', $ARGV[0]) if grep { $_ eq '--help' } @ARGV;
+usage('usage', $ARGV[0]) if grep { $_ eq '--help' } @ARGV[1..(@ARGV - 1)];
 BURPS::load_config unless $actions{$ARGV[0]}->{no_config};
 $actions{$ARGV[0]}->{run}->(@ARGV);
 
