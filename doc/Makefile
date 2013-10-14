@@ -40,6 +40,7 @@ MAN7_ASC += burps_config.asc
 MAN7_ASC += burps_templates.asc
 MAN7_ASC += burps_remote.asc
 MAN7_ASC += burps_distributions.asc
+MAN7_ASC += burps_targets.asc
 
 MAN_ASC = $(MAN1_ASC) $(MAN5_ASC) $(MAN7_ASC)
 MAN_MAN = $(MAN1_MAN) $(MAN5_MAN) $(MAN7_MAN)

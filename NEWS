@@ -3,6 +3,8 @@
 
 - Add an options argument to the exec function
 
+- Add support for targets.
+
 
 Version 0.4
 

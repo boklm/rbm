@@ -115,7 +115,20 @@ sub config {
     my $options = shift;
     my $res;
     foreach my $path (@_) {
-        my @l = map { config_p($_, $project, @$name) } match_distro($project, $path, $name, $options);
+        my @l;
+        my $target;
+        if ($name->[0] ne 'target'
+            && ($target = project_config($project, 'target', $options))) {
+            $target = [ $target ] unless ref $target eq 'ARRAY';
+            foreach my $t (ref $target eq 'ARRAY' ? @$target : $target) {
+                push @l, map { config_p($_, $project, @$name) }
+                        match_distro($project, [@$path, 'targets', $t],
+                                                        $name, $options);
+                push @l, config_p($config, $project, @$path, 'targets', $t, @$name);
+            }
+        }
+        push @l, map { config_p($_, $project, @$name) }
+                match_distro($project, $path, $name, $options);
         push @l, config_p($config, $project, @$path, @$name);
         @l = grep { defined $_ } @l;
         push @$res, @l if @l;
