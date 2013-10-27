@@ -26,11 +26,11 @@ my %actions = (
         descr => 'Create rpm spec file',
     },
     rpm => {
-        run => \&makerpm,
+        run => sub { build_script('rpm', @_) },
         descr => 'Build an rpm package',
     },
     srpm => {
-        run => \&makerpm,
+        run => sub { build_script('srpm', @_) },
         descr => 'Create source rpm file',
     },
     'deb-src' => {
@@ -144,15 +144,6 @@ sub rpmspec {
 sub print_projects {
     usageexit($_[0]) unless @_ == 1;
     print join("\n", BURPS::projectslist()), "\n";
-}
-
-sub makerpm {
-    usageexit($_[0]) unless @_ >= 2;
-    my $cmd = shift;
-    my $args = set_options(@_);
-    usageexit($cmd) unless @$args == 1;
-    my %actions = ( srpm => '-bs', rpm  => '-ba' );
-    BURPS::rpmbuild($args->[0], $actions{$cmd});
 }
 
 sub build_script {

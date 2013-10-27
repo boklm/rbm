@@ -87,15 +87,22 @@ our %default_config = (
     END;
 -%]
 END
+    rpm           => '[% c("rpmbuild", { rpmbuild_action => "-ba" }) %]',
+    srpm          => '[% c("rpmbuild", { rpmbuild_action => "-bs" }) %]',
     rpmbuild      => <<END,
+[% USE date -%]
 #!/bin/sh
 set -e -x
-[% SET srcdir = c('rpmbuild_srcdir', { error_if_undef => 1}) -%]
-rpmbuild [% c('rpmbuild_action', {error_if_undef => 1}) %] --define '_topdir [% srcdir %]' \\
-        --define '_sourcedir [% srcdir %]' \\
+srcdir=\$(pwd)
+cat > '[% project %].spec' << 'BURPS_END_RPM_SPEC'
+[% c('rpmspec') %]
+BURPS_END_RPM_SPEC
+touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %] [% project %].spec
+rpmbuild [% c('rpmbuild_action', {error_if_undef => 1}) %] --define "_topdir \$srcdir" \\
+        --define "_sourcedir \$srcdir" \\
         --define '_srcrpmdir [% dest_dir %]' \\
         --define '_rpmdir [% dest_dir %]' \\
-        '[% srcdir %]/[% project %].spec'
+        "\$srcdir/[% project %].spec"
 END
     rpm_rel         => <<OPT_END,
 [%-

@@ -430,24 +430,6 @@ sub copy_files {
     return @r;
 }
 
-sub rpmbuild {
-    my ($project, $action, $dest_dir) = @_;
-    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
-    valid_project($project);
-    my $tmpdir = File::Temp->newdir;
-    maketar($project, $tmpdir->dirname);
-    copy_files($project, $tmpdir->dirname);
-    rpmspec($project, $tmpdir->dirname);
-    my $options = {
-        rpmbuild_action => $action,
-        output_dir      => $dest_dir,
-        rpmbuild_srcdir => $tmpdir->dirname,
-    };
-    my $rpmbuild = project_config($project, 'rpmbuild', $options);
-    run_script($rpmbuild, sub { system(@_) }) == 0
-                || exit_error "Error running rpmbuild";
-}
-
 sub build_run {
     my ($project, $script_name, $dest_dir) = @_;
     my $error;
