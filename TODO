@@ -1,6 +1,12 @@
 
 - Add support for building packages inside a chroot, with Mock or Iurt.
 
+- Add support for workspace containing only one project, with everything
+  in the root directory (when the projects_dir value is not set).
+
+- When no project name is given on command line, detect the project
+  to use with the current working directory.
+
 - Add a test command. After building packages, this run some integration
   tests on the packages. This works on packages, or other files created
   by the build command.
