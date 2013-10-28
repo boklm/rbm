@@ -45,6 +45,10 @@ my %actions = (
         run => sub { build_script('build', @_) },
         descr => 'Build project with a custom build script',
     },
+    pkg => {
+        run => \&pkg,
+        descr => 'Build a package',
+    },
     showconf => {
         run => \&show_conf,
         descr => 'Show configuration',
@@ -153,6 +157,14 @@ sub build_script {
     my $args = set_options(@_);
     usageexit($cmd) unless @$args == 1;
     BURPS::build_run($args->[0], $script_name);
+}
+
+sub pkg {
+    usageexit($_[0]) unless @_ >= 2;
+    my $cmd = shift;
+    my $args = set_options(@_);
+    usageexit($cmd) unless @$args == 1;
+    BURPS::build_pkg($args->[0]);
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {

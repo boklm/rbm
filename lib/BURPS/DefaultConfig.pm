@@ -87,6 +87,7 @@ our %default_config = (
     END;
 -%]
 END
+    pkg_type      => 'build',
     rpm           => '[% c("rpmbuild", { rpmbuild_action => "-ba" }) %]',
     srpm          => '[% c("rpmbuild", { rpmbuild_action => "-bs" }) %]',
     rpmbuild      => <<END,
@@ -209,12 +210,12 @@ OPT_END
     },
     lsb_release => \&lsb_release,
     distributions => [
-        { lsb_release => { id => 'Mageia'}, package_type => 'rpm', },
-        { lsb_release => { id => 'Fedora'}, package_type => 'rpm', },
-        { lsb_release => { id => 'openSuSe'}, package_type => 'rpm', },
-        { lsb_release => { id => 'MandrivaLinux'}, package_type => 'rpm', },
-        { lsb_release => { id => 'Debian'}, package_type => 'deb', },
-        { lsb_release => { id => 'Ubuntu'}, package_type => 'deb', },
+        { lsb_release => { id => 'Mageia'}, pkg_type => 'rpm', },
+        { lsb_release => { id => 'Fedora'}, pkg_type => 'rpm', },
+        { lsb_release => { id => 'openSuSe'}, pkg_type => 'rpm', },
+        { lsb_release => { id => 'MandrivaLinux'}, pkg_type => 'rpm', },
+        { lsb_release => { id => 'Debian'}, pkg_type => 'deb', },
+        { lsb_release => { id => 'Ubuntu'}, pkg_type => 'deb', },
     ],
 );
 

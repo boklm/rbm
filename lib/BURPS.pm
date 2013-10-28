@@ -506,4 +506,9 @@ sub build_run {
     exit_error $error if $error;
 }
 
+sub build_pkg {
+    my ($project, $dest_dir) = @_;
+    build_run($project, project_config($project, 'pkg_type'), $dest_dir);
+}
+
 1;
