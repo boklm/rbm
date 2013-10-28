@@ -435,6 +435,7 @@ sub build_run {
     my $error;
     $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
     valid_project($project);
+    my $old_cwd = getcwd;
     my $tmpdir = File::Temp->newdir;
     my $tarfile = maketar($project, $tmpdir->dirname);
     my @cfiles = copy_files($project, $tmpdir->dirname);
@@ -464,7 +465,6 @@ sub build_run {
         goto EXIT;
     }
     write_file("$tmpdir/build", $build_script);
-    my $old_cwd = getcwd;
     chdir $tmpdir->dirname;
     chmod 0700, 'build';
     my $res;
