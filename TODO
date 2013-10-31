@@ -11,12 +11,6 @@
   tests on the packages. This works on packages, or other files created
   by the build command.
 
-- Add an upload command, with a default upload template script.
-  This will build packages, run the tests if any, and upload/copy the
-  packages to a repository. Depending on selected distro the template
-  will decide if it should build an rpm or deb, where to upload it and
-  how to update repo metadata.
-
 - Add an install command, to install the package that has been built.
 
 - Add an option to download a tarball, instead of creating it. In the

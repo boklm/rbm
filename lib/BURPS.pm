@@ -431,20 +431,29 @@ sub copy_files {
 }
 
 sub build_run {
-    my ($project, $script_name, $dest_dir) = @_;
+    my ($project, $script_name, $options) = @_;
     my $error;
-    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
+    my $dest_dir = create_dir(path(project_config($project, 'output_dir', $options)));
     valid_project($project);
     my $old_cwd = getcwd;
+    my $srcdir = project_config($project, 'build_srcdir', $options);
     my $tmpdir = File::Temp->newdir;
-    my $tarfile = maketar($project, $tmpdir->dirname);
-    my @cfiles = copy_files($project, $tmpdir->dirname);
+    my @cfiles;
+    if ($srcdir) {
+        @cfiles = ($srcdir);
+    } else {
+        $srcdir = $tmpdir->dirname;
+        push @cfiles, 'build';
+        push @cfiles, maketar($project, $srcdir);
+        push @cfiles, copy_files($project, $srcdir);
+    }
     my ($remote_tmp_src, $remote_tmp_dst, $build_script);
-    if (project_config($project, "remote/$script_name")) {
+    if (project_config($project, "remote/$script_name", $options)) {
         foreach my $remote_tmp ($remote_tmp_src, $remote_tmp_dst) {
             my $cmd = project_config($project, "remote/$script_name/exec", {
+                    %$options,
                     exec_cmd => project_config($project,
-                        "remote/$script_name/mktmpdir") || 'mktemp -d',
+                        "remote/$script_name/mktmpdir", $options) || 'mktemp -d',
                 });
             my ($stdout, $stderr, $success, $exit_code)
                 = run_script($cmd, \&capture_exec);
@@ -455,23 +464,25 @@ sub build_run {
             $remote_tmp = (split("\n", $stdout))[0];
         }
         $build_script = project_config($project, $script_name, {
+                %$options,
                 output_dir => $remote_tmp_dst,
             });
     } else {
-        $build_script = project_config($project, $script_name);
+        $build_script = project_config($project, $script_name, $options);
     }
     if (!$build_script) {
         $error = "Missing $script_name config";
         goto EXIT;
     }
-    write_file("$tmpdir/build", $build_script);
-    chdir $tmpdir->dirname;
+    write_file("$srcdir/build", $build_script);
+    chdir $srcdir;
     chmod 0700, 'build';
     my $res;
     if ($remote_tmp_src && $remote_tmp_dst) {
-        foreach my $file ($tarfile, 'build', @cfiles) {
+        foreach my $file (@cfiles) {
             my $cmd = project_config($project, "remote/$script_name/put", {
-                    put_src => "$tmpdir/$file",
+                    %$options,
+                    put_src => "$srcdir/$file",
                     put_dst => $remote_tmp_src,
                 });
             if (run_script($cmd, sub { system(@_) }) != 0) {
@@ -480,6 +491,7 @@ sub build_run {
             }
         }
         my $cmd = project_config($project, "remote/$script_name/exec", {
+                %$options,
                 exec_cmd => "cd $remote_tmp_src; ./build",
             });
         if (run_script($cmd, sub { system(@_) }) != 0) {
@@ -487,6 +499,7 @@ sub build_run {
             goto EXIT;
         }
         $cmd = project_config($project, "remote/$script_name/get", {
+                %$options,
                 get_src => "$remote_tmp_dst/*",
                 get_dst => $dest_dir,
             });
@@ -494,10 +507,11 @@ sub build_run {
             $error = "Error downloading build result";
         }
         run_script(project_config($project, "remote/$script_name/exec", {
+                %$options,
                 exec_cmd => "rm -Rf $remote_tmp_src $remote_tmp_dst",
             }), \&capture_exec);
     } else {
-        if (system("$tmpdir/build") != 0) {
+        if (system("$srcdir/build") != 0) {
             $error = "Error running $script_name";
         }
     }
@@ -507,8 +521,19 @@ sub build_run {
 }
 
 sub build_pkg {
-    my ($project, $dest_dir) = @_;
-    build_run($project, project_config($project, 'pkg_type'), $dest_dir);
+    my ($project, $options) = @_;
+    build_run($project, project_config($project, 'pkg_type', $options), $options);
+}
+
+sub publish {
+    my ($project) = @_;
+    project_config($project, 'publish', { error_if_undef => 1 });
+    my $publish_src_dir = project_config($project, 'publish_src_dir');
+    if (!$publish_src_dir) {
+        $publish_src_dir = File::Temp->newdir;
+        build_pkg($project, {output_dir => $publish_src_dir});
+    }
+    build_run($project, 'publish', { build_srcdir => $publish_src_dir });
 }
 
 1;

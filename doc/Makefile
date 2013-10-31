@@ -34,6 +34,7 @@ MAN1_ASC += burps-fetch.asc
 MAN1_ASC += burps-deb-src.asc
 MAN1_ASC += burps-deb.asc
 MAN1_ASC += burps-pkg.asc
+MAN1_ASC += burps-publish.asc
 
 MAN7_ASC += burps_tutorial.asc
 MAN7_ASC += burps_layout.asc

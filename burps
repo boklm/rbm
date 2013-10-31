@@ -49,6 +49,10 @@ my %actions = (
         run => \&pkg,
         descr => 'Build a package',
     },
+    publish => {
+        run => \&publish,
+        descr => 'Publish a package',
+    },
     showconf => {
         run => \&show_conf,
         descr => 'Show configuration',
@@ -90,7 +94,7 @@ sub set_options {
                      compress_tar=s pkg-rel=s timestamp=i fetch!
                      gpg-keyring=s gpg-keyring-dir=s gpg-args=s gpg-bin=s
                      sysconf-file=s debsign-keyid=s use-pbuilder!
-                     target=s@);
+                     target=s@ publish-src-dir=s);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
     foreach my $k (keys %val) {
@@ -165,6 +169,14 @@ sub pkg {
     my $args = set_options(@_);
     usageexit($cmd) unless @$args == 1;
     BURPS::build_pkg($args->[0]);
+}
+
+sub publish {
+    usageexit($_[0]) unless @_ >= 2;
+    my $cmd = shift;
+    my $args = set_options(@_);
+    usageexit($cmd) unless @$args == 1;
+    BURPS::publish($args->[0]);
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {
