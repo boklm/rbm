@@ -52,7 +52,6 @@ PAGES_ASC = $(MAN_ASC)
 PAGES_ASC += index.asc
 PAGES_ASC += license.asc
 PAGES_ASC += todo.asc
-PAGES_ASC += git-version.asc
 PAGES_ASC += changelog.asc
 
 PAGES_HTML = $(patsubst %.asc,%.html,$(PAGES_ASC))
