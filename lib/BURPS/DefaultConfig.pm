@@ -126,7 +126,7 @@ OPT_END
         SET gpg_kr = '--keyring ' _ path(c('gpg_keyring'), path(c('gpg_keyring_dir'))) _ ' --no-default-keyring';
     END;
 -%]
-exec [% c('gpg_bin') %] [% c('gpg_args') %] [% gpg_kr %] "\$@"
+exec [% c('gpg_bin') %] [% c('gpg_args') %] --with-fingerprint [% gpg_kr %] "\$@"
 GPGEND
     debian_create => <<DEBEND,
 [%-
