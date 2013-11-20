@@ -178,7 +178,8 @@ sub exit_error {
 sub set_git_gpg_wrapper {
     my ($project) = @_;
     my $w = project_config($project, 'gpg_wrapper');
-    my (undef, $tmp) = File::Temp::tempfile();
+    my (undef, $tmp) = File::Temp::tempfile(DIR =>
+                        project_config($project, 'tmp_dir'));
     write_file($tmp, $w);
     chmod 0700, $tmp;
     system('git', 'config', 'gpg.program', $tmp) == 0
@@ -284,11 +285,12 @@ sub git_clone_fetch_chdir {
 }
 
 sub run_script {
-    my ($cmd, $f) = @_;
+    my ($project, $cmd, $f) = @_;
     $f //= \&capture_exec;
     my @res;
     if ($cmd =~ m/^#/) {
-        my (undef, $tmp) = File::Temp::tempfile();
+        my (undef, $tmp) = File::Temp::tempfile(DIR =>
+                                project_config($project, 'tmp_dir'));
         write_file($tmp, $cmd);
         chmod 0700, $tmp;
         @res = $f->($tmp);
@@ -309,7 +311,7 @@ sub execute {
         = capture_exec('git', 'checkout', $git_hash);
     exit_error "Cannot checkout $git_hash" unless $success;
     ($stdout, $stderr, $success, $exit_code)
-                = run_script($cmd, \&capture_exec);
+                = run_script($project, $cmd, \&capture_exec);
     chdir($old_cwd);
     chomp $stdout;
     return $success ? $stdout : undef;
@@ -437,7 +439,8 @@ sub build_run {
     valid_project($project);
     my $old_cwd = getcwd;
     my $srcdir = project_config($project, 'build_srcdir', $options);
-    my $tmpdir = File::Temp->newdir;
+    my $tmpdir = File::Temp->newdir(project_config($project, 'tmp_dir', $options)
+                                . '/burps-XXXXX');
     my @cfiles;
     if ($srcdir) {
         @cfiles = ($srcdir);
@@ -456,7 +459,7 @@ sub build_run {
                         "remote/$script_name/mktmpdir", $options) || 'mktemp -d',
                 });
             my ($stdout, $stderr, $success, $exit_code)
-                = run_script($cmd, \&capture_exec);
+                = run_script($project, $cmd, \&capture_exec);
             if (!$success) {
                 $error = "Error connecting to remote";
                 goto EXIT;
@@ -485,7 +488,7 @@ sub build_run {
                     put_src => "$srcdir/$file",
                     put_dst => $remote_tmp_src,
                 });
-            if (run_script($cmd, sub { system(@_) }) != 0) {
+            if (run_script($project, $cmd, sub { system(@_) }) != 0) {
                 $error = "Error uploading $file";
                 goto EXIT;
             }
@@ -494,7 +497,7 @@ sub build_run {
                 %$options,
                 exec_cmd => "cd $remote_tmp_src; ./build",
             });
-        if (run_script($cmd, sub { system(@_) }) != 0) {
+        if (run_script($project, $cmd, sub { system(@_) }) != 0) {
             $error = "Error running $script_name";
             goto EXIT;
         }
@@ -503,10 +506,10 @@ sub build_run {
                 get_src => "$remote_tmp_dst/*",
                 get_dst => $dest_dir,
             });
-        if (run_script($cmd, sub { system(@_) }) != 0) {
+        if (run_script($project, $cmd, sub { system(@_) }) != 0) {
             $error = "Error downloading build result";
         }
-        run_script(project_config($project, "remote/$script_name/exec", {
+        run_script($project, project_config($project, "remote/$script_name/exec", {
                 %$options,
                 exec_cmd => "rm -Rf $remote_tmp_src $remote_tmp_dst",
             }), \&capture_exec);
@@ -530,7 +533,8 @@ sub publish {
     project_config($project, 'publish', { error_if_undef => 1 });
     my $publish_src_dir = project_config($project, 'publish_src_dir');
     if (!$publish_src_dir) {
-        $publish_src_dir = File::Temp->newdir;
+        $publish_src_dir = File::Temp->newdir(project_config($project, 'tmp_dir')
+                                . '/burps-XXXXXX');
         build_pkg($project, {output_dir => $publish_src_dir});
     }
     build_run($project, 'publish', { build_srcdir => $publish_src_dir });

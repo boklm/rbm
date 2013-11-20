@@ -67,6 +67,7 @@ sub lsb_release {
 
 our %default_config = (
     sysconf_file  => '/etc/burps.conf',
+    tmp_dir       => '/tmp',
     projects_dir  => 'projects',
     output_dir    => 'out',
     git_clone_dir => 'git_clones',

@@ -9,6 +9,9 @@
 
 - Add the publish command
 
+- Add the tmp_dir option, to select the directory used for temporary
+  files such as build directory
+
 
 Version 0.4
 
