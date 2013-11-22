@@ -274,8 +274,8 @@ sub git_clone_fetch_chdir {
     }
     if (!$config->{projects}{$project}{fetched}
                 && project_config($project, 'fetch', $options)) {
-        system('git', 'checkout', '-q', '--detach', 'master') == 0
-                || exit_error "Error checking out master";
+        system('git', 'checkout', '-q', '--detach') == 0
+                || exit_error "Error running git checkout --detach";
         system('git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*') == 0
                 || exit_error "Error fetching git repository";
         system('git', 'fetch', 'origin', '+refs/tags/*:refs/tags/*') == 0
