@@ -187,3 +187,4 @@ usage('usage', $ARGV[0]) if grep { $_ eq '--help' } @ARGV[1..(@ARGV - 1)];
 BURPS::load_config unless $actions{$ARGV[0]}->{no_config};
 $actions{$ARGV[0]}->{run}->(@ARGV);
 
+# vim: expandtab sw=4

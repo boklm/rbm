@@ -541,3 +541,4 @@ sub publish {
 }
 
 1;
+# vim: expandtab sw=4
