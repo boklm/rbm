@@ -150,6 +150,8 @@ sub confkey_str {
 
 sub project_config {
     my ($project, $name, $options) = @_;
+    my $error_if_undef = $options->{error_if_undef};
+    $options = $options ? {%$options, error_if_undef => 0} : $options;
     $name = [ split '/', $name ] unless ref $name eq 'ARRAY';
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
@@ -161,10 +163,10 @@ sub project_config {
             confkey_str($name) eq 'output_dir' ? '.' : undef);
     }
     $config->{opt} = $opt_save;
-    if (!defined($res) && $options->{error_if_undef}) {
-        my $msg = $options->{error_if_undef} eq '1' ?
+    if (!defined($res) && $error_if_undef) {
+        my $msg = $error_if_undef eq '1' ?
                 "Option " . confkey_str($name) . " is undefined"
-                : $options->{error_if_undef};
+                : $error_if_undef;
         exit_error($msg);
     }
     return $res;
