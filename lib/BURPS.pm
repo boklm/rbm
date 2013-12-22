@@ -195,6 +195,17 @@ sub unset_git_gpg_wrapper {
         || exit_error 'Error unsetting gpg.program';
 }
 
+sub gpg_get_fingerprint {
+    foreach my $l (@_) {
+        if ($l =~ m/^Primary key fingerprint:(.+)$/) {
+            my $fp = $1;
+            $fp =~ s/\s//g;
+            return $fp;
+        }
+    }
+    return undef;
+}
+
 sub git_commit_sign_id {
     my ($project, $chash) = @_;
     my $w = set_git_gpg_wrapper($project);
@@ -205,14 +216,7 @@ sub git_commit_sign_id {
     my @l = split /\n/, $stdout;
     return undef unless @l >= 2;
     return undef unless $l[0] =~ m/^[GU]$/;
-    foreach (@l) {
-        if (m/^Primary key fingerprint:(.+)$/) {
-            my $fp = $1;
-            $fp =~ s/\s//g;
-            return $fp;
-        }
-    }
-    return undef;
+    return gpg_get_fingerprint(@l);
 }
 
 sub git_tag_sign_id {
@@ -222,14 +226,7 @@ sub git_tag_sign_id {
         = capture_exec('git', 'tag', '-v', $tag);
     unset_git_gpg_wrapper($w);
     return undef unless $success;
-    foreach my $l (split /\n/, $stderr) {
-        if ($l =~ m/^Primary key fingerprint:(.+)$/) {
-            my $fp = $1;
-            $fp =~ s/\s//g;
-            return $fp;
-        }
-    }
-    return undef;
+    return gpg_get_fingerprint(split /\n/, $stderr);
 }
 
 sub valid_id {
