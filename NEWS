@@ -15,6 +15,9 @@
 - Add the pc function in templates, a function to access config value
   from an other project
 
+- rpm build: define _rpmfilename macro to remove the leading %{ARCH}
+  directory
+
 
 Version 0.4
 

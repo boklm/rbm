@@ -104,6 +104,7 @@ rpmbuild [% c('rpmbuild_action', {error_if_undef => 1}) %] --define "_topdir \$s
         --define "_sourcedir \$srcdir" \\
         --define '_srcrpmdir [% dest_dir %]' \\
         --define '_rpmdir [% dest_dir %]' \\
+        --define '_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm' \\
         "\$srcdir/[% project %].spec"
 END
     rpm_rel         => <<OPT_END,
