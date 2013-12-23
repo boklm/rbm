@@ -13,10 +13,6 @@
 
 - Add an install command, to install the package that has been built.
 
-- Add an option to download a tarball, instead of creating it. In the
-  config it should be possible to add an url and an sha256sum of a
-  tarball that will be downloaded, and can be used to build the package.
-
 - Make the +d+ template variable a function that returns the distro
   config option value. Make it possible to override distro config in a
   project's config.

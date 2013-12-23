@@ -15,7 +15,8 @@ use File::Path qw(make_path);
 use String::ShellQuote;
 use Sort::Versions;
 use BURPS::DefaultConfig;
-#use Data::Dump qw/dd/;
+use Digest::SHA qw(sha256_hex);
+use Data::Dump qw(dd pp);
 
 our $config;
 
@@ -229,6 +230,19 @@ sub git_tag_sign_id {
     return gpg_get_fingerprint(split /\n/, $stderr);
 }
 
+sub file_sign_id {
+    my ($project, $options) = @_;
+    my (undef, $gpg_wrapper) = File::Temp::tempfile(DIR =>
+                        project_config($project, 'tmp_dir', $options));
+    write_file($gpg_wrapper, project_config($project, 'gpg_wrapper', $options));
+    chmod 0700, $gpg_wrapper;
+    my ($stdout, $stderr, $success, $exit_code) =
+        capture_exec($gpg_wrapper, '--verify',
+            project_config($project, 'filename_sig', $options));
+    return undef unless $success;
+    return gpg_get_fingerprint(split /\n/, $stderr);
+}
+
 sub valid_id {
     my ($fp, $valid_id) = @_;
     if ($valid_id eq '1' || (ref $valid_id eq 'ARRAY' && @$valid_id == 1
@@ -435,6 +449,107 @@ sub copy_files {
     return @r;
 }
 
+sub urlget {
+    my ($project, $input_file, $exit_on_error) = @_;
+    my $cmd = project_config($project, 'urlget', $input_file);
+    my $success = run_script($project, $cmd, sub { system(@_) }) == 0;
+    if (!$success) {
+        unlink project_config($project, 'filename', $input_file);
+        exit_error "Error downloading file" if $exit_on_error;
+    }
+    return $success;
+}
+
+sub is_url {
+    $_[0] =~ m/^https?:\/\/.*/;
+}
+
+sub input_files {
+    my ($project, $options, $dest_dir) = @_;
+    my @res;
+    my $input_files = project_config($project, 'input_files', $options,);
+    return unless $input_files;
+    my $proj_dir = path(project_config($project, 'projects_dir', $options));
+    my $src_dir = "$proj_dir/$project";
+    my $old_cwd = getcwd;
+    chdir $src_dir || exit_error "cannot chdir to $src_dir";
+    foreach my $input_file (@$input_files) {
+        my $t = sub {
+            project_config($project, $_[0], {$options ? %$options : (),
+                    %$input_file, output_dir => $src_dir});
+        };
+        if (!$t->('enable')) {
+            next;
+        }
+        my $url = $t->('URL');
+        my $name = $t->('filename') ? $t->('filename') :
+                   $url ? basename($url) :
+                   undef;
+        $input_file->{filename} //= $name;
+        exit_error("Missing filename:\n" . pp($input_file)) unless $name;
+        my $fname = "$src_dir/$name";
+        my $file_gpg_id = gpg_id($t->('file_gpg_id'));
+        if (!-f $fname || $t->('refresh_input')) {
+            if ($t->('content')) {
+                write_file($fname, $t->('content'));
+            } elsif ($t->('URL')) {
+                urlget($project, $input_file, 1);
+            } elsif ($t->('exec')) {
+                if (run_script($project, $t->('exec'),
+                        sub { system(@_) }) != 0) {
+                    exit_error "Error creating $name";
+                }
+            } elsif ($t->('project')) {
+                my $p = $t->('project');
+                print "Building project $p\n";
+                my $run_save = $config->{run};
+                $config->{run} = {};
+                build_pkg($p, {%$input_file, output_dir => $src_dir});
+                $config->{run} = $run_save;
+            } else {
+                dd $input_file;
+                exit_error "Missing file $name - $fname";
+            }
+        }
+        if ($t->('sha256sum')
+            && $t->('sha256sum') ne sha256_hex(read_file($fname))) {
+            exit_error "Wrong sha256sum for $fname.\n" .
+                       "Expected sha256sum: " . $t->('sha256sum');
+        }
+        if ($file_gpg_id) {
+            my $sig_ext = $t->('sig_ext');
+            $sig_ext = ref $sig_ext eq 'ARRAY' ? $sig_ext : [ $sig_ext ];
+            my $sig_file;
+            foreach my $s (@$sig_ext) {
+                if (-f "$fname.$s" && !$t->('refresh_input')) {
+                    $sig_file = "$fname.$s";
+                    last;
+                }
+            }
+            foreach my $s ($sig_file ? () : @$sig_ext) {
+                if ($url) {
+                    my $f = { %$input_file, URL => "$url.$s",
+                        filename => "$input_file->{filename}.$s" };
+                    if (urlget($project, $f, 0)) {
+                        $sig_file = "$fname.$s";
+                        last;
+                    }
+                }
+            }
+            exit_error "No signature file for $name" unless $sig_file;
+            my $id = file_sign_id($project, { %$input_file,
+                    filename_sig => $sig_file });
+            print "File $name is signed with id $id\n" if $id;
+            if (!$id || !valid_id($id, $file_gpg_id)) {
+                exit_error "File $name is not signed with a valid key";
+            }
+        }
+        copy($fname, "$dest_dir/$name");
+        push @res, $name;
+    }
+    chdir $old_cwd;
+}
+
 sub build_run {
     my ($project, $script_name, $options) = @_;
     my $error;
@@ -452,6 +567,7 @@ sub build_run {
         push @cfiles, 'build';
         push @cfiles, maketar($project, $options, $srcdir);
         push @cfiles, copy_files($project, $srcdir);
+        push @cfiles, input_files($project, $options, $srcdir);
     }
     my ($remote_tmp_src, $remote_tmp_dst, $build_script);
     if (project_config($project, "remote/$script_name", $options)) {

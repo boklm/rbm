@@ -18,6 +18,8 @@
 - rpm build: define _rpmfilename macro to remove the leading %{ARCH}
   directory
 
+- Add support for external input files, documented in burps_input_files(7)
+
 
 Version 0.4
 
