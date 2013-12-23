@@ -12,6 +12,9 @@
 - Add the tmp_dir option, to select the directory used for temporary
   files such as build directory
 
+- Add the pc function in templates, a function to access config value
+  from an other project
+
 
 Version 0.4
 

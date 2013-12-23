@@ -387,6 +387,7 @@ sub process_template {
         project    => $project,
         p          => $config->{projects}{$project},
         c          => sub { project_config($project, @_) },
+        pc         => \&project_config,
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
         exec       => sub { execute($project, @_) },
