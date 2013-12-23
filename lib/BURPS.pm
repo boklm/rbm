@@ -326,15 +326,17 @@ sub gpg_id {
 }
 
 sub maketar {
-    my ($project, $dest_dir) = @_;
-    $dest_dir //= create_dir(path(project_config($project, 'output_dir', { no_distro => 1 })));
+    my ($project, $options, $dest_dir) = @_;
+    $options //= {};
+    $dest_dir //= create_dir(path(project_config($project, 'output_dir',
+                { %$options, no_distro => 1 })));
     valid_project($project);
-    my $git_hash = project_config($project, 'git_hash')
+    my $git_hash = project_config($project, 'git_hash', $options)
         || exit_error 'No git_hash specified';
     my $old_cwd = getcwd;
     git_clone_fetch_chdir($project);
-    my $version = project_config($project, 'version');
-    if (my $tag_gpg_id = gpg_id(project_config($project, 'tag_gpg_id'))) {
+    my $version = project_config($project, 'version', $options);
+    if (my $tag_gpg_id = gpg_id(project_config($project, 'tag_gpg_id', $options))) {
         my $id = git_tag_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed tag";
         if (!valid_id($id, $tag_gpg_id)) {
@@ -342,7 +344,8 @@ sub maketar {
         }
         print "Tag $git_hash is signed with key $id\n";
     }
-    if (my $commit_gpg_id = gpg_id(project_config($project, 'commit_gpg_id'))) {
+    if (my $commit_gpg_id = gpg_id(project_config($project, 'commit_gpg_id',
+                $options))) {
         my $id = git_commit_sign_id($project, $git_hash) ||
                 exit_error "$git_hash is not a signed commit";
         if (!valid_id($id, $commit_gpg_id)) {
@@ -359,7 +362,7 @@ sub maketar {
         gz  => ['gzip', '-f'],
         bz2 => ['bzip2', '-f'],
     );
-    if (my $c = project_config($project, 'compress_tar')) {
+    if (my $c = project_config($project, 'compress_tar', $options)) {
         if (!defined $compress{$c}) {
             exit_error "Unknow compression $c";
         }
@@ -367,7 +370,7 @@ sub maketar {
                 || exit_error "Error compressing $tar_file with $compress{$c}->[0]";
         $tar_file .= ".$c";
     }
-    my $timestamp = project_config($project, 'timestamp');
+    my $timestamp = project_config($project, 'timestamp', $options);
     utime $timestamp, $timestamp, "$dest_dir/$tar_file" if $timestamp;
     print "Created $dest_dir/$tar_file\n";
     chdir($old_cwd);
@@ -447,7 +450,7 @@ sub build_run {
     } else {
         $srcdir = $tmpdir->dirname;
         push @cfiles, 'build';
-        push @cfiles, maketar($project, $srcdir);
+        push @cfiles, maketar($project, $options, $srcdir);
         push @cfiles, copy_files($project, $srcdir);
     }
     my ($remote_tmp_src, $remote_tmp_dst, $build_script);
