@@ -20,6 +20,8 @@
 
 - Add support for external input files, documented in burps_input_files(7)
 
+- Add the abbrev and abbrev_lenght options
+
 
 Version 0.4
 

@@ -76,6 +76,8 @@ our %default_config = (
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(projects_dir) ],
     describe      => \&git_describe,
+    abbrev_lenght => '12',
+    abbrev        => '[% exec("git log -1 --abbrev=" _ c("abbrev_lenght") _ " --format=%h " _ c("git_hash")) %]',
     timestamp     => '[% exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}") %]',
     version       => <<END,
 [%-
