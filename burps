@@ -94,7 +94,7 @@ sub set_options {
                      compress_tar=s pkg-rel=s timestamp=i fetch!
                      gpg-keyring=s gpg-keyring-dir=s gpg-args=s gpg-bin=s
                      sysconf-file=s debsign-keyid=s use-pbuilder!
-                     target=s@ publish-src-dir=s);
+                     target=s@ publish-src-dir=s debug!);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
     foreach my $k (keys %val) {

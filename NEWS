@@ -24,6 +24,9 @@
 
 - Add the tar option, to create deterministic tar files
 
+- Add the debug mode: open a shell in the temporary build directory in
+  case of build failure
+
 
 Version 0.4
 

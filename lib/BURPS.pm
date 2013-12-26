@@ -635,6 +635,11 @@ sub build_run {
     } else {
         if (system("$srcdir/build") != 0) {
             $error = "Error running $script_name";
+            if (project_config($project, 'debug', $options)) {
+                print STDERR $error, "\nOpening debug shell\n";
+                print STDERR "Warning: build files will be removed when you exit this shell.\n";
+                run_script($project, "PS1='debug-$project\$ ' \$SHELL", sub { system(@_) });
+            }
         }
     }
     EXIT:
