@@ -224,6 +224,7 @@ OPT_END
     urlget => 'wget -O[% shell_quote(c("filename")) %] [% shell_quote(c("URL")) %]',
     sig_ext => [ qw(gpg asc sig) ],
     enable => 1,
+    tar    => 'tar --owner=root --group=root --mtime=@[% c("timestamp") %]',
 );
 
 1;

@@ -22,6 +22,8 @@
 
 - Add the abbrev and abbrev_lenght options
 
+- Add the tar option, to create deterministic tar files
+
 
 Version 0.4
 
