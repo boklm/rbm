@@ -110,6 +110,14 @@ sub match_distro {
     return @res1, @res2, @res3, @res4;
 }
 
+sub as_array {
+    ref $_[0] eq 'ARRAY' ? $_[0] : [ $_[0] ];
+}
+
+sub get_targets {
+    $config->{run}{target} ? as_array($config->{run}{target}) : [ 'notarget' ];
+}
+
 sub config {
     my $project = shift;
     my $name = shift;
@@ -117,16 +125,10 @@ sub config {
     my $res;
     foreach my $path (@_) {
         my @l;
-        my $target;
-        if ($name->[0] ne 'target'
-            && ($target = project_config($project, 'target', $options))) {
-            $target = [ $target ] unless ref $target eq 'ARRAY';
-            foreach my $t (ref $target eq 'ARRAY' ? @$target : $target) {
-                push @l, map { config_p($_, $project, @$name) }
-                        match_distro($project, [@$path, 'targets', $t],
-                                                        $name, $options);
-                push @l, config_p($config, $project, @$path, 'targets', $t, @$name);
-            }
+        foreach my $t (@{get_targets()}) {
+            push @l, map { config_p($_, $project, @$name) }
+              match_distro($project, [@$path, 'targets', $t], $name, $options);
+            push @l, config_p($config, $project, @$path, 'targets', $t, @$name);
         }
         push @l, map { config_p($_, $project, @$name) }
                 match_distro($project, $path, $name, $options);
