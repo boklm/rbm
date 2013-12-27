@@ -406,7 +406,14 @@ sub process_template {
         project    => $project,
         p          => $config->{projects}{$project},
         c          => sub { project_config($project, @_) },
-        pc         => \&project_config,
+        pc         => sub {
+            my $run_save = $config->{run};
+            $config->{run} = { target => $_[2]->{target} };
+            $config->{run}{target} //= $run_save->{target};
+            my $res = project_config(@_);
+            $config->{run} = $run_save;
+            return $res;
+        },
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
         exec       => sub { execute($project, @_) },
