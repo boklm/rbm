@@ -505,7 +505,8 @@ sub input_files {
                 my $p = $t->('project');
                 print "Building project $p\n";
                 my $run_save = $config->{run};
-                $config->{run} = {};
+                $config->{run} = { target => $input_file->{target} };
+                $config->{run}{target} //= $run_save->{target};
                 build_pkg($p, {%$input_file, output_dir => $src_dir});
                 $config->{run} = $run_save;
             } else {
