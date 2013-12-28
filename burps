@@ -128,8 +128,12 @@ sub fetch {
     my @l = @_ ? @_ : (BURPS::projectslist());
     foreach my $project (@l) {
         BURPS::valid_project($project);
-        print "Fetching commits for $project\n";
-        BURPS::git_clone_fetch_chdir($project);
+        if (BURPS::project_config($project, 'git_url')) {
+            print "Fetching commits for $project\n";
+            BURPS::git_clone_fetch_chdir($project);
+        } else {
+            print "Skipping $project\n";
+        }
     }
 }
 
