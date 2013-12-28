@@ -251,7 +251,13 @@ OPT_END
     urlget => 'wget -O[% shell_quote(c("filename")) %] [% shell_quote(c("URL")) %]',
     sig_ext => [ qw(gpg asc sig) ],
     enable => 1,
-    tar    => 'tar --owner=root --group=root --mtime=@[% c("timestamp") %]',
+    tar    => <<TAR_END,
+[%- SET src = c('tar_src', { error_if_undef => 1 }) -%]
+find [% src.join(' ') %] -executable -exec chmod 700 {} \\;
+find [% src.join(' ') %] ! -executable -exec chmod 600 {} \\;
+find [% src.join(' ') %] | sort | \
+        tar --owner=root --group=root --mtime=@[% c('timestamp') %] [% c('tar_args', { error_if_undef => 1 }) %] -T -
+TAR_END
     arch   => \&get_arch,
     input_files_by_name => \&input_files_by_name,
 );
