@@ -31,6 +31,8 @@
 
 - Add support for target aliases and extensions
 
+- Add input_files_by_name option
+
 
 Version 0.4
 

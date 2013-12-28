@@ -73,6 +73,24 @@ sub get_arch {
     return $stdout;
 }
 
+sub input_files_by_name {
+    my ($project, $options) = @_;
+    $options //= {};
+    my $input_files = BURPS::project_config($project, 'input_files', $options);
+    return {} unless ref $input_files eq 'ARRAY';
+    my $res = {};
+    foreach my $input_file (@$input_files) {
+        next unless $input_file->{name};
+        my $name = BURPS::project_config($project, 'name', { %$options, %$input_file });
+        $res->{$name} = sub {
+            my ($project, $options) = @_;
+            $options //= {};
+            return BURPS::project_config($project, 'filename', { %$options, %$input_file });
+        };
+    }
+    return $res;
+}
+
 our %default_config = (
     sysconf_file  => '/etc/burps.conf',
     tmp_dir       => '/tmp',
@@ -235,6 +253,7 @@ OPT_END
     enable => 1,
     tar    => 'tar --owner=root --group=root --mtime=@[% c("timestamp") %]',
     arch   => \&get_arch,
+    input_files_by_name => \&input_files_by_name,
 );
 
 1;
