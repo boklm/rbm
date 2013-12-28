@@ -65,6 +65,13 @@ sub lsb_release {
     return $res;
 }
 
+sub get_arch {
+    my ($stdout, $stderr, $success, $exit_code) = capture_exec('uname', '-m');
+    return "unknown" unless $success;
+    chomp $stdout;
+    return $stdout;
+}
+
 our %default_config = (
     sysconf_file  => '/etc/burps.conf',
     tmp_dir       => '/tmp',
@@ -226,6 +233,7 @@ OPT_END
     sig_ext => [ qw(gpg asc sig) ],
     enable => 1,
     tar    => 'tar --owner=root --group=root --mtime=@[% c("timestamp") %]',
+    arch   => \&get_arch,
 );
 
 1;
