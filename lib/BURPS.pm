@@ -328,14 +328,16 @@ sub run_script {
 
 sub execute {
     my ($project, $cmd, $options) = @_;
-    my $git_hash = project_config($project, 'git_hash', $options)
-        || exit_error 'No git_hash specified';
     my $old_cwd = getcwd;
-    git_clone_fetch_chdir($project, $options);
+    if (project_config($project, 'git_url', $options)) {
+        my $git_hash = project_config($project, 'git_hash', $options)
+                || exit_error 'No git_hash specified';
+        git_clone_fetch_chdir($project, $options);
+        my ($stdout, $stderr, $success, $exit_code)
+                = capture_exec('git', 'checkout', $git_hash);
+        exit_error "Cannot checkout $git_hash" unless $success;
+    }
     my ($stdout, $stderr, $success, $exit_code)
-        = capture_exec('git', 'checkout', $git_hash);
-    exit_error "Cannot checkout $git_hash" unless $success;
-    ($stdout, $stderr, $success, $exit_code)
                 = run_script($project, $cmd, \&capture_exec);
     chdir($old_cwd);
     chomp $stdout;
@@ -357,6 +359,7 @@ sub maketar {
     $dest_dir //= create_dir(path(project_config($project, 'output_dir',
                 { %$options, no_distro => 1 })));
     valid_project($project);
+    return undef unless project_config($project, 'git_url', $options);
     my $git_hash = project_config($project, 'git_hash', $options)
         || exit_error 'No git_hash specified';
     my $old_cwd = getcwd;
@@ -585,7 +588,8 @@ sub build_run {
     } else {
         $srcdir = $tmpdir->dirname;
         push @cfiles, 'build';
-        push @cfiles, maketar($project, $options, $srcdir);
+        my $tarfile = maketar($project, $options, $srcdir);
+        push @cfiles, $tarfile if $tarfile;
         push @cfiles, copy_files($project, $srcdir);
         push @cfiles, input_files($project, $options, $srcdir);
     }
