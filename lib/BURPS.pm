@@ -70,11 +70,10 @@ sub path {
 }
 
 sub config_p {
-    my $c = shift;
-    my $project = shift;
-    foreach my $p (@_) {
+    my ($c, $project, $options, @q) = @_;
+    foreach my $p (@q) {
         return undef unless defined $c->{$p};
-        $c->{$p} = $c->{$p}->($project, @_) if ref $c->{$p} eq 'CODE';
+        $c->{$p} = $c->{$p}->($project, $options, @_) if ref $c->{$p} eq 'CODE';
         $c = $c->{$p};
     }
     return $c;
@@ -84,7 +83,7 @@ sub match_distro {
     my ($project, $path, $name, $options) = @_;
     return () if $options->{no_distro};
     my $nodis = { no_distro => 1 };
-    my $distros = config_p($config, $project, @$path, 'distributions');
+    my $distros = config_p($config, $project, $options, @$path, 'distributions');
     return () unless $distros;
     my (@res1, @res2, @res3, @res4);
     my $id = project_config($project, 'lsb_release/id', $nodis);
@@ -115,8 +114,8 @@ sub as_array {
 }
 
 sub get_target {
-    my ($project, $path, $target) = @_;
-    my $z = config_p($config, $project, @$path, 'targets', $target);
+    my ($project, $options, $path, $target) = @_;
+    my $z = config_p($config, $project, $options, @$path, 'targets', $target);
     return [] unless $z;
     return [ $target ] if ref $z eq 'HASH';
     return [ map { @{get_target($project, $path, $_)} }
@@ -124,9 +123,9 @@ sub get_target {
 }
 
 sub get_targets {
-    my ($project, $path) = @_;
+    my ($project, $options, $path) = @_;
     my $tmp = $config->{run}{target} ? as_array($config->{run}{target}) : [ 'notarget' ];
-    return [ map { @{get_target($project, $path, $_)} } @$tmp ];
+    return [ map { @{get_target($project, $options, $path, $_)} } @$tmp ];
 }
 
 sub config {
@@ -136,14 +135,14 @@ sub config {
     my $res;
     foreach my $path (@_) {
         my @l;
-        foreach my $t (@{get_targets($project, $path)}) {
-            push @l, map { config_p($_, $project, @$name) }
+        foreach my $t (@{get_targets($project, $options, $path)}) {
+            push @l, map { config_p($_, $project, $options, @$name) }
               match_distro($project, [@$path, 'targets', $t], $name, $options);
-            push @l, config_p($config, $project, @$path, 'targets', $t, @$name);
+            push @l, config_p($config, $project, $options, @$path, 'targets', $t, @$name);
         }
-        push @l, map { config_p($_, $project, @$name) }
+        push @l, map { config_p($_, $project, $options, @$name) }
                 match_distro($project, $path, $name, $options);
-        push @l, config_p($config, $project, @$path, @$name);
+        push @l, config_p($config, $project, $options, @$path, @$name);
         @l = grep { defined $_ } @l;
         push @$res, @l if @l;
     }
