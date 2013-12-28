@@ -33,6 +33,8 @@
 
 - Add input_files_by_name option
 
+- Add the zip option, to create deterministic zip files
+
 
 Version 0.4
 
