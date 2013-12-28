@@ -118,7 +118,7 @@ sub get_target {
     my $z = config_p($config, $project, $options, @$path, 'targets', $target);
     return [] unless $z;
     return [ $target ] if ref $z eq 'HASH';
-    return [ map { @{get_target($project, $path, $_)} }
+    return [ map { @{get_target($project, $options, $path, $_)} }
         (ref $z eq 'ARRAY' ? @$z : ($z)) ];
 }
 
