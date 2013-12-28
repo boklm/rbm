@@ -14,13 +14,13 @@ use Cwd qw(getcwd);
 use IO::CaptureOutput qw(capture_exec);
 
 sub git_describe {
-    my $project = shift;
-    my $git_hash = BURPS::project_config($project, 'git_hash')
+    my ($project, $options) = @_;
+    my $git_hash = BURPS::project_config($project, 'git_hash', $options)
                 || BURPS::exit_error('No git_hash specified');
     my %res;
     $BURPS::config->{projects}{$project}{describe} = {};
     my $old_cwd = getcwd;
-    BURPS::git_clone_fetch_chdir($project);
+    BURPS::git_clone_fetch_chdir($project, $options);
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'describe', '--long', $git_hash);
     if ($success) {
