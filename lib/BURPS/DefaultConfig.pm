@@ -31,13 +31,14 @@ sub git_describe {
 }
 
 sub lsb_release {
-    my ($project) = shift;
+    my ($project, $options) = @_;
+    $options //= {};
     my $distribution = BURPS::project_config($project, 'distribution',
-                                                        {no_distro => 1});
+                                        { %$options, no_distro => 1 });
     if ($distribution) {
         my @distributions = map { @$_ }
                 @{BURPS::project_config($project, 'distributions',
-                        { as_array => 1, no_distro => 1 })};
+                        { %$options, as_array => 1, no_distro => 1 })};
         my ($id, $release) = split '-', $distribution;
         foreach my $d (@distributions) {
             if ($id eq $d->{lsb_release}{id} && $release
