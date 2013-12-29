@@ -73,8 +73,7 @@ sub config_p {
     my ($c, $project, $options, @q) = @_;
     foreach my $p (@q) {
         return undef unless defined $c->{$p};
-        $c->{$p} = $c->{$p}->($project, $options, @_) if ref $c->{$p} eq 'CODE';
-        $c = $c->{$p};
+        $c = ref $c->{$p} eq 'CODE' ? $c->{$p}->($project, $options, @_) : $c->{$p};
     }
     return $c;
 }
