@@ -66,6 +66,10 @@ sub lsb_release {
     return $res;
 }
 
+sub lsb_release_cache {
+    return $BURPS::config->{default}{lsb_release} = lsb_release(@_);
+}
+
 sub get_arch {
     my ($stdout, $stderr, $success, $exit_code) = capture_exec('uname', '-m');
     return "unknown" unless $success;
@@ -239,7 +243,7 @@ OPT_END
 ssh [% GET c('ssh_options') IF c('ssh_options') %] [% GET '-p ' _ c('ssh_port') IF c('ssh_port') %] [% c('ssh_host') %] [% shell_quote(c('exec_cmd')) -%]
 OPT_END
     },
-    lsb_release => \&lsb_release,
+    lsb_release => \&lsb_release_cache,
     distributions => [
         { lsb_release => { id => 'Mageia'}, pkg_type => 'rpm', },
         { lsb_release => { id => 'Fedora'}, pkg_type => 'rpm', },
