@@ -534,6 +534,7 @@ sub input_files {
                 $config->{run}{target} //= $run_save->{target};
                 build_pkg($p, {%$input_file, output_dir => $src_dir});
                 $config->{run} = $run_save;
+                print "Finished build of project $p\n";
             } else {
                 dd $input_file;
                 exit_error "Missing file $name";
