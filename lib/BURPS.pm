@@ -486,12 +486,18 @@ sub is_url {
     $_[0] =~ m/^https?:\/\/.*/;
 }
 
+sub file_in_dir {
+    my ($filename, @dir) = @_;
+    return map { -f "$_/$filename" ? "$_/$filename" : () } @dir;
+}
+
 sub input_files {
     my ($project, $options, $dest_dir) = @_;
     my @res;
     my $input_files = project_config($project, 'input_files', $options,);
     return unless $input_files;
     my $proj_dir = path(project_config($project, 'projects_dir', $options));
+    my $proj_out_dir = path(project_config($project, 'output_dir', $options));
     my $src_dir = "$proj_dir/$project";
     my $old_cwd = getcwd;
     chdir $src_dir || exit_error "cannot chdir to $src_dir";
@@ -509,11 +515,11 @@ sub input_files {
                    undef;
         $input_file->{filename} //= $name;
         exit_error("Missing filename:\n" . pp($input_file)) unless $name;
-        my $fname = "$src_dir/$name";
+        my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
-        if (!-f $fname || $t->('refresh_input')) {
+        if (!$fname || $t->('refresh_input')) {
             if ($t->('content')) {
-                write_file($fname, $t->('content'));
+                write_file("$src_dir/$name", $t->('content'));
             } elsif ($t->('URL')) {
                 urlget($project, $input_file, 1);
             } elsif ($t->('exec')) {
@@ -531,9 +537,11 @@ sub input_files {
                 $config->{run} = $run_save;
             } else {
                 dd $input_file;
-                exit_error "Missing file $name - $fname";
+                exit_error "Missing file $name";
             }
         }
+        ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
+        exit_error "Missing file $name" unless $fname;
         if ($t->('sha256sum')
             && $t->('sha256sum') ne sha256_hex(read_file($fname))) {
             exit_error "Wrong sha256sum for $fname.\n" .
@@ -567,6 +575,7 @@ sub input_files {
                 exit_error "File $name is not signed with a valid key";
             }
         }
+        print "Using file $fname\n";
         copy($fname, "$dest_dir/$name");
         push @res, $name;
     }
