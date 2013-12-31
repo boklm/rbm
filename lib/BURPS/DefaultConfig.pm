@@ -233,16 +233,45 @@ END;
 -%]
 OPT_END
     remote_ssh => {
-        get => <<OPT_END,
-scp [% GET c('scp_options') IF c('scp_options') %] [% GET '-P ' _ c('ssh_port') IF c('ssh_port') %] -r -p [% c('ssh_host') %]:[% c('get_src') %] [% c('get_dst') -%]
-OPT_END
-        put => <<OPT_END,
-scp [% GET c('scp_options') IF c('scp_options') %] [% GET '-P ' _ c('ssh_port') IF c('ssh_port') %] -r -p [% c('put_src') %] [% c('ssh_host') %]:[% c('put_dst') %]
-OPT_END
         exec => <<OPT_END,
 ssh [% GET c('ssh_options') IF c('ssh_options') %] [% GET '-p ' _ c('ssh_port') IF c('ssh_port') %] [% c('ssh_host') %] [% shell_quote(c('exec_cmd')) -%]
 OPT_END
     },
+    remote_get => <<OPT_END,
+[%
+    SET src = shell_quote(c('get_src', { error_if_undef => 1 }));
+    SET dst = shell_quote(c('get_dst', { error_if_undef => 1 }));
+-%]
+#!/bin/sh
+set -e
+mkdir -p [% dst %]
+cd [% dst %]
+if [% c('remote_chroot/exec', { exec_cmd => 'test -f ' _ src }) %]
+then
+        [% c('remote_chroot/exec', { exec_cmd => 'cd \$(dirname ' _ src _ ') && tar -cf - \$(basename ' _ src _ ')' }) %] | tar -xf -
+else
+        [% c('remote_chroot/exec', { exec_cmd => 'cd ' _ src _ ' && tar -cf - .' }) %] | tar -xf -
+fi
+OPT_END
+    remote_put => <<OPT_END,
+[%
+    SET src = shell_quote(c('put_src', { error_if_undef => 1 }));
+    SET dst = shell_quote(c('put_dst', { error_if_undef => 1 }));
+-%]
+#!/bin/sh
+set -e
+if [ -f [% src %] ]
+then
+        echo 'file [% src %]'
+        cd \$(dirname [% src %])
+        echo "dn: \$(dirname [% src %])"
+        echo "bn: \$(basename [% src %])"
+        tar -cf - \$(basename [% src %]) | [% c('remote_chroot/exec', { exec_cmd => 'mkdir -p ' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
+else
+        cd [% src %]
+        tar -cf . | [% c('remote_chroot/exec', { exec_cmd => 'mkdir -p' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
+fi
+OPT_END
     lsb_release => \&lsb_release_cache,
     distributions => [
         { lsb_release => { id => 'Mageia'}, pkg_type => 'rpm', },

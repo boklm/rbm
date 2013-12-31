@@ -636,7 +636,7 @@ sub build_run {
     my $res;
     if ($remote_tmp_src && $remote_tmp_dst) {
         foreach my $file (@cfiles) {
-            my $cmd = project_config($project, "remote/$script_name/put", {
+            my $cmd = project_config($project, "remote_put", {
                     %$options,
                     put_src => "$srcdir/$file",
                     put_dst => $remote_tmp_src,
@@ -654,9 +654,9 @@ sub build_run {
             $error = "Error running $script_name";
             goto EXIT;
         }
-        $cmd = project_config($project, "remote/$script_name/get", {
+        $cmd = project_config($project, "remote_get", {
                 %$options,
-                get_src => "$remote_tmp_dst/*",
+                get_src => $remote_tmp_dst,
                 get_dst => $dest_dir,
             });
         if (run_script($project, $cmd, sub { system(@_) }) != 0) {
