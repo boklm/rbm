@@ -584,6 +584,7 @@ sub input_files {
 
 sub build_run {
     my ($project, $script_name, $options) = @_;
+    $options //= {};
     my $error;
     my $dest_dir = create_dir(path(project_config($project, 'output_dir', $options)));
     valid_project($project);
