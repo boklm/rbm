@@ -237,6 +237,9 @@ OPT_END
 ssh [% GET c('ssh_options') IF c('ssh_options') %] [% GET '-p ' _ c('ssh_port') IF c('ssh_port') %] [% c('ssh_host') %] [% shell_quote(c('exec_cmd')) -%]
 OPT_END
     },
+    remote_chroot => {
+        exec => 'sudo chroot [% shell_quote(c("chroot_path", { error_if_undef => 1 })) %] su - [% shell_quote(c("chroot_user", { error_if_undef => 1 })) %] -c [% shell_quote(c("exec_cmd")) %]',
+    },
     remote_get => <<OPT_END,
 [%
     SET src = shell_quote(c('get_src', { error_if_undef => 1 }));

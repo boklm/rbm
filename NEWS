@@ -35,6 +35,8 @@
 
 - Add the zip option, to create deterministic zip files
 
+- Add the remote_chroot option
+
 
 Version 0.4
 
