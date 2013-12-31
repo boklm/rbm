@@ -654,6 +654,15 @@ sub build_run {
             });
         if (run_script($project, $cmd, sub { system(@_) }) != 0) {
             $error = "Error running $script_name";
+            if (project_config($project, 'debug', $options)) {
+                print STDERR $error, "\nOpening debug shell\n";
+                print STDERR "Warning: build files will be removed when you exit this shell.\n";
+                my $cmd = project_config($project, "remote/$script_name/exec", {
+                        %$options,
+                        exec_cmd => "cd $remote_tmp_src; PS1='debug-$project\$ ' \$SHELL",
+                    });
+                run_script($project, $cmd, sub { system(@_) });
+            }
             goto EXIT;
         }
         $cmd = project_config($project, "remote_get", {
