@@ -287,10 +287,10 @@ sub git_clone_fetch_chdir {
     my ($project, $options) = @_;
     my $clonedir = create_dir(path(project_config($project,
                                 'git_clone_dir', $options)));
+    my $git_url = project_config($project, 'git_url', $options)
+                || exit_error "git_url is undefined";
     if (!chdir path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
-        my $git_url = project_config($project, 'git_url', $options)
-                || exit_error "git_url is undefined";
         if (system('git', 'clone', $git_url, $project) != 0) {
             exit_error "Error cloning $git_url";
         }
@@ -298,6 +298,8 @@ sub git_clone_fetch_chdir {
     }
     if (!$config->{projects}{$project}{fetched}
                 && project_config($project, 'fetch', $options)) {
+        system('git', 'remote', 'set-url', 'origin', $git_url) == 0
+                || exit_error "Error setting git remote";
         system('git', 'checkout', '-q', '--detach') == 0
                 || exit_error "Error running git checkout --detach";
         system('git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*') == 0
