@@ -507,7 +507,7 @@ sub input_files {
             project_config($project, $_[0], {$options ? %$options : (),
                     %$input_file, output_dir => $src_dir});
         };
-        if (!$t->('enable')) {
+        if ($input_file->{enable} && !$t->('enable')) {
             next;
         }
         my $url = $t->('URL');
