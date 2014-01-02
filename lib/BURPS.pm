@@ -582,6 +582,7 @@ sub input_files {
         push @res, $name;
     }
     chdir $old_cwd;
+    return @res;
 }
 
 sub build_run {
