@@ -265,10 +265,7 @@ OPT_END
 set -e
 if [ -f [% src %] ]
 then
-        echo 'file [% src %]'
         cd \$(dirname [% src %])
-        echo "dn: \$(dirname [% src %])"
-        echo "bn: \$(basename [% src %])"
         tar -cf - \$(basename [% src %]) | [% c('remote_chroot/exec', { exec_cmd => 'mkdir -p ' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
 else
         cd [% src %]
