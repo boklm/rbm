@@ -498,7 +498,6 @@ sub input_files {
     my $input_files = project_config($project, 'input_files', $options,);
     return unless $input_files;
     my $proj_dir = path(project_config($project, 'projects_dir', $options));
-    my $proj_out_dir = path(project_config($project, 'output_dir', $options));
     my $src_dir = "$proj_dir/$project";
     my $old_cwd = getcwd;
     chdir $src_dir || exit_error "cannot chdir to $src_dir";
@@ -510,6 +509,9 @@ sub input_files {
         if ($input_file->{enable} && !$t->('enable')) {
             next;
         }
+        my $proj_out_dir = path(project_config(
+                $t->('project') ? $t->('project') : $project,
+                'output_dir', {$options ? %$options : (), %$input_file}));
         my $url = $t->('URL');
         my $name = $t->('filename') ? $t->('filename') :
                    $url ? basename($url) :
@@ -520,7 +522,7 @@ sub input_files {
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
         if (!$fname || $t->('refresh_input')) {
             if ($t->('content')) {
-                write_file("$src_dir/$name", $t->('content'));
+                write_file("$proj_out_dir/$name", $t->('content'));
             } elsif ($t->('URL')) {
                 urlget($project, $input_file, 1);
             } elsif ($t->('exec')) {
@@ -534,7 +536,7 @@ sub input_files {
                 my $run_save = $config->{run};
                 $config->{run} = { target => $input_file->{target} };
                 $config->{run}{target} //= $run_save->{target};
-                build_pkg($p, {%$input_file, output_dir => $src_dir});
+                build_pkg($p, {%$input_file, output_dir => $proj_out_dir});
                 $config->{run} = $run_save;
                 print "Finished build of project $p\n";
             } else {
