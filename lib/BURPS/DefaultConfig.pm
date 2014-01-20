@@ -281,7 +281,7 @@ OPT_END
         { lsb_release => { id => 'Debian'}, pkg_type => 'deb', },
         { lsb_release => { id => 'Ubuntu'}, pkg_type => 'deb', },
     ],
-    urlget => 'wget -O[% shell_quote(c("filename")) %] [% shell_quote(c("URL")) %]',
+    urlget => 'wget -O[% shell_quote(dest_dir _ "/" _ c("filename")) %] [% shell_quote(c("URL")) %]',
     sig_ext => [ qw(gpg asc sig) ],
     enable => 1,
     tar    => <<TAR_END,
