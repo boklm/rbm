@@ -124,6 +124,7 @@ sub get_target {
 sub get_targets {
     my ($project, $options, $path) = @_;
     my $tmp = $config->{run}{target} ? as_array($config->{run}{target}) : [ 'notarget' ];
+    $tmp = [ map { m/^$project:(.+)$/ ? $1 : $_ } @$tmp ];
     return [ map { @{get_target($project, $options, $path, $_)} } @$tmp ];
 }
 
