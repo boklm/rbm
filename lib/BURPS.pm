@@ -72,6 +72,7 @@ sub path {
 sub config_p {
     my ($c, $project, $options, @q) = @_;
     foreach my $p (@q) {
+        return undef unless ref $c eq 'HASH';
         return undef unless defined $c->{$p};
         $c = ref $c->{$p} eq 'CODE' ? $c->{$p}->($project, $options, @_) : $c->{$p};
     }
