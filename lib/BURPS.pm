@@ -114,19 +114,26 @@ sub as_array {
 }
 
 sub get_target {
-    my ($project, $options, $path, $target) = @_;
-    my $z = config_p($config, $project, $options, @$path, 'targets', $target);
-    return [] unless $z;
-    return [ $target ] if ref $z eq 'HASH';
-    return [ map { @{get_target($project, $options, $path, $_)} }
-        (ref $z eq 'ARRAY' ? @$z : ($z)) ];
+    my ($project, $options, $paths, $target) = @_;
+    my @res;
+    foreach my $path (@$paths) {
+        my $z = config_p($config, $project, $options, @$path, 'targets', $target);
+        next unless $z;
+        if (ref $z eq 'HASH') {
+            push @res, $target unless grep { $_ eq $target } @res;
+            next;
+        }
+        my @z = $z eq 'ARRAY' ? @$z : ($z);
+        push @res, map { @{get_target($project, $options, $paths, $_)} } @z;
+    }
+    return \@res;
 }
 
 sub get_targets {
-    my ($project, $options, $path) = @_;
+    my ($project, $options, $paths) = @_;
     my $tmp = $config->{run}{target} ? as_array($config->{run}{target}) : [ 'notarget' ];
     $tmp = [ map { m/^$project:(.+)$/ ? $1 : $_ } @$tmp ];
-    return [ map { @{get_target($project, $options, $path, $_)} } @$tmp ];
+    return [ map { @{get_target($project, $options, $paths, $_)} } @$tmp ];
 }
 
 sub config {
@@ -134,9 +141,10 @@ sub config {
     my $name = shift;
     my $options = shift;
     my $res;
+    my @targets = @{get_targets($project, $options, \@_)};
     foreach my $path (@_) {
         my @l;
-        foreach my $t (@{get_targets($project, $options, $path)}) {
+        foreach my $t (@targets) {
             push @l, map { config_p($_, $project, $options, @$name) }
               match_distro($project, [@$path, 'targets', $t], $name, $options);
             push @l, config_p($config, $project, $options, @$path, 'targets', $t, @$name);
