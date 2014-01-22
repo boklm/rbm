@@ -342,7 +342,7 @@ sub execute {
     my $old_cwd = getcwd;
     if (project_config($project, 'git_url', $options)) {
         my $git_hash = project_config($project, 'git_hash', $options)
-                || exit_error 'No git_hash specified';
+                || exit_error "No git_hash specified for project $project";
         git_clone_fetch_chdir($project, $options);
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $git_hash);
@@ -372,7 +372,7 @@ sub maketar {
     valid_project($project);
     return undef unless project_config($project, 'git_url', $options);
     my $git_hash = project_config($project, 'git_hash', $options)
-        || exit_error 'No git_hash specified';
+        || exit_error "No git_hash specified for project $project";
     my $old_cwd = getcwd;
     git_clone_fetch_chdir($project);
     my $version = project_config($project, 'version', $options);
