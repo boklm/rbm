@@ -41,6 +41,8 @@
 
 - Add a syntax to set a target only for a specific project
 
+- Add a sha256 function in templates
+
 
 Version 0.4
 

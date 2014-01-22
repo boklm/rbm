@@ -445,6 +445,7 @@ sub process_template {
         tmpl       => sub { process_template($project, $_[0], $dest_dir) },
         shell_quote => \&shell_quote,
         versioncmp  => \&versioncmp,
+        sha256      => \&sha256_hex,
     };
     my $output;
     $template->process(\$tmpl, $vars, \$output, binmode => ':utf8')
