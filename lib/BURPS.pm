@@ -42,6 +42,7 @@ sub load_config {
     $config = load_config_file($config_file);
     $config->{default} = \%default_config;
     $config->{basedir} = dirname($config_file);
+    $config->{step} = 'init';
     $config->{opt} = {};
     my $pdir = $config->{projects_dir} || $config->{default}{projects_dir};
     foreach my $p (glob path($pdir) . '/*') {
@@ -600,7 +601,9 @@ sub input_files {
 
 sub build_run {
     my ($project, $script_name, $options) = @_;
-    $options = {$options ? %$options : (), action => $script_name};
+    my $old_step = $config->{step};
+    $config->{step} = $script_name;
+    $options //= {};
     my $error;
     my $dest_dir = create_dir(path(project_config($project, 'output_dir', $options)));
     valid_project($project);
@@ -702,6 +705,7 @@ sub build_run {
         }
     }
     EXIT:
+    $config->{step} = $old_step;
     chdir $old_cwd;
     exit_error $error if $error;
 }

@@ -37,7 +37,7 @@
 
 - Add the remote_chroot option
 
-- Add the action option
+- Add the step option
 
 - Add a syntax to set a target only for a specific project
 
