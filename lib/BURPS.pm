@@ -124,7 +124,7 @@ sub get_target {
             push @res, $target unless grep { $_ eq $target } @res;
             next;
         }
-        my @z = $z eq 'ARRAY' ? @$z : ($z);
+        my @z = ref $z eq 'ARRAY' ? (@{$z}) : ($z);
         push @res, map { @{get_target($project, $options, $paths, $_)} } @z;
     }
     return \@res;
