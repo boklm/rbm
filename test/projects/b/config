@@ -1,0 +1,4 @@
+option_a: 'project b'
+targets:
+  target_a:
+    option_a: 't a'

@@ -1,0 +1,8 @@
+project_a: a
+tmpl_c1: '[% c("project_a") %]'
+tmpl_pc1: '[% pc("b", "option_a") %]'
+targets:
+  target_b:
+    option_a: b
+  target_c:
+    option_a: c
