@@ -43,6 +43,7 @@ MAN7_ASC += burps_templates.asc
 MAN7_ASC += burps_remote.asc
 MAN7_ASC += burps_distributions.asc
 MAN7_ASC += burps_targets.asc
+MAN7_ASC += burps_steps.asc
 MAN7_ASC += burps_input_files.asc
 MAN7_ASC += burps_cli.asc
 

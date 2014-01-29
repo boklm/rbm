@@ -118,14 +118,17 @@ sub get_target {
     my ($project, $options, $paths, $target) = @_;
     my @res;
     foreach my $path (@$paths) {
-        my $z = config_p($config, $project, $options, @$path, 'targets', $target);
-        next unless $z;
-        if (ref $z eq 'HASH') {
-            push @res, $target unless grep { $_ eq $target } @res;
-            next;
+        foreach my $step ([ 'steps', $config->{step} ], []) {
+            my $z = config_p($config, $project, $options, @$path, @$step,
+                             'targets', $target);
+            next unless $z;
+            if (ref $z eq 'HASH') {
+                push @res, $target unless grep { $_ eq $target } @res;
+                next;
+            }
+            my @z = ref $z eq 'ARRAY' ? (@{$z}) : ($z);
+            push @res, map { @{get_target($project, $options, $paths, $_)} } @z;
         }
-        my @z = ref $z eq 'ARRAY' ? (@{$z}) : ($z);
-        push @res, map { @{get_target($project, $options, $paths, $_)} } @z;
     }
     return \@res;
 }
@@ -137,19 +140,43 @@ sub get_targets {
     return [ map { @{get_target($project, $options, $paths, $_)} } @$tmp ];
 }
 
+sub get_step {
+    my ($project, $options, $step, $paths) = @_;
+    foreach my $path (@$paths) {
+        my $z = config_p($config, $project, $options, @$path, 'steps', $step);
+        next unless $z;
+        return $step if ref $z;
+        return get_step($project, $options, $z, $paths);
+    }
+    return $step;
+}
+
 sub config {
     my $project = shift;
     my $name = shift;
     my $options = shift;
     my $res;
     my @targets = @{get_targets($project, $options, \@_)};
+    my @step = ('steps', get_step($project, $options, $config->{step}, \@_));
     foreach my $path (@_) {
         my @l;
+        # 1st priority: targets + step matching
+        foreach my $t (@targets) {
+            push @l, map { config_p($_, $project, $options, @$name) }
+              match_distro($project, [@$path, @step, 'targets', $t], $name, $options);
+            push @l, config_p($config, $project, $options, @$path, @step, 'targets', $t, @$name);
+        }
+        # 2nd priority: step maching
+        push @l, map { config_p($_, $project, $options, @$name) }
+                match_distro($project, [@$path, @step], $name, $options);
+        push @l, config_p($config, $project, $options, @$path, @step, @$name);
+        # 3rd priority: target matching
         foreach my $t (@targets) {
             push @l, map { config_p($_, $project, $options, @$name) }
               match_distro($project, [@$path, 'targets', $t], $name, $options);
             push @l, config_p($config, $project, $options, @$path, 'targets', $t, @$name);
         }
+        # last priority: no target and no step matching
         push @l, map { config_p($_, $project, $options, @$name) }
                 match_distro($project, $path, $name, $options);
         push @l, config_p($config, $project, $options, @$path, @$name);
@@ -433,10 +460,15 @@ sub process_template {
         c          => sub { project_config($project, @_) },
         pc         => sub {
             my $run_save = $config->{run};
+            my $step_save = $config->{step};
+            if ($_[2] && $_[2]->{step}) {
+                $config->{step} = $_[2]->{step};
+            }
             $config->{run} = { target => $_[2]->{target} };
             $config->{run}{target} //= $run_save->{target};
             my $res = project_config(@_);
             $config->{run} = $run_save;
+            $config->{step} = $step_save;
             return $res;
         },
         dest_dir   => $dest_dir,

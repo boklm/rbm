@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Slurp;
-use Test::More tests => 23;
+use Test::More tests => 31;
 use lib 'lib/';
 
 sub set_target {
@@ -10,6 +10,10 @@ sub set_target {
 
 sub set_distribution {
     $BURPS::config->{run}{distribution} = $_[0];
+}
+
+sub set_step {
+    $BURPS::config->{step} = $_[0];
 }
 
 BEGIN { use_ok('BURPS') };
@@ -71,12 +75,43 @@ is(BURPS::project_config('a', 'tmpl_pc1'), 't a', 'proj target - 2');
 set_target();
 is(BURPS::project_config('a', 'option_d/a'), 'A a', 'perl sub');
 # ---
+set_step('build');
+is(BURPS::project_config('c', 'option_e'), 'build e', 'step config');
+# ---
+set_step('redirect');
+is(BURPS::project_config('c', 'option_e'), 'build e', 'redirect step config');
+# ---
+set_target('version_2');
+set_step('build');
+is(BURPS::project_config('c', 'option_e'), 'build e - v2', 'step + target config');
+# ---
+set_target('set_distro_a');
+set_step('init');
+is(BURPS::project_config('c', 'option_e'), 'distro_a - e', 'distro config');
+# ---
+set_target('set_distro_a');
+set_step('build');
+is(BURPS::project_config('c', 'option_e'), 'distro_a - build e', 'distro + step config');
+# ---
+set_target('set_distro_a', 'version_2');
+set_step('build');
+is(BURPS::project_config('c', 'option_e'), 'distro_a - build e - v2', 'distro + step + target config');
+# ---
+set_step('srpm');
+set_target();
+is(BURPS::project_config('c', 'option_rpm'), '1', 'srpm step');
+# ---
+set_step('deb-src');
+set_target();
+is(BURPS::project_config('c', 'option_deb'), '1', 'deb-src step');
+# ---
+set_step('init');
 set_target('version_1');
 unlink 'out/c-1';
 BURPS::build_run('c', 'build');
-is(read_file('out/c-1'), "1\n", 'build - 1');
+is(read_file('out/c-1'), "1-build e\n", 'build + steps config - 1');
 # ---
 set_target('version_2');
 unlink 'out/c-2';
 BURPS::build_run('c', 'build');
-is(read_file('out/c-2'), "2\n", 'build - 2');
+is(read_file('out/c-2'), "2-build e - v2\n", 'build + steps and targets config');

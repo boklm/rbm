@@ -300,6 +300,10 @@ find [% src.join(' ') %] | sort | \
 ZIP_END
     arch   => \&get_arch,
     input_files_by_name => \&input_files_by_name,
+    steps => {
+        srpm => 'rpm',
+        'deb-src' => 'deb',
+    },
 );
 
 1;

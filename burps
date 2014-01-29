@@ -94,10 +94,14 @@ sub set_options {
                      compress_tar=s pkg-rel=s timestamp=i fetch!
                      gpg-keyring=s gpg-keyring-dir=s gpg-args=s gpg-bin=s
                      sysconf-file=s debsign-keyid=s use-pbuilder!
-                     target=s@ publish-src-dir=s debug!);
+                     step=s target=s@ publish-src-dir=s debug!);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
     foreach my $k (keys %val) {
+        if ($k eq 'step') {
+            $BURPS::config->{step} = $val{$k};
+            next;
+        }
         my $l = $k;
         $l =~ s/-/_/g;
         $BURPS::config->{run}{$l} = $val{$k};

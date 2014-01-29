@@ -43,6 +43,8 @@
 
 - Add a sha256 function in templates
 
+- Add support for config based on current step
+
 
 Version 0.4
 
