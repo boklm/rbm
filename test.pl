@@ -21,97 +21,195 @@ chdir 'test';
 BURPS::load_config;
 ok($BURPS::config, 'load config');
 
-# ---
-is(BURPS::project_config('a', 'option_a'), 'a', 'simple');
-# ---
-is(BURPS::project_config('a', 'project_a'), 'a', 'project');
-# ---
-set_target('target_a');
-is(BURPS::project_config('a', 'option_a'), 'target a', 'target');
-# ---
-set_target('target_b');
-is(BURPS::project_config('a', 'option_a'), 'b', 'target project');
-# ---
-set_target('target_a', 'target_b', 'target_c');
-is(BURPS::project_config('a', 'option_a'), 'b', 'triple target - 1');
-# ---
-set_target('target_c', 'target_a', 'target_b');
-is(BURPS::project_config('a', 'option_a'), 'c', 'triple target - 2');
-# ---
-set_target('target_d');
-is(BURPS::project_config('a', 'option_a'), 'target a', 'target redirect - 1');
-# ---
-set_target('target_e');
-is(BURPS::project_config('a', 'option_a'), 'b', 'target redirect - 2');
-# ---
-set_target('target_f');
-is(BURPS::project_config('a', 'option_a'), 'c', 'target redirect - 3');
-# ---
-set_target('set_distro_a');
-is(BURPS::project_config('a', 'option_b'), 'b_a', 'distro - 1');
-# ---
-set_target('set_distro_b');
-is(BURPS::project_config('a', 'option_b'), 'b_b', 'distro - 2');
-# ---
-set_target('set_distro_a', 'target_g');
-is(BURPS::project_config('a', 'option_c'), 'c_a', 'distro + target - 1');
-# ---
-set_target('set_distro_b', 'target_g');
-is(BURPS::project_config('a', 'option_c'), 'c_b', 'distro + target - 2');
-# ---
-set_target();
-is(BURPS::project_config('a', 'tmpl_c1'), 'a', 'template func c');
-# ---
-is(BURPS::project_config('a', 'tmpl_pc1'), 'project b', 'template func pc');
-# ---
-set_target('target_a');
-is(BURPS::project_config('a', 'tmpl_pc1'), 't a', 'template func pc + target');
-# ---
-set_target('b:target_a');
-is(BURPS::project_config('a', 'option_a'), 'a', 'proj target - 1');
-# ---
-is(BURPS::project_config('a', 'tmpl_pc1'), 't a', 'proj target - 2');
-# ---
-set_target();
-is(BURPS::project_config('a', 'option_d/a'), 'A a', 'perl sub');
-# ---
-set_step('build');
-is(BURPS::project_config('c', 'option_e'), 'build e', 'step config');
-# ---
-set_step('redirect');
-is(BURPS::project_config('c', 'option_e'), 'build e', 'redirect step config');
-# ---
-set_target('version_2');
-set_step('build');
-is(BURPS::project_config('c', 'option_e'), 'build e - v2', 'step + target config');
-# ---
-set_target('set_distro_a');
-set_step('init');
-is(BURPS::project_config('c', 'option_e'), 'distro_a - e', 'distro config');
-# ---
-set_target('set_distro_a');
-set_step('build');
-is(BURPS::project_config('c', 'option_e'), 'distro_a - build e', 'distro + step config');
-# ---
-set_target('set_distro_a', 'version_2');
-set_step('build');
-is(BURPS::project_config('c', 'option_e'), 'distro_a - build e - v2', 'distro + step + target config');
-# ---
-set_step('srpm');
-set_target();
-is(BURPS::project_config('c', 'option_rpm'), '1', 'srpm step');
-# ---
-set_step('deb-src');
-set_target();
-is(BURPS::project_config('c', 'option_deb'), '1', 'deb-src step');
-# ---
-set_step('init');
-set_target('version_1');
-unlink 'out/c-1';
-BURPS::build_run('c', 'build');
-is(read_file('out/c-1'), "1-build e\n", 'build + steps config - 1');
-# ---
-set_target('version_2');
-unlink 'out/c-2';
-BURPS::build_run('c', 'build');
-is(read_file('out/c-2'), "2-build e - v2\n", 'build + steps and targets config');
+my @tests = (
+    {
+        name => 'simple',
+        config => [ 'a', 'option_a' ],
+        expected => 'a',
+    },
+    {
+        name => 'project',
+        config => [ 'a', 'project_a' ],
+        expected => 'a',
+    },
+    {
+        name => 'target',
+        target => ['target_a'],
+        config => [ 'a', 'option_a' ],
+        expected => 'target a',
+    },
+    {
+        name => 'target project',
+        target => ['target_b'],
+        config => [ 'a', 'option_a' ],
+        expected => 'b',
+    },
+    {
+        name => 'triple target - 1',
+        target => [ 'target_a', 'target_b', 'target_c' ],
+        config => [ 'a', 'option_a' ],
+        expected => 'b',
+    },
+    {
+        name => 'triple target - 2',
+        target => [ 'target_c', 'target_a', 'target_b' ],
+        config => [ 'a', 'option_a' ],
+        expected => 'c',
+    },
+    {
+        name => 'target redirect - 1',
+        target => [ 'target_d' ],
+        config => [ 'a', 'option_a' ],
+        expected => 'target a',
+    },
+    {
+        name => 'target redirect - 2',
+        target => [ 'target_e' ],
+        config => [ 'a', 'option_a' ],
+        expected => 'b',
+    },
+    {
+        name => 'target redirect - 3',
+        target => [ 'target_f' ],
+        config => [ 'a', 'option_a' ],
+        expected => 'c',
+    },
+    {
+        name => 'distro - 1',
+        target => [ 'set_distro_a' ],
+        config => [ 'a', 'option_b' ],
+        expected => 'b_a',
+    },
+    {
+        name => 'distro - 2',
+        target => [ 'set_distro_b' ],
+        config => [ 'a', 'option_b' ],
+        expected => 'b_b',
+    },
+    {
+        name => 'distro + target - 1',
+        target => [ 'set_distro_a', 'target_g' ],
+        config => [ 'a', 'option_c' ],
+        expected => 'c_a',
+    },
+    {
+        name => 'distro + target - 2',
+        target => [ 'set_distro_b', 'target_g' ],
+        config => [ 'a', 'option_c' ],
+        expected => 'c_b',
+    },
+    {
+        name => 'template func c',
+        config => [ 'a', 'tmpl_c1' ],
+        expected => 'a',
+    },
+    {
+        name => 'template func pc',
+        config => [ 'a', 'tmpl_pc1' ],
+        expected => 'project b',
+    },
+    {
+        name => 'template func pc + target',
+        target => [ 'target_a' ],
+        config => [ 'a', 'tmpl_pc1' ],
+        expected => 't a',
+    },
+    {
+        name => 'proj target - 1',
+        target => [ 'b:target_a' ],
+        config => [ 'a', 'option_a' ],
+        expected => 'a',
+    },
+    {
+        name => 'proj target - 2',
+        target => [ 'b:target_a' ],
+        config => [ 'a', 'tmpl_pc1' ],
+        expected => 't a',
+    },
+    {
+        name => 'perl sub',
+        config => [ 'a', 'option_d/a' ],
+        expected => 'A a',
+    },
+    {
+        name => 'step config',
+        step => 'build',
+        config => [ 'c', 'option_e' ],
+        expected => 'build e',
+    },
+    {
+        name => 'redirect step config',
+        step => 'redirect',
+        config => [ 'c', 'option_e' ],
+        expected => 'build e',
+    },
+    {
+        name => 'step + target config',
+        step => 'build',
+        target => [ 'version_2' ],
+        config => [ 'c', 'option_e' ],
+        expected => 'build e - v2',
+    },
+    {
+        name => 'distro config',
+        target => [ 'set_distro_a' ],
+        config => [ 'c', 'option_e' ],
+        expected => 'distro_a - e',
+    },
+    {
+        name => 'distro + step config',
+        target => [ 'set_distro_a' ],
+        step => 'build',
+        config => [ 'c', 'option_e' ],
+        expected => 'distro_a - build e',
+    },
+    {
+        name => 'distro + step + target config',
+        target => [ 'set_distro_a', 'version_2' ],
+        step => 'build',
+        config => [ 'c', 'option_e' ],
+        expected => 'distro_a - build e - v2',
+    },
+    {
+        name => 'srpm step',
+        step => 'srpm',
+        config => [ 'c', 'option_rpm' ],
+        expected => '1',
+    },
+    {
+        name => 'deb-src step',
+        step => 'deb-src',
+        config => [ 'c', 'option_deb' ],
+        expected => '1',
+    },
+    {
+        name => 'build + steps config - 1',
+        target => [ 'version_1' ],
+        build => [ 'c', 'build' ],
+        files => { 'out/c-1' => "1-build e\n" },
+    },
+    {
+        name => 'build + steps and targets config',
+        target => [ 'version_2' ],
+        build => [ 'c', 'build' ],
+        files => { 'out/c-2' => "2-build e - v2\n" },
+    },
+);
+
+foreach my $test (@tests) {
+    set_target($test->{target} ? @{$test->{target}} : ());
+    set_step($test->{step} ? $test->{step} : 'init');
+    if ($test->{config}) {
+        is(
+            BURPS::project_config(@{$test->{config}}),
+            $test->{expected},
+            $test->{name}
+        );
+    }
+    if ($test->{build}) {
+        unlink keys %{$test->{files}};
+        BURPS::build_run(@{$test->{build}});
+        my $res = grep { read_file($_) ne $test->{files}{$_} } keys %{$test->{files}};
+        ok(!$res, $test->{name});
+    }
+}
