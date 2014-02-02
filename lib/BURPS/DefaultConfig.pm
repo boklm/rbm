@@ -232,14 +232,10 @@ ELSE;
 END;
 -%]
 OPT_END
-    remote_ssh => {
-        exec => <<OPT_END,
+    remote_ssh => <<OPT_END,
 ssh [% GET c('ssh_options') IF c('ssh_options') %] [% GET '-p ' _ c('ssh_port') IF c('ssh_port') %] [% c('ssh_host') %] [% shell_quote(c('exec_cmd')) -%]
 OPT_END
-    },
-    remote_chroot => {
-        exec => 'sudo chroot [% shell_quote(c("chroot_path", { error_if_undef => 1 })) %] su - [% shell_quote(c("chroot_user", { error_if_undef => 1 })) %] -c [% shell_quote(c("exec_cmd")) %]',
-    },
+    remote_chroot => 'sudo chroot [% shell_quote(c("chroot_path", { error_if_undef => 1 })) %] su - [% shell_quote(c("chroot_user", { error_if_undef => 1 })) %] -c [% shell_quote(c("exec_cmd")) %]',
     remote_get => <<OPT_END,
 [%
     SET src = shell_quote(c('get_src', { error_if_undef => 1 }));
@@ -249,11 +245,11 @@ OPT_END
 set -e
 mkdir -p [% dst %]
 cd [% dst %]
-if [% c('remote_chroot/exec', { exec_cmd => 'test -f ' _ src }) %]
+if [% c('remote_chroot', { exec_cmd => 'test -f ' _ src }) %]
 then
-        [% c('remote_chroot/exec', { exec_cmd => 'cd \$(dirname ' _ src _ ') && tar -cf - \$(basename ' _ src _ ')' }) %] | tar -xf -
+        [% c('remote_chroot', { exec_cmd => 'cd \$(dirname ' _ src _ ') && tar -cf - \$(basename ' _ src _ ')' }) %] | tar -xf -
 else
-        [% c('remote_chroot/exec', { exec_cmd => 'cd ' _ src _ ' && tar -cf - .' }) %] | tar -xf -
+        [% c('remote_chroot', { exec_cmd => 'cd ' _ src _ ' && tar -cf - .' }) %] | tar -xf -
 fi
 OPT_END
     remote_put => <<OPT_END,
@@ -266,10 +262,10 @@ set -e
 if [ -f [% src %] ]
 then
         cd \$(dirname [% src %])
-        tar -cf - \$(basename [% src %]) | [% c('remote_chroot/exec', { exec_cmd => 'mkdir -p ' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
+        tar -cf - \$(basename [% src %]) | [% c('remote_chroot', { exec_cmd => 'mkdir -p ' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
 else
         cd [% src %]
-        tar -cf . | [% c('remote_chroot/exec', { exec_cmd => 'mkdir -p' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
+        tar -cf . | [% c('remote_chroot', { exec_cmd => 'mkdir -p' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
 fi
 OPT_END
     lsb_release => \&lsb_release_cache,

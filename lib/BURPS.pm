@@ -655,12 +655,12 @@ sub build_run {
         push @cfiles, input_files($project, $options, $srcdir);
     }
     my ($remote_tmp_src, $remote_tmp_dst, $build_script);
-    if (project_config($project, "remote/$script_name", $options)) {
+    if (project_config($project, "remote_exec", $options)) {
         foreach my $remote_tmp ($remote_tmp_src, $remote_tmp_dst) {
-            my $cmd = project_config($project, "remote/$script_name/exec", {
+            my $cmd = project_config($project, "remote_exec", {
                     %$options,
                     exec_cmd => project_config($project,
-                        "remote/$script_name/mktmpdir", $options) || 'mktemp -d',
+                        "remote_mktemp", $options) || 'mktemp -d',
                 });
             my ($stdout, $stderr, $success, $exit_code)
                 = run_script($project, $cmd, \&capture_exec);
@@ -697,7 +697,7 @@ sub build_run {
                 goto EXIT;
             }
         }
-        my $cmd = project_config($project, "remote/$script_name/exec", {
+        my $cmd = project_config($project, "remote_exec", {
                 %$options,
                 exec_cmd => "cd $remote_tmp_src; ./build",
             });
@@ -706,7 +706,7 @@ sub build_run {
             if (project_config($project, 'debug', $options)) {
                 print STDERR $error, "\nOpening debug shell\n";
                 print STDERR "Warning: build files will be removed when you exit this shell.\n";
-                my $cmd = project_config($project, "remote/$script_name/exec", {
+                my $cmd = project_config($project, "remote_exec", {
                         %$options,
                         exec_cmd => "cd $remote_tmp_src; PS1='debug-$project\$ ' \$SHELL",
                     });
@@ -722,7 +722,7 @@ sub build_run {
         if (run_script($project, $cmd, sub { system(@_) }) != 0) {
             $error = "Error downloading build result";
         }
-        run_script($project, project_config($project, "remote/$script_name/exec", {
+        run_script($project, project_config($project, "remote_exec", {
                 %$options,
                 exec_cmd => "rm -Rf $remote_tmp_src $remote_tmp_dst",
             }), \&capture_exec);

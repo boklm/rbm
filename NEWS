@@ -45,6 +45,10 @@
 
 - Add support for config based on current step
 
+- The remote/[script_name]/exec option is replaced by the remote_exec
+  option. With the addition of steps configuration, it becomes useless
+  to have per step exec option.
+
 
 Version 0.4
 
