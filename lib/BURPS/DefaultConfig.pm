@@ -292,7 +292,7 @@ TAR_END
 find [% src.join(' ') %] -executable -exec chmod 700 {} \\;
 find [% src.join(' ') %] ! -executable -exec chmod 600 {} \\;
 find [% src.join(' ') %] | sort | \
-        zip -@ -X [% c('zip_args', { error_if_undef => 1 }) %]
+        zip -q -@ -X [% c('zip_args', { error_if_undef => 1 }) %]
 ZIP_END
     arch   => \&get_arch,
     input_files_by_name => \&input_files_by_name,
