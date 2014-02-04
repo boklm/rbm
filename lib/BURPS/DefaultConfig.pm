@@ -233,9 +233,17 @@ END;
 -%]
 OPT_END
     remote_ssh => <<OPT_END,
-ssh [% GET c('ssh_options') IF c('ssh_options') %] [% GET '-p ' _ c('ssh_port') IF c('ssh_port') %] [% c('ssh_host') %] [% shell_quote(c('exec_cmd')) -%]
+[%-
+    ssh_user = c('exec_as_root') ? '-l root' : '';
+-%]
+ssh [% GET c('ssh_options') IF c('ssh_options') %] [% ssh_user %] [% GET '-p ' _ c('ssh_port') IF c('ssh_port') %] [% c('ssh_host') %] [% shell_quote(c('exec_cmd')) -%]
 OPT_END
-    remote_chroot => 'sudo chroot [% shell_quote(c("chroot_path", { error_if_undef => 1 })) %] su - [% shell_quote(c("chroot_user", { error_if_undef => 1 })) %] -c [% shell_quote(c("exec_cmd")) %]',
+    remote_chroot => <<OPT_END,
+[%-
+    chroot_user = c('exec_as_root') ? '' : shell_quote(c("chroot_user", { error_if_undef => 1 }));
+-%]
+sudo -- chroot [% shell_quote(c("chroot_path", { error_if_undef => 1 })) %] su - [% chroot_user %] -c [% shell_quote(c("exec_cmd")) -%]
+OPT_END
     remote_get => <<OPT_END,
 [%
     SET src = shell_quote(c('get_src', { error_if_undef => 1 }));

@@ -49,6 +49,9 @@
   option. With the addition of steps configuration, it becomes useless
   to have per step exec option.
 
+- Add support for pre and post scripts, to be run as root. Those scripts
+  can be used to install/remove build dependencies.
+
 
 Version 0.4
 

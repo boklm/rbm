@@ -641,26 +641,30 @@ sub build_run {
     valid_project($project);
     my $old_cwd = getcwd;
     my $srcdir = project_config($project, 'build_srcdir', $options);
+    my $use_srcdir = $srcdir;
     my $tmpdir = File::Temp->newdir(project_config($project, 'tmp_dir', $options)
                                 . '/burps-XXXXX');
     my @cfiles;
-    if ($srcdir) {
+    if ($use_srcdir) {
         @cfiles = ($srcdir);
     } else {
         $srcdir = $tmpdir->dirname;
-        push @cfiles, 'build';
         my $tarfile = maketar($project, $options, $srcdir);
         push @cfiles, $tarfile if $tarfile;
         push @cfiles, copy_files($project, $srcdir);
         push @cfiles, input_files($project, $options, $srcdir);
     }
-    my ($remote_tmp_src, $remote_tmp_dst, $build_script);
+    my ($remote_tmp_src, $remote_tmp_dst, %build_script);
+    my @scripts = ('pre', $script_name, 'post');
+    my %scripts_root = ( pre => 1, post => 1);
     if (project_config($project, "remote_exec", $options)) {
         foreach my $remote_tmp ($remote_tmp_src, $remote_tmp_dst) {
             my $cmd = project_config($project, "remote_exec", {
                     %$options,
                     exec_cmd => project_config($project,
                         "remote_mktemp", $options) || 'mktemp -d',
+                    exec_name => 'mktemp',
+                    exec_as_root => 0,
                 });
             my ($stdout, $stderr, $success, $exit_code)
                 = run_script($project, $cmd, \&capture_exec);
@@ -670,20 +674,29 @@ sub build_run {
             }
             $remote_tmp = (split("\n", $stdout))[0];
         }
-        $build_script = project_config($project, $script_name, {
-                %$options,
-                output_dir => $remote_tmp_dst,
-            });
+        my $o = {
+            %$options,
+            output_dir => $remote_tmp_dst,
+        };
+        foreach my $s (@scripts) {
+            $build_script{$s} = project_config($project, $s, $o);
+        }
     } else {
-        $build_script = project_config($project, $script_name, $options);
+        foreach my $s (@scripts) {
+            $build_script{$s} = project_config($project, $s, $options);
+        }
     }
-    if (!$build_script) {
+    if (!$build_script{$script_name}) {
         $error = "Missing $script_name config";
         goto EXIT;
     }
-    write_file("$srcdir/build", $build_script);
+    @scripts = grep { $build_script{$_} } @scripts;
+    push @cfiles, @scripts unless $use_srcdir;
+    foreach my $s (@scripts) {
+        write_file("$srcdir/$s", $build_script{$s});
+        chmod 0700, "$srcdir/$s";
+    }
     chdir $srcdir;
-    chmod 0700, 'build';
     my $res;
     if ($remote_tmp_src && $remote_tmp_dst) {
         foreach my $file (@cfiles) {
@@ -691,33 +704,43 @@ sub build_run {
                     %$options,
                     put_src => "$srcdir/$file",
                     put_dst => $remote_tmp_src,
+                    exec_name => 'put',
+                    exec_as_root => 0,
                 });
             if (run_script($project, $cmd, sub { system(@_) }) != 0) {
                 $error = "Error uploading $file";
                 goto EXIT;
             }
         }
-        my $cmd = project_config($project, "remote_exec", {
-                %$options,
-                exec_cmd => "cd $remote_tmp_src; ./build",
-            });
-        if (run_script($project, $cmd, sub { system(@_) }) != 0) {
-            $error = "Error running $script_name";
-            if (project_config($project, 'debug', $options)) {
-                print STDERR $error, "\nOpening debug shell\n";
-                print STDERR "Warning: build files will be removed when you exit this shell.\n";
-                my $cmd = project_config($project, "remote_exec", {
-                        %$options,
-                        exec_cmd => "cd $remote_tmp_src; PS1='debug-$project\$ ' \$SHELL",
-                    });
-                run_script($project, $cmd, sub { system(@_) });
+        foreach my $s (@scripts) {
+            my $cmd = project_config($project, "remote_exec", {
+                    %$options,
+                    exec_cmd => "cd $remote_tmp_src; ./$s",
+                    exec_name => $s,
+                    exec_as_root => $scripts_root{$s},
+                });
+            if (run_script($project, $cmd, sub { system(@_) }) != 0) {
+                $error = "Error running $script_name";
+                if (project_config($project, 'debug', $options)) {
+                    print STDERR $error, "\nOpening debug shell\n";
+                    print STDERR "Warning: build files will be removed when you exit this shell.\n";
+                    my $cmd = project_config($project, "remote_exec", {
+                            %$options,
+                            exec_cmd => "cd $remote_tmp_src; PS1='debug-$project\$ ' \$SHELL",
+                            exec_name => "debug-$s",
+                            exec_as_root => $scripts_root{$s},
+                        });
+                    run_script($project, $cmd, sub { system(@_) });
+                }
+                goto EXIT;
             }
-            goto EXIT;
         }
-        $cmd = project_config($project, "remote_get", {
+        my $cmd = project_config($project, "remote_get", {
                 %$options,
                 get_src => $remote_tmp_dst,
                 get_dst => $dest_dir,
+                exec_name => 'get',
+                exec_as_root => 0,
             });
         if (run_script($project, $cmd, sub { system(@_) }) != 0) {
             $error = "Error downloading build result";
@@ -725,14 +748,20 @@ sub build_run {
         run_script($project, project_config($project, "remote_exec", {
                 %$options,
                 exec_cmd => "rm -Rf $remote_tmp_src $remote_tmp_dst",
+                exec_name => 'clean',
+                exec_as_root => 0,
             }), \&capture_exec);
     } else {
-        if (system("$srcdir/build") != 0) {
-            $error = "Error running $script_name";
-            if (project_config($project, 'debug', $options)) {
-                print STDERR $error, "\nOpening debug shell\n";
-                print STDERR "Warning: build files will be removed when you exit this shell.\n";
-                run_script($project, "PS1='debug-$project\$ ' \$SHELL", sub { system(@_) });
+        foreach my $s (@scripts) {
+            my $cmd = $scripts_root{$s} ? project_config($project, 'suexec',
+                { suexec_cmd => "$srcdir/$s" }) : "$srcdir/$s";
+            if (system($cmd) != 0) {
+                $error = "Error running $script_name";
+                if (project_config($project, 'debug', $options)) {
+                    print STDERR $error, "\nOpening debug shell\n";
+                    print STDERR "Warning: build files will be removed when you exit this shell.\n";
+                    run_script($project, "PS1='debug-$project\$ ' \$SHELL", sub { system(@_) });
+                }
             }
         }
     }
