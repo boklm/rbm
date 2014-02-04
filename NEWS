@@ -52,6 +52,8 @@
 - Add support for pre and post scripts, to be run as root. Those scripts
   can be used to install/remove build dependencies.
 
+- Add the install_package option, for use in scripts templates.
+
 
 Version 0.4
 

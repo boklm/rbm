@@ -278,12 +278,35 @@ fi
 OPT_END
     lsb_release => \&lsb_release_cache,
     distributions => [
-        { lsb_release => { id => 'Mageia'}, pkg_type => 'rpm', },
-        { lsb_release => { id => 'Fedora'}, pkg_type => 'rpm', },
-        { lsb_release => { id => 'openSuSe'}, pkg_type => 'rpm', },
-        { lsb_release => { id => 'MandrivaLinux'}, pkg_type => 'rpm', },
-        { lsb_release => { id => 'Debian'}, pkg_type => 'deb', },
-        { lsb_release => { id => 'Ubuntu'}, pkg_type => 'deb', },
+        {
+            lsb_release     => { id => 'Mageia'},
+            pkg_type        => 'rpm',
+            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || urpmi [% c("pkg_name") %]',
+        },
+        { lsb_release       => { id => 'Fedora'},
+            pkg_type        => 'rpm',
+            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || yum install [% c("pkg_name") %]',
+        },
+        {
+            lsb_release => { id => 'openSuSe'},
+            pkg_type => 'rpm',
+            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || zypper install [% c("pkg_name") %]',
+        },
+        {
+            lsb_release     => { id => 'MandrivaLinux'},
+            pkg_type        => 'rpm',
+            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || urpmi [% c("pkg_name") %]',
+        },
+        {
+            lsb_release     => { id => 'Debian'},
+            pkg_type        => 'deb',
+            install_package => 'dpkg -l [% c("pkg_name") %] > /dev/null || apt-get install -y [% c("pkg_name") %]',
+        },
+        {
+            lsb_release     => { id => 'Ubuntu'},
+            pkg_type        => 'deb',
+            install_package => 'dpkg -l [% c("pkg_name") %] > /dev/null || apt-get install -y [% c("pkg_name") %]',
+        },
     ],
     urlget => 'wget -O[% shell_quote(dest_dir _ "/" _ c("filename")) %] [% shell_quote(c("URL")) %]',
     sig_ext => [ qw(gpg asc sig) ],
