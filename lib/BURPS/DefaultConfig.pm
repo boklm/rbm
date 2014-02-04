@@ -300,6 +300,7 @@ ZIP_END
         srpm => 'rpm',
         'deb-src' => 'deb',
     },
+    suexec => 'sudo -- [% c("suexec_cmd") %]',
 );
 
 1;
