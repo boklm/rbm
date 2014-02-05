@@ -1,5 +1,5 @@
 
-- Rename mkpkg to burps: build & upload reproducible packaging system
+- project is renamed to rbm (Reproducible Build Manager)
 
 - Add an options argument to the exec function
 

@@ -1,4 +1,4 @@
-package BURPS::DefaultConfig;
+package RBM::DefaultConfig;
 
 use strict;
 use warnings;
@@ -9,18 +9,18 @@ BEGIN {
     our @EXPORT = qw(%default_config);
 }
 
-use BURPS;
+use RBM;
 use Cwd qw(getcwd);
 use IO::CaptureOutput qw(capture_exec);
 
 sub git_describe {
     my ($project, $options) = @_;
-    my $git_hash = BURPS::project_config($project, 'git_hash', $options)
-                || BURPS::exit_error('No git_hash specified');
+    my $git_hash = RBM::project_config($project, 'git_hash', $options)
+                || RBM::exit_error('No git_hash specified');
     my %res;
-    $BURPS::config->{projects}{$project}{describe} = {};
+    $RBM::config->{projects}{$project}{describe} = {};
     my $old_cwd = getcwd;
-    BURPS::git_clone_fetch_chdir($project, $options);
+    RBM::git_clone_fetch_chdir($project, $options);
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('git', 'describe', '--long', $git_hash);
     if ($success) {
@@ -33,11 +33,11 @@ sub git_describe {
 sub lsb_release {
     my ($project, $options) = @_;
     $options //= {};
-    my $distribution = BURPS::project_config($project, 'distribution',
+    my $distribution = RBM::project_config($project, 'distribution',
                                         { %$options, no_distro => 1 });
     if ($distribution) {
         my @distributions = map { @$_ }
-                @{BURPS::project_config($project, 'distributions',
+                @{RBM::project_config($project, 'distributions',
                         { %$options, as_array => 1, no_distro => 1 })};
         my ($id, $release) = split '-', $distribution;
         foreach my $d (@distributions) {
@@ -54,7 +54,7 @@ sub lsb_release {
         return { id => $id, release => $release };
     }
     my $res = {};
-    my $u = "Unknown distribution. Check burps_distributions(7) man page.";
+    my $u = "Unknown distribution. Check rbm_distributions(7) man page.";
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('lsb_release', '-irc');
     exit_error $u unless $success;
@@ -67,7 +67,7 @@ sub lsb_release {
 }
 
 sub lsb_release_cache {
-    return $BURPS::config->{default}{lsb_release} = lsb_release(@_);
+    return $RBM::config->{default}{lsb_release} = lsb_release(@_);
 }
 
 sub get_arch {
@@ -80,23 +80,23 @@ sub get_arch {
 sub input_files_by_name {
     my ($project, $options) = @_;
     $options //= {};
-    my $input_files = BURPS::project_config($project, 'input_files', $options);
+    my $input_files = RBM::project_config($project, 'input_files', $options);
     return {} unless ref $input_files eq 'ARRAY';
     my $res = {};
     foreach my $input_file (@$input_files) {
         next unless $input_file->{name};
-        my $name = BURPS::project_config($project, 'name', { %$options, %$input_file });
+        my $name = RBM::project_config($project, 'name', { %$options, %$input_file });
         $res->{$name} = sub {
             my ($project, $options) = @_;
             $options //= {};
-            return BURPS::project_config($project, 'filename', { %$options, %$input_file });
+            return RBM::project_config($project, 'filename', { %$options, %$input_file });
         };
     }
     return $res;
 }
 
 our %default_config = (
-    sysconf_file  => '/etc/burps.conf',
+    sysconf_file  => '/etc/rbm.conf',
     tmp_dir       => '/tmp',
     projects_dir  => 'projects',
     output_dir    => 'out',
@@ -129,9 +129,9 @@ END
 #!/bin/sh
 set -e -x
 srcdir=\$(pwd)
-cat > '[% project %].spec' << 'BURPS_END_RPM_SPEC'
+cat > '[% project %].spec' << 'RBM_END_RPM_SPEC'
 [% c('rpmspec') %]
-BURPS_END_RPM_SPEC
+RBM_END_RPM_SPEC
 touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %] [% project %].spec
 rpmbuild [% c('rpmbuild_action', {error_if_undef => 1}) %] --define "_topdir \$srcdir" \\
         --define "_sourcedir \$srcdir" \\

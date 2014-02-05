@@ -5,21 +5,21 @@ use Test::More tests => 31;
 use lib 'lib/';
 
 sub set_target {
-    $BURPS::config->{run}{target} = [@_];
+    $RBM::config->{run}{target} = [@_];
 }
 
 sub set_distribution {
-    $BURPS::config->{run}{distribution} = $_[0];
+    $RBM::config->{run}{distribution} = $_[0];
 }
 
 sub set_step {
-    $BURPS::config->{step} = $_[0];
+    $RBM::config->{step} = $_[0];
 }
 
-BEGIN { use_ok('BURPS') };
+BEGIN { use_ok('RBM') };
 chdir 'test';
-BURPS::load_config;
-ok($BURPS::config, 'load config');
+RBM::load_config;
+ok($RBM::config, 'load config');
 
 my @tests = (
     {
@@ -201,14 +201,14 @@ foreach my $test (@tests) {
     set_step($test->{step} ? $test->{step} : 'init');
     if ($test->{config}) {
         is(
-            BURPS::project_config(@{$test->{config}}),
+            RBM::project_config(@{$test->{config}}),
             $test->{expected},
             $test->{name}
         );
     }
     if ($test->{build}) {
         unlink keys %{$test->{files}};
-        BURPS::build_run(@{$test->{build}});
+        RBM::build_run(@{$test->{build}});
         my $res = grep { read_file($_) ne $test->{files}{$_} } keys %{$test->{files}};
         ok(!$res, $test->{name});
     }

@@ -1,4 +1,4 @@
-package BURPS;
+package RBM;
 
 use warnings;
 use strict;
@@ -14,7 +14,7 @@ use File::Slurp;
 use File::Path qw(make_path);
 use String::ShellQuote;
 use Sort::Versions;
-use BURPS::DefaultConfig;
+use RBM::DefaultConfig;
 use Digest::SHA qw(sha256_hex);
 use Data::Dump qw(dd pp);
 
@@ -59,7 +59,7 @@ sub load_system_config {
 
 sub find_config_file {
     for (my $dir = getcwd; $dir ne '/'; $dir = dirname($dir)) {
-        return "$dir/burps.conf" if -f "$dir/burps.conf";
+        return "$dir/rbm.conf" if -f "$dir/rbm.conf";
     }
     exit_error("Can't find config file");
 }
@@ -643,7 +643,7 @@ sub build_run {
     my $srcdir = project_config($project, 'build_srcdir', $options);
     my $use_srcdir = $srcdir;
     my $tmpdir = File::Temp->newdir(project_config($project, 'tmp_dir', $options)
-                                . '/burps-XXXXX');
+                                . '/rbm-XXXXX');
     my @cfiles;
     if ($use_srcdir) {
         @cfiles = ($srcdir);
@@ -782,7 +782,7 @@ sub publish {
     my $publish_src_dir = project_config($project, 'publish_src_dir');
     if (!$publish_src_dir) {
         $publish_src_dir = File::Temp->newdir(project_config($project, 'tmp_dir')
-                                . '/burps-XXXXXX');
+                                . '/rbm-XXXXXX');
         build_pkg($project, {output_dir => $publish_src_dir});
     }
     build_run($project, 'publish', { build_srcdir => $publish_src_dir });

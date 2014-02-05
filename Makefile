@@ -1,9 +1,9 @@
 VERSION=0.4
 
-PROJECTNAME=burps
-BINFILES=burps
-PERL_MODULE_MAIN=lib/BURPS.pm
-PERL_MODULES=lib/BURPS/DefaultConfig.pm
+PROJECTNAME=rbm
+BINFILES=rbm
+PERL_MODULE_MAIN=lib/RBM.pm
+PERL_MODULES=lib/RBM/DefaultConfig.pm
 
 sysconfdir=/etc
 bindir=/usr/bin
@@ -17,9 +17,9 @@ all:
 install:
 	install -d $(DESTDIR)$(bindir) $(DESTDIR)$(sysconfdir)
 	install -m 755 $(BINFILES) $(DESTDIR)$(bindir)
-	install -d $(DESTDIR)$(perldir) $(DESTDIR)$(perldir)/BURPS
+	install -d $(DESTDIR)$(perldir) $(DESTDIR)$(perldir)/RBM
 	install -m 644 $(PERL_MODULE_MAIN) $(DESTDIR)$(perldir)
-	install -m 644 $(PERL_MODULES) $(DESTDIR)$(perldir)/BURPS
+	install -m 644 $(PERL_MODULES) $(DESTDIR)$(perldir)/RBM
 	$(MAKE) -C doc install
 
 clean:
