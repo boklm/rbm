@@ -84,6 +84,11 @@ sub input_files_by_name {
     return {} unless ref $input_files eq 'ARRAY';
     my $res = {};
     foreach my $input_file (@$input_files) {
+        if (!ref $input_file) {
+            $input_file = RBM::project_config($project,
+                RBM::process_template($project, $input_file), $options);
+        }
+        next unless $input_file;
         next unless $input_file->{name};
         my $name = RBM::project_config($project, 'name', { %$options, %$input_file });
         $res->{$name} = sub {

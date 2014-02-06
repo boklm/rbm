@@ -546,6 +546,11 @@ sub input_files {
     my $old_cwd = getcwd;
     chdir $src_dir || exit_error "cannot chdir to $src_dir";
     foreach my $input_file (@$input_files) {
+        if (!ref $input_file) {
+            $input_file = project_config($project,
+                process_template($project, $input_file), $options);
+        }
+        next unless $input_file;
         my $t = sub {
             project_config($project, $_[0], {$options ? %$options : (),
                     %$input_file, output_dir => $src_dir});
