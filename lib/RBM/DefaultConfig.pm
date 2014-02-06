@@ -310,12 +310,12 @@ OPT_END
         {
             lsb_release     => { id => 'Debian'},
             pkg_type        => 'deb',
-            install_package => 'dpkg -l [% c("pkg_name") %] > /dev/null || apt-get install -y [% c("pkg_name") %]',
+            install_package => 'dpkg -s [% c("pkg_name") %] > /dev/null 2>&1 || apt-get install -y [% c("pkg_name") %]',
         },
         {
             lsb_release     => { id => 'Ubuntu'},
             pkg_type        => 'deb',
-            install_package => 'dpkg -l [% c("pkg_name") %] > /dev/null || apt-get install -y [% c("pkg_name") %]',
+            install_package => 'dpkg -s [% c("pkg_name") %] > /dev/null 2>&1 || apt-get install -y [% c("pkg_name") %]',
         },
     ],
     urlget => 'wget -O[% shell_quote(dest_dir _ "/" _ c("filename")) %] [% shell_quote(c("URL")) %]',
