@@ -108,7 +108,12 @@ our %default_config = (
     describe      => \&git_describe,
     abbrev_lenght => '12',
     abbrev        => '[% exec("git log -1 --abbrev=" _ c("abbrev_lenght") _ " --format=%h " _ c("git_hash")) %]',
-    timestamp     => '[% exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}") %]',
+    timestamp     => '[%
+                         IF c("git_url");
+                           GET exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}");
+                         ELSE;
+                           GET "946684800";
+                         END; %]',
     debug         => 0,
     version       => <<END,
 [%-
