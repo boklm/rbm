@@ -157,7 +157,7 @@ END
   ELSIF c('describe/tag_reach');
         GET '1.' _ c('describe/tag_reach') _ '.g' _ c('describe/hash');
   ELSE;
-        GET '1';
+        GET '1.g' _ c('abbrev');
   END;
 -%]
 OPT_END
