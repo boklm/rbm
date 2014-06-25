@@ -12,6 +12,7 @@ use File::Temp;
 use File::Copy;
 use File::Slurp;
 use File::Path qw(make_path);
+use File::Basename;
 use String::ShellQuote;
 use Sort::Versions;
 use RBM::DefaultConfig;
@@ -479,6 +480,7 @@ sub process_template {
         shell_quote => \&shell_quote,
         versioncmp  => \&versioncmp,
         sha256      => \&sha256_hex,
+        fileparse   => \&fileparse,
     };
     my $output;
     $template->process(\$tmpl, $vars, \$output, binmode => ':utf8')

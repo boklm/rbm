@@ -54,6 +54,8 @@
 
 - Add the install_package option, for use in scripts templates.
 
+- Add the fileparse function in templates
+
 
 Version 0.4
 
