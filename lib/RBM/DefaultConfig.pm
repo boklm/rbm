@@ -263,11 +263,11 @@ OPT_END
 set -e
 mkdir -p [% dst %]
 cd [% dst %]
-if [% c('remote_chroot', { exec_cmd => 'test -f ' _ src }) %]
+if [% c('remote_exec', { exec_cmd => 'test -f ' _ src }) %]
 then
-        [% c('remote_chroot', { exec_cmd => 'cd \$(dirname ' _ src _ ') && tar -cf - \$(basename ' _ src _ ')' }) %] | tar -xf -
+        [% c('remote_exec', { exec_cmd => 'cd \$(dirname ' _ src _ ') && tar -cf - \$(basename ' _ src _ ')' }) %] | tar -xf -
 else
-        [% c('remote_chroot', { exec_cmd => 'cd ' _ src _ ' && tar -cf - .' }) %] | tar -xf -
+        [% c('remote_exec', { exec_cmd => 'cd ' _ src _ ' && tar -cf - .' }) %] | tar -xf -
 fi
 OPT_END
     remote_put => <<OPT_END,
@@ -280,10 +280,10 @@ set -e
 if [ -f [% src %] ]
 then
         cd \$(dirname [% src %])
-        tar -cf - \$(basename [% src %]) | [% c('remote_chroot', { exec_cmd => 'mkdir -p ' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
+        tar -cf - \$(basename [% src %]) | [% c('remote_exec', { exec_cmd => 'mkdir -p ' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
 else
         cd [% src %]
-        tar -cf . | [% c('remote_chroot', { exec_cmd => 'mkdir -p' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
+        tar -cf . | [% c('remote_exec', { exec_cmd => 'mkdir -p' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
 fi
 OPT_END
     lsb_release => \&lsb_release_cache,
