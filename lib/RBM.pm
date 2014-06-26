@@ -679,7 +679,7 @@ sub build_run {
                 $error = "Error connecting to remote";
                 goto EXIT;
             }
-            $remote_tmp = (split("\n", $stdout))[0];
+            $remote_tmp = (split(/\r?\n/, $stdout))[0];
         }
         my $o = {
             %$options,
