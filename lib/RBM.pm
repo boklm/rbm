@@ -17,6 +17,7 @@ use String::ShellQuote;
 use Sort::Versions;
 use RBM::DefaultConfig;
 use Digest::SHA qw(sha256_hex);
+use Data::UUID;
 use Data::Dump qw(dd pp);
 
 our $config;
@@ -646,6 +647,7 @@ sub build_run {
     my $error;
     my $dest_dir = create_dir(path(project_config($project, 'output_dir', $options)));
     valid_project($project);
+    $options = { %$options, build_id => Data::UUID->new->create_str };
     my $old_cwd = getcwd;
     my $srcdir = project_config($project, 'build_srcdir', $options);
     my $use_srcdir = $srcdir;
