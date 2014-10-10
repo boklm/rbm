@@ -60,6 +60,8 @@
 
 - Add the remote_start and remote_finish options
 
+- Add support for remote builds using docker
+
 
 Version 0.4
 

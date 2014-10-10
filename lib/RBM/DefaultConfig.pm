@@ -254,8 +254,23 @@ OPT_END
 -%]
 sudo -- chroot [% shell_quote(c("chroot_path", { error_if_undef => 1 })) %] su - [% chroot_user %] -c [% shell_quote(c("exec_cmd")) -%]
 OPT_END
+
+    remote_exec => <<OPT_END,
+[%
+    IF c('remote_docker');
+        GET c('docker_remote_exec');
+        RETURN;
+    END;
+-%]
+OPT_END
+
     remote_get => <<OPT_END,
 [%
+    IF c('remote_docker');
+        GET c('docker_remote_get');
+        RETURN;
+    END;
+
     SET src = shell_quote(c('get_src', { error_if_undef => 1 }));
     SET dst = shell_quote(c('get_dst', { error_if_undef => 1 }));
 -%]
@@ -270,8 +285,14 @@ else
         [% c('remote_exec', { exec_cmd => 'cd ' _ src _ ' && tar -cf - .' }) %] | tar -xf -
 fi
 OPT_END
+
     remote_put => <<OPT_END,
 [%
+    IF c('remote_docker');
+        GET c('docker_remote_put');
+        RETURN;
+    END;
+
     SET src = shell_quote(c('put_src', { error_if_undef => 1 }));
     SET dst = shell_quote(c('put_dst', { error_if_undef => 1 }));
 -%]
@@ -285,7 +306,90 @@ else
         cd [% src %]
         tar -cf . | [% c('remote_exec', { exec_cmd => 'mkdir -p' _ dst _ '&& cd ' _ dst _ '&& tar -xf -' }) %]
 fi
+
 OPT_END
+
+    remote_start => <<OPT_END,
+[%
+    IF c('remote_docker');
+        GET c('docker_remote_start');
+        RETURN;
+    END;
+-%]
+OPT_END
+
+    remote_finish => <<OPT_END,
+[%
+    IF c('remote_docker');
+        GET c('docker_remote_finish');
+        RETURN;
+    END;
+-%]
+OPT_END
+
+    docker_build_image => 'rbm-[% sha256(c("build_id")).substr(0, 12) %]',
+
+    docker_remote_start => <<OPT_END,
+#!/bin/sh
+set -e
+ciddir=\$(mktemp -d)
+cidfile="\$ciddir/cid"
+docker run --cidfile="\$cidfile" [% c("docker_opt") %] [% shell_quote(c('docker_image')) %] /bin/true
+cid=\$(cat \$cidfile)
+rm -rf "\$ciddir"
+docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
+docker rm \$cid > /dev/null
+OPT_END
+
+    docker_remote_finish => <<OPT_END,
+#!/bin/sh
+set -e
+[% IF c('docker_save_image') -%]
+docker tag -f [% c('docker_build_image') %] [% c('docker_save_image') %]
+[% END -%]
+docker rmi [% c('docker_build_image') %] > /dev/null
+OPT_END
+
+    docker_remote_exec => <<OPT_END,
+#!/bin/sh
+set -e
+ciddir=\$(mktemp -d)
+cidfile="\$ciddir/cid"
+docker run --cidfile="\$cidfile" [% c("docker_opt") %] [% c('docker_build_image') %] /bin/sh -c [% shell_quote(c('exec_cmd')) %]
+cid=\$(cat \$cidfile)
+rm -rf "\$ciddir"
+docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
+docker rm \$cid > /dev/null
+OPT_END
+
+    docker_remote_put => <<OPT_END,
+[%
+    SET src = c('put_src', { error_if_undef => 1 });
+    SET dst = c('put_dst', { error_if_undef => 1 });
+    SET p = fileparse(src);
+    SET src_filename = p.0;
+    SET src_dir = p.1;
+    GET c("docker_remote_exec", { docker_opt => '-v ' _ src_dir _ ':/rbm_copy',
+                             exec_cmd => 'cp -ar /rbm_copy/' _ src_filename _ ' ' _ dst });
+%]
+OPT_END
+
+    docker_remote_get => <<OPT_END,
+[%
+    SET src = c('get_src', { error_if_undef => 1 });
+    SET dst = c('get_dst', { error_if_undef => 1 });
+-%]
+#!/bin/sh
+set -e
+tmpdir=\$(mktemp -d)
+[%
+    GET c("docker_remote_exec", { docker_opt => '-v \$tmpdir:/rbm_copy',
+                             exec_cmd => 'cd ' _ src _ '; tar -cf - . | tar -C /rbm_copy --no-same-owner -xf -'});
+%]
+cd \$tmpdir
+tar -cf - . | tar -C [% dst %] --no-same-owner -xf -
+OPT_END
+
     lsb_release => \&lsb_release_cache,
     distributions => [
         {
