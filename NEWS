@@ -58,6 +58,8 @@
 
 - Add the build_id option
 
+- Add the remote_start and remote_finish options
+
 
 Version 0.4
 

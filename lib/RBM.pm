@@ -667,8 +667,17 @@ sub build_run {
     my @scripts = ('pre', $script_name, 'post');
     my %scripts_root = ( pre => 1, post => 1);
     if (project_config($project, "remote_exec", $options)) {
+        my $cmd = project_config($project, "remote_start", $options);
+        if ($cmd) {
+            my ($stdout, $stderr, $success, $exit_code)
+                = run_script($project, $cmd, \&capture_exec);
+            if (!$success) {
+                $error = "Error starting remote";
+                goto EXIT;
+            }
+        }
         foreach my $remote_tmp ($remote_tmp_src, $remote_tmp_dst) {
-            my $cmd = project_config($project, "remote_exec", {
+            $cmd = project_config($project, "remote_exec", {
                     %$options,
                     exec_cmd => project_config($project,
                         "remote_mktemp", $options) || 'mktemp -d',
@@ -775,6 +784,12 @@ sub build_run {
         }
     }
     EXIT:
+    if ($remote_tmp_src && $remote_tmp_dst) {
+        my $cmd = project_config($project, "remote_finish", $options);
+        if ($cmd && (run_script($project, $cmd, sub { system(@_) }) != 0)) {
+            $error ||= "Error finishing remote";
+        }
+    }
     $config->{step} = $old_step;
     chdir $old_cwd;
     exit_error $error if $error;
