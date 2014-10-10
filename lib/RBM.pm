@@ -678,7 +678,7 @@ sub build_run {
             my ($stdout, $stderr, $success, $exit_code)
                 = run_script($project, $cmd, \&capture_exec);
             if (!$success) {
-                $error = "Error connecting to remote";
+                $error = "Error connecting to remote:\n$stderr";
                 goto EXIT;
             }
             $remote_tmp = (split(/\r?\n/, $stdout))[0];
