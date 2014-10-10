@@ -131,9 +131,15 @@ our %default_config = (
     END;
 -%]
 END
+####
+####
+####
     pkg_type      => 'build',
     rpm           => '[% c("rpmbuild", { rpmbuild_action => "-ba" }) %]',
     srpm          => '[% c("rpmbuild", { rpmbuild_action => "-bs" }) %]',
+####
+####
+####
     rpmbuild      => <<END,
 [% USE date -%]
 #!/bin/sh
@@ -150,6 +156,9 @@ rpmbuild [% c('rpmbuild_action', {error_if_undef => 1}) %] --define "_topdir \$s
         --define '_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm' \\
         "\$srcdir/[% project %].spec"
 END
+####
+####
+####
     rpm_rel         => <<OPT_END,
 [%-
   IF c('pkg_rel').defined;
@@ -161,6 +170,9 @@ END
   END;
 -%]
 OPT_END
+####
+####
+####
     gpg_bin         => 'gpg',
     gpg_args        => '',
     gpg_keyring_dir => '[% config.basedir %]/keyring',
@@ -173,6 +185,9 @@ OPT_END
 -%]
 exec [% c('gpg_bin') %] [% c('gpg_args') %] --with-fingerprint [% gpg_kr %] "\$@"
 GPGEND
+####
+####
+####
     debian_create => <<DEBEND,
 [%-
     FOREACH f IN c('debian_files');
@@ -182,6 +197,9 @@ GPGEND
     END;
 -%]
 DEBEND
+####
+####
+####
     deb_src => <<DEBEND,
 #!/bin/sh
 set -e -x
@@ -196,6 +214,9 @@ cd debian
 cd [% dest_dir %]
 dpkg-source -b "\$builddir"
 DEBEND
+####
+####
+####
     deb => <<DEBEND,
 #!/bin/sh
 set -e -x
@@ -231,6 +252,9 @@ do
 done
 [% END -%]
 DEBEND
+####
+####
+####
     debian_revision => <<OPT_END,
 [%-
 IF c('pkg_rel');
@@ -242,19 +266,27 @@ ELSE;
 END;
 -%]
 OPT_END
+####
+####
+####
     remote_ssh => <<OPT_END,
 [%-
     ssh_user = c('exec_as_root') ? '-l root' : '';
 -%]
 ssh [% GET c('ssh_options') IF c('ssh_options') %] [% ssh_user %] [% GET '-p ' _ c('ssh_port') IF c('ssh_port') %] [% c('ssh_host') %] [% shell_quote(c('exec_cmd')) -%]
 OPT_END
+####
+####
+####
     remote_chroot => <<OPT_END,
 [%-
     chroot_user = c('exec_as_root') ? '' : shell_quote(c("chroot_user", { error_if_undef => 1 }));
 -%]
 sudo -- chroot [% shell_quote(c("chroot_path", { error_if_undef => 1 })) %] su - [% chroot_user %] -c [% shell_quote(c("exec_cmd")) -%]
 OPT_END
-
+####
+####
+####
     remote_exec => <<OPT_END,
 [%
     IF c('remote_docker');
@@ -263,7 +295,9 @@ OPT_END
     END;
 -%]
 OPT_END
-
+####
+####
+####
     remote_get => <<OPT_END,
 [%
     IF c('remote_docker');
@@ -285,7 +319,9 @@ else
         [% c('remote_exec', { exec_cmd => 'cd ' _ src _ ' && tar -cf - .' }) %] | tar -xf -
 fi
 OPT_END
-
+####
+####
+####
     remote_put => <<OPT_END,
 [%
     IF c('remote_docker');
@@ -308,7 +344,9 @@ else
 fi
 
 OPT_END
-
+####
+####
+####
     remote_start => <<OPT_END,
 [%
     IF c('remote_docker');
@@ -317,7 +355,9 @@ OPT_END
     END;
 -%]
 OPT_END
-
+####
+####
+####
     remote_finish => <<OPT_END,
 [%
     IF c('remote_docker');
@@ -326,9 +366,13 @@ OPT_END
     END;
 -%]
 OPT_END
-
+####
+####
+####
     docker_build_image => 'rbm-[% sha256(c("build_id")).substr(0, 12) %]',
-
+####
+####
+####
     docker_remote_start => <<OPT_END,
 #!/bin/sh
 set -e
@@ -340,7 +384,9 @@ rm -rf "\$ciddir"
 docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
 docker rm \$cid > /dev/null
 OPT_END
-
+####
+####
+####
     docker_remote_finish => <<OPT_END,
 #!/bin/sh
 set -e
@@ -349,7 +395,9 @@ docker tag -f [% c('docker_build_image') %] [% c('docker_save_image') %]
 [% END -%]
 docker rmi [% c('docker_build_image') %] > /dev/null
 OPT_END
-
+####
+####
+####
     docker_remote_exec => <<OPT_END,
 #!/bin/sh
 set -e
@@ -361,7 +409,9 @@ rm -rf "\$ciddir"
 docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
 docker rm \$cid > /dev/null
 OPT_END
-
+####
+####
+####
     docker_remote_put => <<OPT_END,
 [%
     SET src = c('put_src', { error_if_undef => 1 });
@@ -373,7 +423,9 @@ OPT_END
                              exec_cmd => 'cp -ar /rbm_copy/' _ src_filename _ ' ' _ dst });
 %]
 OPT_END
-
+####
+####
+####
     docker_remote_get => <<OPT_END,
 [%
     SET src = c('get_src', { error_if_undef => 1 });
@@ -389,7 +441,9 @@ tmpdir=\$(mktemp -d)
 cd \$tmpdir
 tar -cf - . | tar -C [% dst %] --no-same-owner -xf -
 OPT_END
-
+####
+####
+####
     lsb_release => \&lsb_release_cache,
     distributions => [
         {
@@ -432,6 +486,9 @@ find [% src.join(' ') %] ! -executable -exec chmod 600 {} \\;
 find [% src.join(' ') %] | sort | \
         tar --owner=root --group=root --mtime=@[% c('timestamp') %] [% c('tar_args', { error_if_undef => 1 }) %] -T -
 TAR_END
+####
+####
+####
     zip    => <<ZIP_END,
 [%- SET src = c('zip_src', { error_if_undef => 1 }) -%]
 find [% src.join(' ') %] -executable -exec chmod 700 {} \\;
@@ -439,6 +496,9 @@ find [% src.join(' ') %] ! -executable -exec chmod 600 {} \\;
 find [% src.join(' ') %] | sort | \
         zip -q -@ -X [% c('zip_args', { error_if_undef => 1 }) %]
 ZIP_END
+####
+####
+####
     arch   => \&get_arch,
     input_files_by_name => \&input_files_by_name,
     steps => {
