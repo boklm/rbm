@@ -269,7 +269,7 @@ OPT_END
 ####
 ####
 ####
-    remote_ssh => <<OPT_END,
+    ssh_remote_exec => <<OPT_END,
 [%-
     ssh_user = c('exec_as_root') ? '-l root' : '';
 -%]
@@ -278,7 +278,7 @@ OPT_END
 ####
 ####
 ####
-    remote_chroot => <<OPT_END,
+    chroot_remote_exec => <<OPT_END,
 [%-
     chroot_user = c('exec_as_root') ? '' : shell_quote(c("chroot_user", { error_if_undef => 1 }));
 -%]
@@ -291,6 +291,14 @@ OPT_END
 [%
     IF c('remote_docker');
         GET c('docker_remote_exec');
+        RETURN;
+    END;
+    IF c('remote_ssh');
+        GET c('ssh_remote_exec');
+        RETURN;
+    END;
+    IF c('remote_chroot');
+        GET c('chroot_remote_exec');
         RETURN;
     END;
 -%]
