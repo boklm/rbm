@@ -744,9 +744,10 @@ sub build_run {
                     print STDERR "Warning: build files will be removed when you exit this shell.\n";
                     my $cmd = project_config($project, "remote_exec", {
                             %$options,
-                            exec_cmd => "cd $remote_tmp_src; PS1='debug-$project\$ ' \$SHELL",
+                            exec_cmd => "cd $remote_tmp_src; PS1='debug-$project\$ ' \${SHELL-/bin/bash}",
                             exec_name => "debug-$s",
                             exec_as_root => $scripts_root{$s},
+                            interactive => 1,
                         });
                     run_script($project, $cmd, sub { system(@_) });
                 }

@@ -411,7 +411,7 @@ OPT_END
 set -e
 ciddir=\$(mktemp -d)
 cidfile="\$ciddir/cid"
-docker run --cidfile="\$cidfile" [% c("docker_opt") %] [% c('docker_build_image') %] /bin/sh -c [% shell_quote(c('exec_cmd')) %]
+docker run [% IF c('interactive') %]-i -t[% END %] --cidfile="\$cidfile" [% c("docker_opt") %] [% c('docker_build_image') %] /bin/sh -c [% shell_quote(c('exec_cmd')) %]
 cid=\$(cat \$cidfile)
 rm -rf "\$ciddir"
 docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
