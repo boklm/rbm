@@ -386,7 +386,11 @@ OPT_END
 set -e
 ciddir=\$(mktemp -d)
 cidfile="\$ciddir/cid"
-docker run --cidfile="\$cidfile" [% c("docker_opt") %] [% shell_quote(c('docker_image')) %] /bin/true
+[%
+    SET user=c('docker_user');
+    SET cmd = '/bin/sh -c ' _ shell_quote("id \$user >/dev/null 2>&1 || adduser \$user");
+-%]
+docker run --cidfile="\$cidfile" [% c("docker_opt") %] [% shell_quote(c('docker_image')) %] [% cmd %]
 cid=\$(cat \$cidfile)
 rm -rf "\$ciddir"
 docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
@@ -406,12 +410,19 @@ OPT_END
 ####
 ####
 ####
+    docker_user => 'rbm',
+####
+####
+####
     docker_remote_exec => <<OPT_END,
 #!/bin/sh
 set -e
 ciddir=\$(mktemp -d)
 cidfile="\$ciddir/cid"
-docker run [% IF c('interactive') %]-i -t[% END %] --cidfile="\$cidfile" [% c("docker_opt") %] [% c('docker_build_image') %] /bin/sh -c [% shell_quote(c('exec_cmd')) %]
+docker run [% IF c('interactive') %]-i -t[% END %] \\
+       [% IF !c('exec_as_root') %]-u=[% shell_quote(c('docker_user')) %][% END %] \\
+       --cidfile="\$cidfile" [% c("docker_opt") %] [% c('docker_build_image') %] \\
+       /bin/sh -c [% shell_quote(c('exec_cmd')) %]
 cid=\$(cat \$cidfile)
 rm -rf "\$ciddir"
 docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
