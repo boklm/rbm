@@ -421,7 +421,8 @@ ciddir=\$(mktemp -d)
 cidfile="\$ciddir/cid"
 set +e
 docker run [% IF c('interactive') %]-i -t[% END %] \\
-       [% IF !c('exec_as_root') %]-u=[% shell_quote(c('docker_user')) %][% END %] \\
+       [% IF c('exec_as_root') %]-u=root[%
+                ELSE %]-u=[% shell_quote(c('docker_user')) %][% END %] \\
        --cidfile="\$cidfile" [% c("docker_opt") %] [% c('docker_build_image') %] \\
        /bin/sh -c [% shell_quote(c('exec_cmd')) %]
 ret=\$?
