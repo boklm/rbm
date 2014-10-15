@@ -567,7 +567,7 @@ sub input_files {
                 $t->('project') ? $t->('project') : $project,
                 'output_dir', {$options ? %$options : (), %$input_file}));
         my $url = $t->('URL');
-        my $name = $t->('filename') ? $t->('filename') :
+        my $name = $input_file->{filename} ? $t->('filename') :
                    $url ? basename($url) :
                    undef;
         $name //= project_step_config($t->('project'), 'filename',
