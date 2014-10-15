@@ -570,8 +570,9 @@ sub input_files {
         my $name = $t->('filename') ? $t->('filename') :
                    $url ? basename($url) :
                    undef;
-        $name //= project_config($t->('project'), 'filename',
-            {$options ? %$options : (), %$input_file}) if $t->('project');
+        $name //= project_step_config($t->('project'), 'filename',
+            {$options ? %$options : (), step => $t->('pkg_type'),
+                %$input_file}) if $t->('project');
         $input_file->{filename} //= $name;
         exit_error("Missing filename:\n" . pp($input_file)) unless $name;
         my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
