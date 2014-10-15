@@ -390,7 +390,7 @@ cidfile="\$ciddir/cid"
     SET user=c('docker_user');
     SET cmd = '/bin/sh -c ' _ shell_quote("id \$user >/dev/null 2>&1 || adduser \$user");
 -%]
-docker run --cidfile="\$cidfile" [% c("docker_opt") %] [% shell_quote(c('docker_image')) %] [% cmd %]
+docker run --cidfile="\$cidfile" [% c("docker_opt") %] [% shell_quote(c('docker_image', {error_if_undef => 1})) %] [% cmd %]
 cid=\$(cat \$cidfile)
 rm -rf "\$ciddir"
 docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
