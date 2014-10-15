@@ -394,7 +394,7 @@ docker run --cidfile="\$cidfile" [% c("docker_opt") %] [% shell_quote(c('docker_
 cid=\$(cat \$cidfile)
 rm -rf "\$ciddir"
 docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
-docker rm \$cid > /dev/null
+docker rm -f \$cid > /dev/null
 OPT_END
 ####
 ####
@@ -405,7 +405,7 @@ set -e
 [% IF c('docker_save_image') -%]
 docker tag -f [% c('docker_build_image') %] [% c('docker_save_image') %]
 [% END -%]
-docker rmi [% c('docker_build_image') %] > /dev/null
+docker rmi -f [% c('docker_build_image') %] > /dev/null
 OPT_END
 ####
 ####
@@ -429,7 +429,7 @@ set -e
 cid=\$(cat \$cidfile)
 rm -rf "\$ciddir"
 docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
-docker rm \$cid > /dev/null
+docker rm -f \$cid > /dev/null
 exit \$ret
 OPT_END
 ####
