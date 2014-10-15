@@ -431,7 +431,7 @@ cid=\$(cat \$cidfile)
 rm -rf "\$ciddir"
 docker commit \$cid [% c('docker_build_image') %] > /dev/null < /dev/null
 docker rm -f \$cid > /dev/null
-exit \$ret
+test \$ret -eq 0
 OPT_END
 ####
 ####
