@@ -224,6 +224,20 @@ sub project_config {
     return $res;
 }
 
+sub project_step_config {
+    my $run_save = $config->{run};
+    my $step_save = $config->{step};
+    if ($_[2] && $_[2]->{step}) {
+        $config->{step} = $_[2]->{step};
+    }
+    $config->{run} = { target => $_[2]->{target} };
+    $config->{run}{target} //= $run_save->{target};
+    my $res = project_config(@_);
+    $config->{run} = $run_save;
+    $config->{step} = $step_save;
+    return $res;
+}
+
 sub exit_error {
     print STDERR "Error: ", $_[0], "\n";
     exit (exists $_[1] ? $_[1] : 1);
@@ -460,19 +474,7 @@ sub process_template {
         project    => $project,
         p          => $config->{projects}{$project},
         c          => sub { project_config($project, @_) },
-        pc         => sub {
-            my $run_save = $config->{run};
-            my $step_save = $config->{step};
-            if ($_[2] && $_[2]->{step}) {
-                $config->{step} = $_[2]->{step};
-            }
-            $config->{run} = { target => $_[2]->{target} };
-            $config->{run}{target} //= $run_save->{target};
-            my $res = project_config(@_);
-            $config->{run} = $run_save;
-            $config->{step} = $step_save;
-            return $res;
-        },
+        pc         => \&project_step_config,
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
         exec       => sub { execute($project, @_) },
