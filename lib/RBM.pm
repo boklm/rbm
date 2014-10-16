@@ -590,13 +590,13 @@ sub input_files {
                 }
             } elsif ($t->('project')) {
                 my $p = $t->('project');
-                print "Building project $p\n";
+                print "Building project $p - $name\n";
                 my $run_save = $config->{run};
                 $config->{run} = { target => $input_file->{target} };
                 $config->{run}{target} //= $run_save->{target};
                 build_pkg($p, {%$input_file, output_dir => $proj_out_dir});
                 $config->{run} = $run_save;
-                print "Finished build of project $p\n";
+                print "Finished build of project $p - $name\n";
             } else {
                 dd $input_file;
                 exit_error "Missing file $name";
