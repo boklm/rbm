@@ -563,6 +563,7 @@ sub input_files {
         if ($input_file->{enable} && !$t->('enable')) {
             next;
         }
+        $input_file->{origin_project} = $project;
         my $proj_out_dir = path(project_config(
                 $t->('project') ? $t->('project') : $project,
                 'output_dir', {$options ? %$options : (), %$input_file}));
