@@ -94,7 +94,17 @@ sub input_files_by_name {
         $res->{$name} = sub {
             my ($project, $options) = @_;
             $options //= {};
-            return RBM::project_config($project, 'filename', { %$options, %$input_file });
+            $options->{origin_project} = $project;
+            my $t = sub {
+                RBM::project_config($project, $_[0], { %$options, %$input_file })
+            };
+            return $t->('filename') if $input_file->{filename};
+            my $url = $t->('URL');
+            return basename($url) if $url;
+            return RBM::project_step_config($t->('project'), 'filename',
+                        {%$options, step => $t->('pkg_type'), %$input_file})
+                    if $input_file->{project};
+            return undef;
         };
     }
     return $res;

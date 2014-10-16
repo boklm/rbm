@@ -544,6 +544,7 @@ sub file_in_dir {
 sub input_files {
     my ($project, $options, $dest_dir) = @_;
     my @res;
+    $options = {$options ? %$options : ()};
     my $input_files = project_config($project, 'input_files', $options,);
     return unless $input_files;
     my $proj_dir = path(project_config($project, 'projects_dir', $options));
@@ -563,18 +564,16 @@ sub input_files {
         if ($input_file->{enable} && !$t->('enable')) {
             next;
         }
-        $input_file->{origin_project} = $project;
+        $options->{origin_project} = $project;
         my $proj_out_dir = path(project_config(
                 $t->('project') ? $t->('project') : $project,
-                'output_dir', {$options ? %$options : (), %$input_file}));
+                'output_dir', {%$input_file}));
         my $url = $t->('URL');
         my $name = $input_file->{filename} ? $t->('filename') :
                    $url ? basename($url) :
                    undef;
         $name //= project_step_config($t->('project'), 'filename',
-            {$options ? %$options : (), step => $t->('pkg_type'),
-                %$input_file}) if $t->('project');
-        $input_file->{filename} //= $name;
+            {%$options, step => $t->('pkg_type'), %$input_file}) if $t->('project');
         exit_error("Missing filename:\n" . pp($input_file)) unless $name;
         my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
@@ -594,7 +593,7 @@ sub input_files {
                 my $run_save = $config->{run};
                 $config->{run} = { target => $input_file->{target} };
                 $config->{run}{target} //= $run_save->{target};
-                build_pkg($p, {%$input_file, output_dir => $proj_out_dir});
+                build_pkg($p, {%$options, %$input_file, output_dir => $proj_out_dir});
                 $config->{run} = $run_save;
                 print "Finished build of project $p - $name\n";
             } else {
