@@ -581,7 +581,7 @@ sub input_files {
             if ($t->('content')) {
                 write_file("$proj_out_dir/$name", $t->('content'));
             } elsif ($t->('URL')) {
-                urlget($project, $input_file, 1);
+                urlget($project, {%$input_file, filename => $name}, 1);
             } elsif ($t->('exec')) {
                 if (run_script($project, $t->('exec'),
                         sub { system(@_) }) != 0) {
@@ -621,7 +621,7 @@ sub input_files {
             foreach my $s ($sig_file ? () : @$sig_ext) {
                 if ($url) {
                     my $f = { %$input_file, URL => "$url.$s",
-                        filename => "$input_file->{filename}.$s" };
+                        filename => "$name.$s" };
                     if (urlget($project, $f, 0)) {
                         $sig_file = "$fname.$s";
                         last;

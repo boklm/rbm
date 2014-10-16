@@ -9,6 +9,7 @@ BEGIN {
     our @EXPORT = qw(%default_config);
 }
 
+use File::Basename;
 use RBM;
 use Cwd qw(getcwd);
 use IO::CaptureOutput qw(capture_exec);
