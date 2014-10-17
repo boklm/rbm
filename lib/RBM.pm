@@ -474,7 +474,11 @@ sub process_template {
         project    => $project,
         p          => $config->{projects}{$project},
         c          => sub { project_config($project, @_) },
-        pc         => \&project_step_config,
+        pc         => sub {
+            my @args = @_;
+            $args[2] = { $_[2] ? %{$_[2]} : (), origin_project => $project };
+            project_step_config(@args);
+        },
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
         exec       => sub { execute($project, @_) },
