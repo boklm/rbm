@@ -677,7 +677,7 @@ sub build_run {
             my ($stdout, $stderr, $success, $exit_code)
                 = run_script($project, $cmd, \&capture_exec);
             if (!$success) {
-                $error = "Error starting remote";
+                $error = "Error starting remote:\n$stderr";
                 goto EXIT;
             }
         }
