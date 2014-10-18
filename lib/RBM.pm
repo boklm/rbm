@@ -465,7 +465,7 @@ sub maketar {
 
 sub process_template {
     my ($project, $tmpl, $dest_dir) = @_;
-    $dest_dir //= create_dir(path(project_config($project, 'output_dir', { no_distro => 1 })));
+    $dest_dir //= path(project_config($project, 'output_dir', { no_distro => 1 }));
     my $projects_dir = path(project_config($project, 'projects_dir', { no_distro => 1 }));
     my $template = Template->new(
         ENCODING        => 'utf8',
