@@ -202,14 +202,16 @@ sub confkey_str {
 
 sub project_config {
     my ($project, $name, $options) = @_;
+    my $res;
     my $error_if_undef = $options->{error_if_undef};
     $options = $options ? {%$options, error_if_undef => 0} : $options;
     $name = [ split '/', $name ] unless ref $name eq 'ARRAY';
+    goto FINISH unless @$name;
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
     $options = $options ? {%$options, no_distro => 1} : $options
                 if $name->[0] eq 'lsb_release';
-    my $res = config($project, $name, $options, ['opt'], ['run'],
+    $res = config($project, $name, $options, ['opt'], ['run'],
                         ['projects', $project], [], ['system'], ['default']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
@@ -217,6 +219,7 @@ sub project_config {
             confkey_str($name) eq 'output_dir' ? '.' : undef);
     }
     $config->{opt} = $opt_save;
+    FINISH:
     if (!defined($res) && $error_if_undef) {
         my $msg = $error_if_undef eq '1' ?
                 "Option " . confkey_str($name) . " is undefined"
