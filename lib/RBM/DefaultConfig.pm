@@ -84,14 +84,20 @@ sub input_files_by_name {
     my $input_files = RBM::project_config($project, 'input_files', $options);
     return {} unless ref $input_files eq 'ARRAY';
     my $res = {};
+    my $noname = 0;
     foreach my $input_file (@$input_files) {
         if (!ref $input_file) {
             $input_file = RBM::project_config($project,
                 RBM::process_template($project, $input_file), $options);
         }
         next unless $input_file;
-        next unless $input_file->{name};
-        my $name = RBM::project_config($project, 'name', { %$options, %$input_file });
+        my $name;
+        if ($input_file->{name}) {
+            $name = RBM::project_config($project, 'name', { %$options, %$input_file });
+        } else {
+            $name = "noname_$noname";
+            $noname++;
+        }
         $res->{$name} = sub {
             my ($project, $options) = @_;
             $options //= {};
