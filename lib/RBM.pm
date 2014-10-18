@@ -487,6 +487,10 @@ sub process_template {
         shell_quote => \&shell_quote,
         versioncmp  => \&versioncmp,
         sha256      => \&sha256_hex,
+        sha256file  => sub {
+            my $f = path(shift);
+            return -f $f ? sha256_hex(scalar read_file($f)) : '';
+        },
         fileparse   => \&fileparse,
     };
     my $output;

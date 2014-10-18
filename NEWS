@@ -62,6 +62,8 @@
 
 - Add support for remote builds using docker
 
+- Add an sha256file function in templates
+
 
 Version 0.4
 
