@@ -207,6 +207,8 @@ sub project_config {
     $name = [ split '/', $name ] unless ref $name eq 'ARRAY';
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
+    $options = $options ? {%$options, no_distro => 1} : $options
+                if $name->[0] eq 'lsb_release';
     my $res = config($project, $name, $options, ['opt'], ['run'],
                         ['projects', $project], [], ['system'], ['default']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
