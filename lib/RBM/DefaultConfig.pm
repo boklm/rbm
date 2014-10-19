@@ -461,12 +461,15 @@ OPT_END
     SET src_filename = p.0;
     SET src_dir = p.1;
     GET c("docker_remote_exec", { docker_opt => '-v ' _ src_dir _ ':/rbm_copy',
-                             exec_cmd => 'cp -ar /rbm_copy/' _ src_filename _ ' ' _ dst });
+                             exec_as_root => 1,
+                             exec_cmd => 'cp -ar /rbm_copy/' _ src_filename _ ' ' _ dst
+					 _ '; chown ' _ c('docker_user') _ ' ' _ dst _ '/' _ src_filename });
 %]
 OPT_END
 ####
 ####
 ####
+    uid => $>,
     docker_remote_get => <<OPT_END,
 [%
     SET src = c('get_src', { error_if_undef => 1 });
@@ -477,7 +480,8 @@ set -e
 tmpdir=\$(mktemp -d)
 [%
     GET c("docker_remote_exec", { docker_opt => '-v \$tmpdir:/rbm_copy',
-                             exec_cmd => 'cd ' _ src _ '; tar -cf - . | tar -C /rbm_copy --no-same-owner -xf -'});
+                             exec_as_root => 1,
+                             exec_cmd => 'cd ' _ src _ '; tar -cf - . | tar -C /rbm_copy -xf -; chown -R ' _ c('uid') _ ' /rbm_copy'});
 %]
 cd \$tmpdir
 tar -cf - . | tar -C [% dst %] --no-same-owner -xf -
