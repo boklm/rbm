@@ -498,11 +498,11 @@ OPT_END
         },
         { lsb_release       => { id => 'Fedora'},
             pkg_type        => 'rpm',
-            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || yum install [% c("pkg_name") %]',
+            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || yum install -y [% c("pkg_name") %]',
         },
         { lsb_release       => { id => 'CentOS'},
             pkg_type        => 'rpm',
-            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || yum install [% c("pkg_name") %]',
+            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || yum install -y [% c("pkg_name") %]',
         },
         {
             lsb_release => { id => 'openSuSe'},
