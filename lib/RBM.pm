@@ -497,6 +497,7 @@ sub process_template {
             return -f $f ? sha256_hex(scalar read_file($f)) : '';
         },
         fileparse   => \&fileparse,
+        ENV         => \%ENV,
     };
     my $output;
     $template->process(\$tmpl, $vars, \$output, binmode => ':utf8')

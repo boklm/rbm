@@ -64,6 +64,8 @@
 
 - Add an sha256file function in templates
 
+- Make environment variables available to templates
+
 
 Version 0.4
 
