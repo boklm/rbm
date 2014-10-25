@@ -601,7 +601,7 @@ sub input_files {
                         sub { system(@_) }) != 0) {
                     exit_error "Error creating $name";
                 }
-            } elsif ($t->('project')) {
+            } elsif ($input_file->{project} && $t->('project')) {
                 my $p = $t->('project');
                 print "Building project $p - $name\n";
                 my $run_save = $config->{run};
