@@ -533,7 +533,7 @@ OPT_END
 find [% src.join(' ') %] -executable -exec chmod 700 {} \\;
 find [% src.join(' ') %] ! -executable -exec chmod 600 {} \\;
 find [% src.join(' ') %] | sort | \
-        tar --owner=root --group=root --mtime=@[% c('timestamp') %] [% c('tar_args', { error_if_undef => 1 }) %] -T -
+        tar --no-recursion --owner=root --group=root --mtime=@[% c('timestamp') %] [% c('tar_args', { error_if_undef => 1 }) %] -T -
 TAR_END
 ####
 ####
