@@ -587,7 +587,8 @@ sub input_files {
                    $url ? basename($url) :
                    undef;
         $name //= project_step_config($t->('project'), 'filename',
-            {%$options, step => $t->('pkg_type'), %$input_file}) if $t->('project');
+            {%$options, step => $t->('pkg_type'), %$input_file})
+                if $input_file->{project};
         exit_error("Missing filename:\n" . pp($input_file)) unless $name;
         my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
