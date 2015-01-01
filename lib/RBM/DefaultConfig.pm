@@ -195,6 +195,7 @@ OPT_END
     gpg_keyring_dir => '[% config.basedir %]/keyring',
     gpg_wrapper     => <<GPGEND,
 #!/bin/sh
+export LC_ALL=C
 [%
     IF c('gpg_keyring');
         SET gpg_kr = '--keyring ' _ path(c('gpg_keyring'), path(c('gpg_keyring_dir'))) _ ' --no-default-keyring';
