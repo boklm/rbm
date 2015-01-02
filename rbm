@@ -168,7 +168,7 @@ sub build_script {
     my $cmd = shift;
     my $args = set_options(@_);
     usageexit($cmd) unless @$args == 1;
-    RBM::build_run($args->[0], $script_name);
+    RBM::build_pkg($args->[0], { pkg_type => $script_name });
 }
 
 sub pkg {
