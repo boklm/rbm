@@ -1,0 +1,4 @@
+filename: r1
+build: |
+  #!/bin/sh
+  echo 1 - [% c('pkg_type') %] > [% dest_dir %]/[% c('filename') %]

@@ -1,0 +1,7 @@
+filename: r2
+build: |
+  #!/bin/sh
+  cat r1 > [% dest_dir %]/[% c('filename') %]
+  echo 2 - [% c('pkg_type') %] >> [% dest_dir %]/[% c('filename') %]
+input_files:
+  - project: r1

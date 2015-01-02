@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Slurp;
-use Test::More tests => 31;
+use Test::More tests => 32;
 use lib 'lib/';
 
 sub set_target {
@@ -193,6 +193,16 @@ my @tests = (
         target => [ 'version_2' ],
         build => [ 'c', 'build' ],
         files => { 'out/c-2' => "2-build e - v2\n" },
+    },
+    {
+        name => 'multi-projects build',
+        target => [],
+        build => [ 'r3', 'build', { pkg_type => 'build' } ],
+        files => {
+            'out/r1' => "1 - build\n",
+            'out/r2' => "1 - build\n2 - build\n",
+            'out/r3' => "1 - build\n2 - build\n3 - build\n",
+        },
     },
 );
 
