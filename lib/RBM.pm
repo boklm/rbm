@@ -579,9 +579,14 @@ sub input_files {
             next;
         }
         $options->{origin_project} = $project;
-        my $proj_out_dir = path(project_config(
-                $t->('project') ? $t->('project') : $project,
-                'output_dir', {%$input_file}));
+        my $proj_out_dir;
+        if ($input_file->{project}) {
+            $proj_out_dir = path(project_step_config($t->('project'), 'output_dir',
+                    {%$options, step => $t->('pkg_type'), %$input_file}));
+        } else {
+            $proj_out_dir = path(project_config($project, 'output_dir',
+                    {%$input_file}));
+        }
         my $url = $t->('URL');
         my $name = $input_file->{filename} ? $t->('filename') :
                    $url ? basename($url) :
