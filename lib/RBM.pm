@@ -582,7 +582,8 @@ sub input_files {
         my $proj_out_dir;
         if ($input_file->{project}) {
             $proj_out_dir = path(project_step_config($t->('project'), 'output_dir',
-                    {%$options, step => $t->('pkg_type'), %$input_file}));
+                    { %$options, step => $t->('pkg_type'),
+                        output_dir => undef, %$input_file }));
         } else {
             $proj_out_dir = path(project_config($project, 'output_dir',
                     {%$input_file}));
