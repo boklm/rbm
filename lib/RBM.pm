@@ -308,7 +308,8 @@ sub file_sign_id {
     chmod 0700, $gpg_wrapper;
     my ($stdout, $stderr, $success, $exit_code) =
         capture_exec($gpg_wrapper, '--verify',
-            project_config($project, 'filename_sig', $options));
+            project_config($project, 'filename_sig', $options),
+            project_config($project, 'filename_data', $options));
     return undef unless $success;
     return gpg_get_fingerprint(split /\n/, $stderr);
 }
@@ -651,7 +652,7 @@ sub input_files {
             }
             exit_error "No signature file for $name" unless $sig_file;
             my $id = file_sign_id($project, { %$input_file,
-                    filename_sig => $sig_file });
+                    filename_data => $fname, filename_sig => $sig_file });
             print "File $name is signed with id $id\n" if $id;
             if (!$id || !valid_id($id, $file_gpg_id)) {
                 exit_error "File $name is not signed with a valid key";
