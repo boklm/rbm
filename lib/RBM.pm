@@ -162,6 +162,8 @@ sub config {
     my @step = ('steps', get_step($project, $options, $config->{step}, \@_));
     foreach my $path (@_) {
         my @l;
+        push @l, config_p($config, $project, $options, @$path, "override.$name->[0]")
+                if @$name == 1;
         # 1st priority: targets + step matching
         foreach my $t (@targets) {
             push @l, map { config_p($_, $project, $options, @$name) }
@@ -642,7 +644,7 @@ sub input_files {
             }
             foreach my $s ($sig_file ? () : @$sig_ext) {
                 if ($url) {
-                    my $f = { %$input_file, URL => "$url.$s",
+                    my $f = { %$input_file, 'override.URL' => "$url.$s",
                         filename => "$name.$s" };
                     if (urlget($project, $f, 0)) {
                         $sig_file = "$fname.$s";
