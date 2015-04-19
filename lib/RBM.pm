@@ -661,6 +661,7 @@ sub input_files {
             }
         }
         print "Using file $fname\n";
+        mkdir dirname("$dest_dir/$name");
         copy($fname, "$dest_dir/$name");
         push @res, $name;
     }
@@ -750,7 +751,7 @@ sub build_run {
             my $cmd = project_config($project, "remote_put", {
                     %$options,
                     put_src => "$srcdir/$file",
-                    put_dst => $remote_tmp_src,
+                    put_dst => $remote_tmp_src . '/' . dirname($file),
                     exec_name => 'put',
                     exec_as_root => 0,
                 });
