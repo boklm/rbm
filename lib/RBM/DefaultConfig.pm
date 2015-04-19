@@ -463,7 +463,7 @@ OPT_END
     SET src_dir = p.1;
     GET c("docker_remote_exec", { docker_opt => '-v ' _ src_dir _ ':/rbm_copy',
                              exec_as_root => 1,
-                             exec_cmd => 'cp -ar /rbm_copy/' _ src_filename _ ' ' _ dst
+                             exec_cmd => 'mkdir -p ' _ dst _ '; cp -ar /rbm_copy/' _ src_filename _ ' ' _ dst
 					 _ '; chown ' _ c('docker_user') _ ' ' _ dst _ '/' _ src_filename });
 %]
 OPT_END
