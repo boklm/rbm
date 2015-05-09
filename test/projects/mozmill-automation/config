@@ -1,0 +1,7 @@
+version: '[% c("abbrev") %]'
+hg_url: https://hg.mozilla.org/qa/mozmill-automation/
+hg_hash: bbad7215c713
+t: '[% sha256(exec("cat testrun_remote.py")) %]'
+build: |
+  #!/bin/sh
+  sha256sum [% project %]-[% c("version") %].tar > [% dest_dir %]/[% project %]-[% c("version") %]_sha256sum.txt

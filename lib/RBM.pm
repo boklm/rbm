@@ -372,6 +372,26 @@ sub git_clone_fetch_chdir {
     }
 }
 
+sub hg_clone_fetch_chdir {
+    my ($project, $options) = @_;
+    my $clonedir = create_dir(path(project_config($project,
+                                'hg_clone_dir', $options)));
+    my $hg_url = project_config($project, 'hg_url', $options)
+                || exit_error "hg_url is undefined";
+    if (!chdir path("$clonedir/$project")) {
+        chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
+        if (system('hg', 'clone', '-q', $hg_url, $project) != 0) {
+            exit_error "Error cloning $hg_url";
+        }
+        chdir($project) || exit_error "Error entering $project directory";
+    }
+    if (!$config->{projects}{$project}{fetched}
+                && project_config($project, 'fetch', $options)) {
+        system('hg', 'pull', '-q', $hg_url) == 0
+                || exit_error "Error pulling changes from $hg_url";
+    }
+}
+
 sub run_script {
     my ($project, $cmd, $f) = @_;
     $f //= \&capture_exec;
@@ -399,6 +419,13 @@ sub execute {
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $git_hash);
         exit_error "Cannot checkout $git_hash" unless $success;
+    } elsif (project_config($project, 'hg_url', $options)) {
+        my $hg_hash = project_config($project, 'hg_hash', $options)
+                || exit_error "No hg_hash specified for project $project";
+        hg_clone_fetch_chdir($project, $options);
+        my ($stdout, $stderr, $success, $exit_code)
+                = capture_exec('hg', 'update', '-C', $hg_hash);
+        exit_error "Cannot checkout $hg_hash" unless $success;
     }
     my ($stdout, $stderr, $success, $exit_code)
                 = run_script($project, $cmd, \&capture_exec);
@@ -422,33 +449,48 @@ sub maketar {
     $dest_dir //= create_dir(path(project_config($project, 'output_dir',
                 { %$options, no_distro => 1 })));
     valid_project($project);
-    return undef unless project_config($project, 'git_url', $options);
-    my $git_hash = project_config($project, 'git_hash', $options)
-        || exit_error "No git_hash specified for project $project";
     my $old_cwd = getcwd;
-    git_clone_fetch_chdir($project);
+    my $commit_hash;
+    if (project_config($project, 'git_url', $options)) {
+        $commit_hash = project_config($project, 'git_hash', $options)
+                || exit_error "No git_hash specified for project $project";
+        git_clone_fetch_chdir($project);
+    } elsif (project_config($project, 'hg_url', $options)) {
+        $commit_hash = project_config($project, 'hg_hash', $options)
+                || exit_error "No hg_hash specified for project $project";
+        hg_clone_fetch_chdir($project);
+    } else {
+        return undef;
+    }
+
     my $version = project_config($project, 'version', $options);
     if (my $tag_gpg_id = gpg_id(project_config($project, 'tag_gpg_id', $options))) {
-        my $id = git_tag_sign_id($project, $git_hash) ||
-                exit_error "$git_hash is not a signed tag";
+        my $id = git_tag_sign_id($project, $commit_hash) ||
+                exit_error "$commit_hash is not a signed tag";
         if (!valid_id($id, $tag_gpg_id)) {
-            exit_error "Tag $git_hash is not signed with a valid key";
+            exit_error "Tag $commit_hash is not signed with a valid key";
         }
-        print "Tag $git_hash is signed with key $id\n";
+        print "Tag $commit_hash is signed with key $id\n";
     }
     if (my $commit_gpg_id = gpg_id(project_config($project, 'commit_gpg_id',
                 $options))) {
-        my $id = git_commit_sign_id($project, $git_hash) ||
-                exit_error "$git_hash is not a signed commit";
+        my $id = git_commit_sign_id($project, $commit_hash) ||
+                exit_error "$commit_hash is not a signed commit";
         if (!valid_id($id, $commit_gpg_id)) {
-            exit_error "Commit $git_hash is not signed with a valid key";
+            exit_error "Commit $commit_hash is not signed with a valid key";
         }
-        print "Commit $git_hash is signed with key $id\n";
+        print "Commit $commit_hash is signed with key $id\n";
     }
     my $tar_file = "$project-$version.tar";
-    system('git', 'archive', "--prefix=$project-$version/",
-        "--output=$dest_dir/$tar_file", $git_hash) == 0
-        || exit_error 'Error running git archive.';
+    if (project_config($project, 'git_url', $options)) {
+        system('git', 'archive', "--prefix=$project-$version/",
+            "--output=$dest_dir/$tar_file", $commit_hash) == 0
+                || exit_error 'Error running git archive.';
+    } else {
+        system('hg', 'archive', '-r', $commit_hash, '-t', 'tar',
+            '--prefix', "$project-$version", "$dest_dir/$tar_file") == 0
+                || exit_error 'Error running hg archive.';
+    }
     my %compress = (
         xz  => ['xz', '-f'],
         gz  => ['gzip', '-f'],
@@ -512,7 +554,6 @@ sub rpmspec {
     my ($project, $dest_dir) = @_;
     $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
     valid_project($project);
-    my $git_hash = project_config($project, 'git_hash');
     my $timestamp = project_config($project, 'timestamp');
     my $rpmspec = project_config($project, 'rpmspec')
                 || exit_error "Undefined config for rpmspec";

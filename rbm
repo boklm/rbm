@@ -94,7 +94,8 @@ sub set_options {
                      compress_tar=s pkg-rel=s timestamp=i fetch!
                      gpg-keyring=s gpg-keyring-dir=s gpg-args=s gpg-bin=s
                      sysconf-file=s debsign-keyid=s use-pbuilder!
-                     step=s target=s@ publish-src-dir=s debug!);
+                     step=s target=s@ publish-src-dir=s debug! hg-clone-dir=s
+                     hg-hash=s);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
     foreach my $k (keys %val) {
@@ -135,6 +136,9 @@ sub fetch {
         if (RBM::project_config($project, 'git_url')) {
             print "Fetching commits for $project\n";
             RBM::git_clone_fetch_chdir($project);
+        } elsif (RBM::project_config($project, 'hg_url')) {
+            print "Fetching commits for $project\n";
+            RBM::hg_clone_fetch_chdir($project);
         } else {
             print "Skipping $project\n";
         }

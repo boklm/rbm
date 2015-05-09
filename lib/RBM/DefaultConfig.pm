@@ -123,13 +123,20 @@ our %default_config = (
     projects_dir  => 'projects',
     output_dir    => 'out',
     git_clone_dir => 'git_clones',
+    hg_clone_dir  => 'hg_clones',
     fetch         => 1,
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(projects_dir) ],
     describe      => \&git_describe,
     abbrev_lenght => '12',
-    abbrev        => '[% exec("git log -1 --abbrev=" _ c("abbrev_lenght") _ " --format=%h " _ c("git_hash")) %]',
+    abbrev        => '[%
+                         IF c("git_url");
+                                exec("git log -1 --abbrev=" _ c("abbrev_lenght") _ " --format=%h " _ c("git_hash"));
+                         ELSE;
+                                exec("hg id -i -r " _ c("hg_hash"));
+                         END;
+                      %]',
     timestamp     => '[%
                          IF c("git_url");
                            GET exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}");

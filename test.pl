@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Slurp;
-use Test::More tests => 32;
+use Test::More tests => 34;
 use lib 'lib/';
 
 sub set_target {
@@ -202,6 +202,22 @@ my @tests = (
             'out/r1' => "1 - build\n",
             'out/r2' => "1 - build\n2 - build\n",
             'out/r3' => "1 - build\n2 - build\n3 - build\n",
+        },
+    },
+    {
+        name => 'mercurial repo',
+        target => [],
+        config => [ 'mozmill-automation', 't' ],
+        expected => '432611daa42c7608d32b04c89ac26fbcea6a61663419aa88ead87116e212a004',
+    },
+    {
+        name => 'mercurial repo build',
+        target => [],
+        build => [ 'mozmill-automation', 'build' ],
+        files => {
+            'out/mozmill-automation-bbad7215c713_sha256sum.txt' =>
+            '0ef263a660c5021013620b07c5d2c8344a6f6ee579b8aa1edab15f92e36924e8  '
+            . "mozmill-automation-bbad7215c713.tar\n",
         },
     },
 );

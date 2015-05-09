@@ -66,6 +66,8 @@
 
 - Make environment variables available to templates
 
+- Add support for mercurial repositories
+
 
 Version 0.4
 
