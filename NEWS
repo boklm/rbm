@@ -68,6 +68,8 @@
 
 - Add support for mercurial repositories
 
+- Change default remote_mktemp to use /var/tmp
+
 
 Version 0.4
 
