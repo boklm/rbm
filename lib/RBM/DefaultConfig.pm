@@ -137,12 +137,22 @@ our %default_config = (
                                 exec("hg id -i -r " _ c("hg_hash"));
                          END;
                       %]',
-    timestamp     => '[%
-                         IF c("git_url");
-                           GET exec("git show -s --format=format:%ct " _ c("git_hash") _ "^{commit}");
-                         ELSE;
-                           GET "946684800";
-                         END; %]',
+    timestamp     => sub {
+        my ($project, $options) = @_;
+        if (RBM::project_config($project, 'git_url', $options)) {
+            my $git_hash = RBM::project_config($project, 'git_hash', $options);
+            return RBM::execute($project,
+                "git show -s --format=format:%ct ${git_hash}^{commit}", $options);
+        } elsif (RBM::project_config($project, 'hg_url', $options)) {
+            my $hg_hash = RBM::project_config($project, 'hg_hash', $options);
+            my $changeset = RBM::execute($project,
+                "hg export --noninteractive -r $hg_hash", $options);
+            foreach my $line (split "\n", $changeset) {
+                return $1 if ($line =~ m/^# Date (\d+) \d+/);
+            }
+        }
+        return '946684800';
+    },
     debug         => 0,
     version       => <<END,
 [%-
