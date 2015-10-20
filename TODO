@@ -17,10 +17,6 @@
   config option value. Make it possible to override distro config in a
   project's config.
 
-- Make it possible to use perl config files (probably named +config.pl+)
-  in addition to the yaml config files. That would allow to use a perl
-  function for some of the options.
-
 - Add a pkg template function that take a generic package name as
   argument, and return a distro specific package name. To do this, it
   will use the first undef value after trying in the following order :
