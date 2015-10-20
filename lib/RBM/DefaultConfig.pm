@@ -52,10 +52,6 @@ sub lsb_release {
     return $res;
 }
 
-sub lsb_release_cache {
-    return $RBM::config->{default}{lsb_release} = lsb_release(@_);
-}
-
 sub get_arch {
     my ($stdout, $stderr, $success, $exit_code) = capture_exec('uname', '-m');
     return "unknown" unless $success;
@@ -453,7 +449,7 @@ OPT_END
 ####
 ####
 ####
-    lsb_release => \&lsb_release_cache,
+    lsb_release => \&lsb_release,
     pkg_type =>  sub {
         my ($project, $options) = @_;
         my $distro = RBM::project_config($project, 'lsb_release/id', $options);
