@@ -78,45 +78,6 @@ sub get_arch {
     return $stdout;
 }
 
-sub input_files_by_name {
-    my ($project, $options) = @_;
-    $options //= {};
-    my $input_files = RBM::project_config($project, 'input_files', $options);
-    return {} unless ref $input_files eq 'ARRAY';
-    my $res = {};
-    my $noname = 0;
-    foreach my $input_file (@$input_files) {
-        if (!ref $input_file) {
-            $input_file = RBM::project_config($project,
-                RBM::process_template($project, $input_file), $options);
-        }
-        next unless $input_file;
-        my $name;
-        if ($input_file->{name}) {
-            $name = RBM::project_config($project, 'name', { %$options, %$input_file });
-        } else {
-            $name = "noname_$noname";
-            $noname++;
-        }
-        $res->{$name} = sub {
-            my ($project, $options) = @_;
-            $options //= {};
-            $options->{origin_project} = $project;
-            my $t = sub {
-                RBM::project_config($project, $_[0], { %$options, %$input_file })
-            };
-            return $t->('filename') if $input_file->{filename};
-            my $url = $t->('URL');
-            return basename($url) if $url;
-            return RBM::project_step_config($t->('project'), 'filename',
-                        {%$options, step => $t->('pkg_type'), %$input_file})
-                    if $input_file->{project};
-            return undef;
-        };
-    }
-    return $res;
-}
-
 our %default_config = (
     sysconf_file  => '/etc/rbm.conf',
     tmp_dir       => '/tmp',
@@ -567,7 +528,7 @@ ZIP_END
 ####
 ####
     arch   => \&get_arch,
-    input_files_by_name => \&input_files_by_name,
+    input_files_by_name => sub { RBM::input_files('getfnames', @_); },
     steps => {
         srpm => 'rpm',
         'deb-src' => 'deb',

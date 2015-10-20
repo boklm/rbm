@@ -602,11 +602,13 @@ sub file_in_dir {
 }
 
 sub input_files {
-    my ($project, $options, $dest_dir) = @_;
-    my @res;
+    my ($action, $project, $options, $dest_dir) = @_;
+    my @res_copy;
+    my %res_getfnames;
+    my $getfnames_noname = 0;
     $options = {$options ? %$options : ()};
     my $input_files = project_config($project, 'input_files', $options,);
-    return unless $input_files;
+    goto RETURN_RES unless $input_files;
     my $proj_dir = path(project_config($project, 'projects_dir', $options));
     my $src_dir = "$proj_dir/$project";
     my $old_cwd = getcwd;
@@ -625,6 +627,31 @@ sub input_files {
             next;
         }
         $options->{origin_project} = $project;
+        if ($action eq 'getfnames') {
+            my $getfnames_name;
+            if ($input_file->{name}) {
+                $getfnames_name = $t->('name');
+            } else {
+                $getfnames_name = "noname_$getfnames_noname";
+                $getfnames_noname++;
+            }
+            $res_getfnames{$getfnames_name} = sub {
+                my ($project, $options) = @_;
+                $options //= {};
+                $options->{origin_project} = $project;
+                my $t = sub {
+                    RBM::project_config($project, $_[0], { %$options, %$input_file })
+                };
+                return $t->('filename') if $input_file->{filename};
+                my $url = $t->('URL');
+                return basename($url) if $url;
+                return RBM::project_step_config($t->('project'), 'filename',
+                        {%$options, step => $t->('pkg_type'), %$input_file})
+                    if $input_file->{project};
+                return undef;
+            };
+            next;
+        }
         my $proj_out_dir;
         if ($input_file->{project}) {
             $proj_out_dir = path(project_step_config($t->('project'), 'output_dir',
@@ -706,10 +733,12 @@ sub input_files {
         print "Using file $fname\n";
         mkdir dirname("$dest_dir/$name");
         copy($fname, "$dest_dir/$name");
-        push @res, $name;
+        push @res_copy, $name;
     }
     chdir $old_cwd;
-    return @res;
+    RETURN_RES:
+    return @res_copy if $action eq 'copy';
+    return \%res_getfnames if $action eq 'getfnames';
 }
 
 sub build_run {
@@ -734,7 +763,7 @@ sub build_run {
         my $tarfile = maketar($project, $options, $srcdir);
         push @cfiles, $tarfile if $tarfile;
         push @cfiles, copy_files($project, $srcdir);
-        push @cfiles, input_files($project, $options, $srcdir);
+        push @cfiles, input_files('copy', $project, $options, $srcdir);
     }
     my ($remote_tmp_src, $remote_tmp_dst, %build_script);
     my @scripts = ('pre', $script_name, 'post');
