@@ -5,31 +5,13 @@ targets:
   version_2:
     version: 2
 option_e: e
-distributions:
- - lsb_release:
-     id: distro_a
-     release: 1
-     codename: codename_a
-   option_e: 'distro_a - e'
 steps:
   redirect: build
   build:
     option_e: 'build e'
-    distributions:
-     - lsb_release:
-         id: distro_a
-         release: 1
-         codename: codename_a
-       option_e: 'distro_a - build e'
     targets:
       version_2:
         option_e: 'build e - v2'
-        distributions:
-         - lsb_release:
-             id: distro_a
-             release: 1
-             codename: codename_a
-           option_e: 'distro_a - build e - v2'
   publish:
     option_e: 'publish e'
     targets:

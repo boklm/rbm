@@ -1,3 +1,6 @@
+- remove support for distributions configuration. This feature made
+  lookup of options 3 or 4 times slower, and is not very useful. The
+  targets feature should be used instead.
 
 - project is renamed to rbm (Reproducible Build Manager)
 

@@ -41,7 +41,6 @@ MAN7_ASC += rbm_layout.asc
 MAN7_ASC += rbm_config.asc
 MAN7_ASC += rbm_templates.asc
 MAN7_ASC += rbm_remote.asc
-MAN7_ASC += rbm_distributions.asc
 MAN7_ASC += rbm_targets.asc
 MAN7_ASC += rbm_steps.asc
 MAN7_ASC += rbm_input_files.asc

@@ -82,36 +82,6 @@ sub config_p {
     return $c;
 }
 
-sub match_distro {
-    my ($project, $path, $name, $options) = @_;
-    return () if $options->{no_distro};
-    my $nodis = { no_distro => 1 };
-    my $distros = config_p($config, $project, $options, @$path, 'distributions');
-    return () unless $distros;
-    my (@res1, @res2, @res3, @res4);
-    my $id = project_config($project, 'lsb_release/id', $nodis);
-    my $release = project_config($project, 'lsb_release/release', $nodis);
-    my $codename = project_config($project, 'lsb_release/codename', $nodis);
-    foreach my $d (@$distros) {
-        my %l = %{$d->{lsb_release}};
-        next unless $l{id} eq $id;
-        if (defined($l{release}) && $l{release} eq $release) {
-            if (defined($l{codename}) && $l{codename} eq $codename) {
-                push @res1, $d;
-            } elsif (!defined($l{codename})) {
-                push @res2, $d;
-            }
-        } elsif (!defined $l{release}) {
-            if (defined($l{codename}) && $l{codename} eq $codename) {
-                push @res3, $d;
-            } elsif (!defined $l{codename}) {
-                push @res4, $d;
-            }
-        }
-    }
-    return @res1, @res2, @res3, @res4;
-}
-
 sub as_array {
     ref $_[0] eq 'ARRAY' ? $_[0] : [ $_[0] ];
 }
@@ -166,23 +136,15 @@ sub config {
                 if @$name == 1;
         # 1st priority: targets + step matching
         foreach my $t (@targets) {
-            push @l, map { config_p($_, $project, $options, @$name) }
-              match_distro($project, [@$path, @step, 'targets', $t], $name, $options);
             push @l, config_p($config, $project, $options, @$path, @step, 'targets', $t, @$name);
         }
         # 2nd priority: step maching
-        push @l, map { config_p($_, $project, $options, @$name) }
-                match_distro($project, [@$path, @step], $name, $options);
         push @l, config_p($config, $project, $options, @$path, @step, @$name);
         # 3rd priority: target matching
         foreach my $t (@targets) {
-            push @l, map { config_p($_, $project, $options, @$name) }
-              match_distro($project, [@$path, 'targets', $t], $name, $options);
             push @l, config_p($config, $project, $options, @$path, 'targets', $t, @$name);
         }
         # last priority: no target and no step matching
-        push @l, map { config_p($_, $project, $options, @$name) }
-                match_distro($project, $path, $name, $options);
         push @l, config_p($config, $project, $options, @$path, @$name);
         @l = grep { defined $_ } @l;
         push @$res, @l if @l;

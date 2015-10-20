@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Slurp;
-use Test::More tests => 34;
+use Test::More tests => 27;
 use lib 'lib/';
 
 sub set_target {
@@ -75,30 +75,6 @@ my @tests = (
         expected => 'c',
     },
     {
-        name => 'distro - 1',
-        target => [ 'set_distro_a' ],
-        config => [ 'a', 'option_b' ],
-        expected => 'b_a',
-    },
-    {
-        name => 'distro - 2',
-        target => [ 'set_distro_b' ],
-        config => [ 'a', 'option_b' ],
-        expected => 'b_b',
-    },
-    {
-        name => 'distro + target - 1',
-        target => [ 'set_distro_a', 'target_g' ],
-        config => [ 'a', 'option_c' ],
-        expected => 'c_a',
-    },
-    {
-        name => 'distro + target - 2',
-        target => [ 'set_distro_b', 'target_g' ],
-        config => [ 'a', 'option_c' ],
-        expected => 'c_b',
-    },
-    {
         name => 'template func c',
         config => [ 'a', 'tmpl_c1' ],
         expected => 'a',
@@ -149,26 +125,6 @@ my @tests = (
         target => [ 'version_2' ],
         config => [ 'c', 'option_e' ],
         expected => 'build e - v2',
-    },
-    {
-        name => 'distro config',
-        target => [ 'set_distro_a' ],
-        config => [ 'c', 'option_e' ],
-        expected => 'distro_a - e',
-    },
-    {
-        name => 'distro + step config',
-        target => [ 'set_distro_a' ],
-        step => 'build',
-        config => [ 'c', 'option_e' ],
-        expected => 'distro_a - build e',
-    },
-    {
-        name => 'distro + step + target config',
-        target => [ 'set_distro_a', 'version_2' ],
-        step => 'build',
-        config => [ 'c', 'option_e' ],
-        expected => 'distro_a - build e - v2',
     },
     {
         name => 'srpm step',

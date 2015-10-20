@@ -37,28 +37,13 @@ sub lsb_release {
     my $distribution = RBM::project_config($project, 'distribution',
                                         { %$options, no_distro => 1 });
     if ($distribution) {
-        my @distributions = map { @$_ }
-                @{RBM::project_config($project, 'distributions',
-                        { %$options, as_array => 1, no_distro => 1 })};
         my ($id, $release) = split '-', $distribution;
-        foreach my $d (@distributions) {
-            if ($id eq $d->{lsb_release}{id} && $release
-                        && $d->{lsb_release}{release}
-                        && $release eq $d->{lsb_release}{release}) {
-                return {
-                    id => $id,
-                    release => $release,
-                    codename => $d->{lsb_release}{codename},
-                };
-            }
-        }
         return { id => $id, release => $release };
     }
     my $res = {};
-    my $u = "Unknown distribution. Check rbm_distributions(7) man page.";
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('lsb_release', '-irc');
-    exit_error $u unless $success;
+    exit_error("Unknown distribution") unless $success;
     foreach (split "\n", $stdout) {
         $res->{id} = $1 if (m/^Distributor ID:\s+(.+)$/);
         $res->{release} = $1 if (m/^Release:\s+(.+)$/);
@@ -469,41 +454,36 @@ OPT_END
 ####
 ####
     lsb_release => \&lsb_release_cache,
-    distributions => [
-        {
-            lsb_release     => { id => 'Mageia'},
-            pkg_type        => 'rpm',
-            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || urpmi [% c("pkg_name") %]',
-        },
-        { lsb_release       => { id => 'Fedora'},
-            pkg_type        => 'rpm',
-            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || yum install -y [% c("pkg_name") %]',
-        },
-        { lsb_release       => { id => 'CentOS'},
-            pkg_type        => 'rpm',
-            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || yum install -y [% c("pkg_name") %]',
-        },
-        {
-            lsb_release => { id => 'openSuSe'},
-            pkg_type => 'rpm',
-            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || zypper install [% c("pkg_name") %]',
-        },
-        {
-            lsb_release     => { id => 'MandrivaLinux'},
-            pkg_type        => 'rpm',
-            install_package => 'rpm -q [% c("pkg_name") %] > /dev/null || urpmi [% c("pkg_name") %]',
-        },
-        {
-            lsb_release     => { id => 'Debian'},
-            pkg_type        => 'deb',
-            install_package => 'dpkg -s [% c("pkg_name") %] > /dev/null 2>&1 || apt-get install -y [% c("pkg_name") %]',
-        },
-        {
-            lsb_release     => { id => 'Ubuntu'},
-            pkg_type        => 'deb',
-            install_package => 'dpkg -s [% c("pkg_name") %] > /dev/null 2>&1 || apt-get install -y [% c("pkg_name") %]',
-        },
-    ],
+    pkg_type =>  sub {
+        my ($project, $options) = @_;
+        my $distro = RBM::project_config($project, 'lsb_release/id', $options);
+        my %pkg_types = qw(
+            Fedora   rpm
+            CentOS   rpm
+            Mageia   rpm
+            openSuSe rpm
+            Debian   deb
+            Ubuntu   deb
+        );
+        return $pkg_types{$distro};
+    },
+    install_package => sub {
+        my ($project, $options) = @_;
+        my $distro = RBM::project_config($project, 'lsb_release/id', $options);
+        my $yum = 'rpm -q [% c("pkg_name") %] > /dev/null || yum install -y [% c("pkg_name") %]';
+        my $zypper = 'rpm -q [% c("pkg_name") %] > /dev/null || zypper install [% c("pkg_name") %]';
+        my $urpmi = 'rpm -q [% c("pkg_name") %] > /dev/null || urpmi [% c("pkg_name") %]';
+        my $apt = 'dpkg -s [% c("pkg_name") %] > /dev/null 2>&1 || apt-get install -y [% c("pkg_name") %]';
+        my %install = (
+            Fedora   => $yum,
+            CentOS   => $yum,
+            Mageia   => $urpmi,
+            openSuSe => $zypper,
+            Debian   => $apt,
+            Ubuntu   => $apt,
+        );
+        return $install{$distro};
+    },
     urlget => 'wget -O[% shell_quote(dest_dir _ "/" _ c("filename")) %] [% shell_quote(c("URL")) %]',
     sig_ext => [ qw(gpg asc sig) ],
     enable => 1,
