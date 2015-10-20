@@ -33,9 +33,7 @@ sub git_describe {
 
 sub lsb_release {
     my ($project, $options) = @_;
-    $options //= {};
-    my $distribution = RBM::project_config($project, 'distribution',
-                                        { %$options, no_distro => 1 });
+    my $distribution = RBM::project_config($project, 'distribution', $options);
     if ($distribution) {
         my ($id, $release) = split '-', $distribution;
         return { id => $id, release => $release };

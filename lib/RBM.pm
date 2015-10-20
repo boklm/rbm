@@ -177,7 +177,7 @@ sub notmpl {
     my ($name, $project) = @_;
     return 1 if $name eq 'notmpl';
     my @n = (@{$config->{default}{notmpl}},
-        @{project_config($project, 'notmpl', { no_distro => 1 })});
+        @{project_config($project, 'notmpl')});
     return grep { $name eq $_ } @n;
 }
 
@@ -194,8 +194,6 @@ sub project_config {
     goto FINISH unless @$name;
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
-    $options = $options ? {%$options, no_distro => 1} : $options
-                if $name->[0] eq 'lsb_release';
     $res = config($project, $name, $options, ['opt'], ['run'],
                         ['projects', $project], [], ['system'], ['default']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
@@ -428,9 +426,7 @@ sub gpg_id {
 
 sub maketar {
     my ($project, $options, $dest_dir) = @_;
-    $options //= {};
-    $dest_dir //= create_dir(path(project_config($project, 'output_dir',
-                { %$options, no_distro => 1 })));
+    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
     valid_project($project);
     my $old_cwd = getcwd;
     my $commit_hash;
@@ -496,8 +492,8 @@ sub maketar {
 
 sub process_template {
     my ($project, $tmpl, $dest_dir) = @_;
-    $dest_dir //= path(project_config($project, 'output_dir', { no_distro => 1 }));
-    my $projects_dir = path(project_config($project, 'projects_dir', { no_distro => 1 }));
+    $dest_dir //= path(project_config($project, 'output_dir'));
+    my $projects_dir = path(project_config($project, 'projects_dir'));
     my $template = Template->new(
         ENCODING        => 'utf8',
         INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
