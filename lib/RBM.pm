@@ -130,26 +130,47 @@ sub config {
     my $res;
     my @targets = @{get_targets($project, $options, \@_)};
     my @step = ('steps', get_step($project, $options, $config->{step}, \@_));
+    my $as_array = $options->{as_array};
     foreach my $path (@_) {
         my @l;
         push @l, config_p($config, $project, $options, @$path, "override.$name->[0]")
                 if @$name == 1;
+        if (!$as_array) {
+            @l = grep { defined $_ } @l;
+            return $l[0] if @l;
+        }
         # 1st priority: targets + step matching
         foreach my $t (@targets) {
             push @l, config_p($config, $project, $options, @$path, @step, 'targets', $t, @$name);
+            if (!$as_array) {
+                @l = grep { defined $_ } @l;
+                return $l[0] if @l;
+            }
         }
         # 2nd priority: step maching
         push @l, config_p($config, $project, $options, @$path, @step, @$name);
+        if (!$as_array) {
+            @l = grep { defined $_ } @l;
+            return $l[0] if @l;
+        }
         # 3rd priority: target matching
         foreach my $t (@targets) {
             push @l, config_p($config, $project, $options, @$path, 'targets', $t, @$name);
+            if (!$as_array) {
+                @l = grep { defined $_ } @l;
+                return $l[0] if @l;
+            }
         }
         # last priority: no target and no step matching
         push @l, config_p($config, $project, $options, @$path, @$name);
+        if (!$as_array) {
+            @l = grep { defined $_ } @l;
+            return $l[0] if @l;
+        }
         @l = grep { defined $_ } @l;
         push @$res, @l if @l;
     }
-    return $options->{as_array} ? $res : $res->[0];
+    return $as_array ? $res : undef;
 }
 
 sub notmpl {
