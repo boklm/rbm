@@ -538,8 +538,10 @@ sub process_template {
         versioncmp  => \&versioncmp,
         sha256      => \&sha256_hex,
         sha256file  => sub {
+            CORE::state %res;
             my $f = path(shift);
-            return -f $f ? sha256_hex(scalar read_file($f)) : '';
+            return $res{$f} if exists $res{$f};
+            return $res{$f} = -f $f ? sha256_hex(scalar read_file($f)) : '';
         },
         fileparse   => \&fileparse,
         ENV         => \%ENV,
