@@ -677,7 +677,7 @@ sub input_files {
                         output_dir => undef, %$input_file }));
         } else {
             $proj_out_dir = path(project_config($project, 'output_dir',
-                    {%$input_file}));
+                    { %$input_file, output_dir => undef }));
         }
         my $url = $t->('URL');
         my $name = $input_file->{filename} ? $t->('filename') :
