@@ -187,9 +187,21 @@ sub confkey_str {
 
 sub project_config {
     my ($project, $name, $options) = @_;
+    CORE::state $cache;
     my $res;
     my $error_if_undef = $options->{error_if_undef};
-    $options = $options ? {%$options, error_if_undef => 0} : $options;
+    my $cache_save = $cache;
+    if ($options) {
+        $options = {%$options, error_if_undef => 0};
+        my %ignore_options = map { $_ => 1 } qw(error_if_undef step);
+        $cache = {} if grep { !$ignore_options{$_} } keys %$options;
+    }
+    my $name_str = ref $name eq 'ARRAY' ? join '/', @$name : $name;
+    my $step = $config->{step};
+    if (exists $cache->{$project}{$step}{$name_str}) {
+        $res = $cache->{$project}{$step}{$name_str};
+        goto FINISH;
+    }
     $name = [ split '/', $name ] unless ref $name eq 'ARRAY';
     goto FINISH unless @$name;
     my $opt_save = $config->{opt};
@@ -201,8 +213,10 @@ sub project_config {
         $res = process_template($project, $res,
             confkey_str($name) eq 'output_dir' ? '.' : undef);
     }
+    $cache->{$project}{$step}{$name_str} = $res;
     $config->{opt} = $opt_save;
     FINISH:
+    $cache = $cache_save;
     if (!defined($res) && $error_if_undef) {
         my $msg = $error_if_undef eq '1' ?
                 "Option " . confkey_str($name) . " is undefined"
