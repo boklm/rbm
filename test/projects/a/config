@@ -6,3 +6,14 @@ targets:
     option_a: b
   target_c:
     option_a: c
+
+steps:
+  S:
+    z: A
+    option_a: 12345
+z: '[% c("option_a") %]'
+z_1: '[% c("z") %]'
+z_2: '[% c("z", { option_a => "Z" }) %]'
+Z_1: '[% c("z_1") _ c("z_2") _ c("z_1") %]'
+Z_2: '[% pc("a", "z_1", { step => "S"}) _ c("z_2") _ c("z_1") %]'
+Z: '[% c("Z_1") _ " " _ c("Z_2") _ " " _ c("Z_1") %]'

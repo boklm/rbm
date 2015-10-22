@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Slurp;
-use Test::More tests => 27;
+use Test::More tests => 28;
 use lib 'lib/';
 
 sub set_target {
@@ -125,6 +125,12 @@ my @tests = (
         target => [ 'version_2' ],
         config => [ 'c', 'option_e' ],
         expected => 'build e - v2',
+    },
+    {
+        name => 'option overriding',
+        step => 'build',
+        config => [ 'a', 'Z' ],
+        expected => 'aZa AZa aZa',
     },
     {
         name => 'srpm step',
