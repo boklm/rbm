@@ -504,6 +504,13 @@ sub maketar {
     return $tar_file;
 }
 
+sub sha256file {
+    CORE::state %res;
+    my $f = path(shift);
+    return $res{$f} if exists $res{$f};
+    return $res{$f} = -f $f ? sha256_hex(scalar read_file($f)) : '';
+}
+
 sub process_template {
     my ($project, $tmpl, $dest_dir) = @_;
     $dest_dir //= path(project_config($project, 'output_dir'));
@@ -530,12 +537,7 @@ sub process_template {
         shell_quote => \&shell_quote,
         versioncmp  => \&versioncmp,
         sha256      => \&sha256_hex,
-        sha256file  => sub {
-            CORE::state %res;
-            my $f = path(shift);
-            return $res{$f} if exists $res{$f};
-            return $res{$f} = -f $f ? sha256_hex(scalar read_file($f)) : '';
-        },
+        sha256file  => \&sha256file,
         fileparse   => \&fileparse,
         ENV         => \%ENV,
     };
@@ -594,11 +596,34 @@ sub file_in_dir {
     return map { -f "$_/$filename" ? "$_/$filename" : () } @dir;
 }
 
+sub input_file_id_need_dl {
+    my ($input_file, $t, $fname) = @_;
+    return undef if $input_file->{input_file_id};
+    return undef if $input_file->{sha256sum};
+    return undef if $fname;
+    return 1 if $input_file->{URL};
+    return 1 if $input_file->{exec};
+    return 1 if $input_file->{content};
+    return undef if $input_file->{project};
+    return undef;
+    exit_error "Missing file" unless $fname;
+}
+
+sub input_file_id {
+    my ($input_file, $t, $fname, $filename) = @_;
+    return $t->('input_file_id') if $input_file->{input_file_id};
+    return $input_file->{project} . ':' . $filename if $input_file->{project};
+    return $filename . ':' . $t->('sha256sum') if $input_file->{sha256sum};
+    return $filename . ':' . sha256file($fname);
+}
+
 sub input_files {
     my ($action, $project, $options, $dest_dir) = @_;
     my @res_copy;
     my %res_getfnames;
     my $getfnames_noname = 0;
+    my $need_dl = 1;
+    my $input_files_id = '';
     $options = {$options ? %$options : ()};
     my $input_files = project_config($project, 'input_files', $options,);
     goto RETURN_RES unless $input_files;
@@ -663,8 +688,10 @@ sub input_files {
                 if $input_file->{project};
         exit_error("Missing filename:\n" . pp($input_file)) unless $name;
         my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
+        $need_dl = input_file_id_need_dl($input_file, $t, $fname)
+                        if $action eq 'input_files_id';
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
-        if (!$fname || $t->('refresh_input')) {
+        if ($need_dl && (!$fname || $t->('refresh_input'))) {
             if ($t->('content')) {
                 write_file("$proj_out_dir/$name", $t->('content'));
             } elsif ($t->('URL')) {
@@ -689,6 +716,11 @@ sub input_files {
             }
         }
         ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
+        if ($action eq 'input_files_id') {
+            $input_files_id .= input_file_id($input_file, $t, $fname, $name);
+            $input_files_id .= "\n";
+            next;
+        }
         exit_error "Missing file $name" unless $fname;
         if ($t->('sha256sum')
             && $t->('sha256sum') ne sha256_hex(read_file($fname))) {
@@ -730,6 +762,7 @@ sub input_files {
     }
     chdir $old_cwd;
     RETURN_RES:
+    return sha256_hex($input_files_id) if $action eq 'input_files_id';
     return @res_copy if $action eq 'copy';
     return \%res_getfnames if $action eq 'getfnames';
 }

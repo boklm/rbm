@@ -503,6 +503,7 @@ ZIP_END
 ####
     arch   => \&get_arch,
     input_files_by_name => sub { RBM::input_files('getfnames', @_); },
+    input_files_id => sub { RBM::input_files('input_files_id', @_); },
     steps => {
         srpm => 'rpm',
         'deb-src' => 'deb',
