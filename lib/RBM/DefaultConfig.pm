@@ -74,7 +74,7 @@ our %default_config = (
                          IF c("git_url");
                                 exec("git log -1 --abbrev=" _ c("abbrev_lenght") _ " --format=%h " _ c("git_hash"));
                          ELSE;
-                                exec("hg id -i -r " _ c("hg_hash"));
+                                exec(c("hg") _ " id -i -r " _ c("hg_hash"));
                          END;
                       %]',
     timestamp     => sub {
@@ -84,9 +84,10 @@ our %default_config = (
             return RBM::execute($project,
                 "git show -s --format=format:%ct ${git_hash}^{commit}", $options);
         } elsif (RBM::project_config($project, 'hg_url', $options)) {
+            my $hg = RBM::project_config($project, 'hg', $options);
             my $hg_hash = RBM::project_config($project, 'hg_hash', $options);
             my $changeset = RBM::execute($project,
-                "hg export --noninteractive -r $hg_hash", $options);
+                "$hg export --noninteractive -r $hg_hash", $options);
             foreach my $line (split "\n", $changeset) {
                 return $1 if ($line =~ m/^# Date (\d+) \d+/);
             }
@@ -509,6 +510,7 @@ ZIP_END
         'deb-src' => 'deb',
     },
     suexec => 'sudo -- [% c("suexec_cmd") %]',
+    hg => 'hg [% c("hg_opt") %]',
 );
 
 1;

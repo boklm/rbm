@@ -369,20 +369,22 @@ sub git_clone_fetch_chdir {
 
 sub hg_clone_fetch_chdir {
     my ($project, $options) = @_;
+    my $hg = create_dir(project_config($project, 'hg', $options));
     my $clonedir = create_dir(path(project_config($project,
                                 'hg_clone_dir', $options)));
-    my $hg_url = project_config($project, 'hg_url', $options)
+    my $hg_url = shell_quote(project_config($project, 'hg_url', $options))
                 || exit_error "hg_url is undefined";
+    my $sq_project = shell_quote($project);
     if (!chdir path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
-        if (system('hg', 'clone', '-q', $hg_url, $project) != 0) {
+        if (system("$hg clone -q $hg_url $sq_project") != 0) {
             exit_error "Error cloning $hg_url";
         }
         chdir($project) || exit_error "Error entering $project directory";
     }
     if (!$config->{projects}{$project}{fetched}
                 && project_config($project, 'fetch', $options)) {
-        system('hg', 'pull', '-q', $hg_url) == 0
+        system("$hg pull -q $hg_url") == 0
                 || exit_error "Error pulling changes from $hg_url";
     }
 }
