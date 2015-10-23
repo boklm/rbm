@@ -681,6 +681,7 @@ sub input_files {
             $proj_out_dir = path(project_config($project, 'output_dir',
                     { %$input_file, output_dir => undef }));
         }
+        create_dir($proj_out_dir);
         my $url = $t->('URL');
         my $name = $input_file->{filename} ? $t->('filename') :
                    $url ? basename($url) :
