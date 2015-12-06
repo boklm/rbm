@@ -340,6 +340,20 @@ sub create_dir {
     return $directory;
 }
 
+sub git_need_fetch {
+    my ($project, $options) = @_;
+    return 0 if $config->{projects}{$project}{fetched};
+    my $fetch = project_config($project, 'fetch', $options);
+    if ($fetch eq 'if_needed') {
+        my $git_hash = project_config($project, 'git_hash', $options)
+                || exit_error "No git_hash specified for project $project";
+        my (undef, undef, $success) = capture_exec('git', 'rev-parse',
+                                        '--verify', "$git_hash^{commit}");
+        return !$success;
+    }
+    return $fetch;
+}
+
 sub git_clone_fetch_chdir {
     my ($project, $options) = @_;
     my $clonedir = create_dir(path(project_config($project,
@@ -353,8 +367,7 @@ sub git_clone_fetch_chdir {
         }
         chdir($project) || exit_error "Error entering $project directory";
     }
-    if (!$config->{projects}{$project}{fetched}
-                && project_config($project, 'fetch', $options)) {
+    if (git_need_fetch($project, $options)) {
         system('git', 'remote', 'set-url', 'origin', $git_url) == 0
                 || exit_error "Error setting git remote";
         system('git', 'checkout', '-q', '--detach') == 0
@@ -365,6 +378,19 @@ sub git_clone_fetch_chdir {
                 || exit_error "Error fetching git repository";
         $config->{projects}{$project}{fetched} = 1;
     }
+}
+
+sub hg_need_fetch {
+    my ($project, $options) = @_;
+    return 0 if $config->{projects}{$project}{fetched};
+    my $fetch = project_config($project, 'fetch', $options);
+    if ($fetch eq 'if_needed') {
+        my $hg_hash = project_config($project, 'hg_hash', $options)
+                || exit_error "No hg_hash specified for project $project";
+        my (undef, undef, $success) = capture_exec('hg', 'export', $hg_hash);
+        return !$success;
+    }
+    return $fetch;
 }
 
 sub hg_clone_fetch_chdir {
@@ -382,8 +408,7 @@ sub hg_clone_fetch_chdir {
         }
         chdir($project) || exit_error "Error entering $project directory";
     }
-    if (!$config->{projects}{$project}{fetched}
-                && project_config($project, 'fetch', $options)) {
+    if (hg_need_fetch($project, $options)) {
         system("$hg pull -q $hg_url") == 0
                 || exit_error "Error pulling changes from $hg_url";
     }

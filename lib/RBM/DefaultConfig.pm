@@ -64,7 +64,7 @@ our %default_config = (
     output_dir    => 'out',
     git_clone_dir => 'git_clones',
     hg_clone_dir  => 'hg_clones',
-    fetch         => 1,
+    fetch         => 'if_needed',
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
     notmpl        => [ qw(projects_dir) ],
