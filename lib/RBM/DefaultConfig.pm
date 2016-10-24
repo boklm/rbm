@@ -41,7 +41,7 @@ sub lsb_release {
     my $res = {};
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('lsb_release', '-irc');
-    exit_error("Unknown distribution") unless $success;
+    RBM::exit_error("Unknown distribution") unless $success;
     foreach (split "\n", $stdout) {
         $res->{id} = $1 if (m/^Distributor ID:\s+(.+)$/);
         $res->{release} = $1 if (m/^Release:\s+(.+)$/);
