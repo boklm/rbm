@@ -39,6 +39,21 @@ sub lsb_release {
         return { id => $id, release => $release };
     }
     my $res = {};
+    if (-f '/usr/bin/sw_vers') {
+        # If sw_vers exists, we assume we are on OSX and use it
+        my ($stdout, $stderr, $success, $exit_code)
+                = capture_exec('/usr/bin/sw_vers', '-productName');
+        RBM::exit_error("sw_vers: unknown ProductName")
+                unless $success;
+        ($res->{id}) = split("\n", $stdout);
+        ($stdout, $stderr, $success, $exit_code)
+                = capture_exec('/usr/bin/sw_vers', '-productVersion');
+        RBM::exit_error("sw_vers: unknown ProductVersion")
+                unless $success;
+        ($res->{release}) = split("\n", $stdout);
+        $res->{codename} = $res->{release};
+        return $res;
+    }
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('lsb_release', '-irc');
     RBM::exit_error("Unknown distribution") unless $success;
