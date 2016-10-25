@@ -511,20 +511,35 @@ OPT_END
     urlget => 'wget -O[% shell_quote(dest_dir _ "/" _ c("filename")) %] [% shell_quote(c("URL")) %]',
     sig_ext => [ qw(gpg asc sig) ],
     enable => 1,
+    gnu_utils => sub {
+        my ($project, $options) = @_;
+        my $distro = RBM::project_config($project, 'lsb_release/id', $options);
+        my %non_gnu = (
+            'Mac OS X'  => 1,
+            NetBSD      => 1,
+            OpenBSD     => 1,
+            FreeBSD     => 1,
+            DragonFly   => 1,
+        );
+        return ! $non_gnu{$distro};
+    },
     tar    => <<TAR_END,
 [%- SET src = c('tar_src', { error_if_undef => 1 }) -%]
-find [% src.join(' ') %] -executable -exec chmod 700 {} \\;
-find [% src.join(' ') %] ! -executable -exec chmod 600 {} \\;
+find [% src.join(' ') %] [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 700 {} \\;
+find [% src.join(' ') %] ! [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 600 {} \\;
 find [% src.join(' ') %] | sort | \
-        tar --no-recursion --owner=root --group=root --mtime=@[% c('timestamp') %] [% c('tar_args', { error_if_undef => 1 }) %] -T -
+        tar --no-recursion [% IF c('gnu_utils') -%]
+                --owner=root --group=root --mtime=@[% c('timestamp') %]
+                [%- END -%]
+                [% c('tar_args', { error_if_undef => 1 }) %] -T -
 TAR_END
 ####
 ####
 ####
     zip    => <<ZIP_END,
 [%- SET src = c('zip_src', { error_if_undef => 1 }) -%]
-find [% src.join(' ') %] -executable -exec chmod 700 {} \\;
-find [% src.join(' ') %] ! -executable -exec chmod 600 {} \\;
+find [% src.join(' ') %] [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 700 {} \\;
+find [% src.join(' ') %] ! [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 600 {} \\;
 find [% src.join(' ') %] | sort | \
         zip -q -@ -X [% c('zip_args', { error_if_undef => 1 }) %]
 ZIP_END
