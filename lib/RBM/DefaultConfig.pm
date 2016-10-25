@@ -39,6 +39,7 @@ sub lsb_release {
         return { id => $id, release => $release };
     }
     my $res = {};
+
     if (-f '/usr/bin/sw_vers') {
         # If sw_vers exists, we assume we are on OSX and use it
         my ($stdout, $stderr, $success, $exit_code)
@@ -54,14 +55,27 @@ sub lsb_release {
         $res->{codename} = $res->{release};
         return $res;
     }
+
     my ($stdout, $stderr, $success, $exit_code)
         = capture_exec('lsb_release', '-irc');
-    RBM::exit_error("Unknown distribution") unless $success;
-    foreach (split "\n", $stdout) {
-        $res->{id} = $1 if (m/^Distributor ID:\s+(.+)$/);
-        $res->{release} = $1 if (m/^Release:\s+(.+)$/);
-        $res->{codename} = $1 if (m/^Codename:\s+(.+)$/);
+    if ($success) {
+        foreach (split "\n", $stdout) {
+            $res->{id} = $1 if (m/^Distributor ID:\s+(.+)$/);
+            $res->{release} = $1 if (m/^Release:\s+(.+)$/);
+            $res->{codename} = $1 if (m/^Codename:\s+(.+)$/);
+        }
+        return $res;
     }
+
+    ($stdout, $stderr, $success, $exit_code)
+        = capture_exec('uname', '-s');
+    RBM::exit_error("Unknown OS") unless $success;
+    ($res->{id}) = split("\n", $stdout);
+    ($stdout, $stderr, $success, $exit_code)
+        = capture_exec('uname', '-r');
+    RBM::exit_error("Unknown OS release") unless $success;
+    ($res->{release}) = split("\n", $stdout);
+    $res->{codename} = $res->{release};
     return $res;
 }
 
