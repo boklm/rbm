@@ -19,6 +19,7 @@ use RBM::DefaultConfig;
 use Digest::SHA qw(sha256_hex);
 use Data::UUID;
 use Data::Dump qw(dd pp);
+use feature "state";
 
 our $config;
 
