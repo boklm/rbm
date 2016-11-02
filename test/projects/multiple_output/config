@@ -1,0 +1,14 @@
+# vim: filetype=yaml sw=2
+version: 1
+filename: 'mul-[% c("input_files_id") %]'
+build: |
+  #!/bin/sh
+  out_dir="[% dest_dir _ '/' _ c("filename") %]"
+  echo "out_dir: $out_dir"
+  mkdir -p "$out_dir"
+  cp 1.txt "$out_dir"
+  cp 2.txt "$out_dir"
+
+input_files:
+  - filename: 1.txt
+  - filename: 2.txt

@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Slurp;
-use Test::More tests => 28;
+use Test::More tests => 29;
 use lib 'lib/';
 
 sub set_target {
@@ -180,6 +180,15 @@ my @tests = (
             'out/mozmill-automation-bbad7215c713_sha256sum.txt' =>
             '13660d3f3ebbc363056ccbd3794f8f78a940dd394a464093bee5fc0575ee4090  '
             . "mozmill-automation-bbad7215c713.tar\n",
+        },
+    },
+    {
+        name => 'build using files and directories as input',
+        target => [],
+        build => [ 'files_project', 'build', { pkg_type => 'build' } ],
+        files => {
+            'out/files_project-57a38d32f55ac3bec035f8531bbf4574d81c6ffc41a47bfc959dc8113b86be14' =>
+            "1\n2\n3\n4\n1\n2\n",
         },
     },
 );

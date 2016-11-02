@@ -1,0 +1,18 @@
+# vim: filetype=yaml sw=2
+debug: 1
+filename: 'files_project-[% c("input_files_id") %]'
+build: |
+  #!/bin/sh
+  cat file1.txt > [% dest_dir _ '/' _ c("filename") %]
+  cat file2.txt >> [% dest_dir _ '/' _ c("filename") %]
+  cat directory/file3.txt >> [% dest_dir _ '/' _ c("filename") %]
+  cat directory/file4.txt >> [% dest_dir _ '/' _ c("filename") %]
+  cat [% c("input_files_by_name/multiple_output") %]/1.txt >> [% dest_dir _ '/' _ c("filename") %]
+  cat [% c("input_files_by_name/multiple_output") %]/2.txt >> [% dest_dir _ '/' _ c("filename") %]
+
+input_files:
+  - filename: file1.txt
+  - filename: file2.txt
+  - filename: directory
+  - project: multiple_output
+    name: multiple_output

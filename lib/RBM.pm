@@ -621,7 +621,7 @@ sub is_url {
 
 sub file_in_dir {
     my ($filename, @dir) = @_;
-    return map { -f "$_/$filename" ? "$_/$filename" : () } @dir;
+    return map { -e "$_/$filename" ? "$_/$filename" : () } @dir;
 }
 
 sub input_file_id_need_dl {
@@ -637,12 +637,34 @@ sub input_file_id_need_dl {
     exit_error "Missing file" unless $fname;
 }
 
+sub input_file_id_hash {
+    my ($fname, $filename) = @_;
+    return $filename . ':' . sha256file($fname) if -f $fname;
+    my @hashes = map { input_file_id_hash("$fname/$_", "$filename/$_") }
+                                sort(read_dir($fname));
+    return join("\n", @hashes);
+}
+
 sub input_file_id {
     my ($input_file, $t, $fname, $filename) = @_;
     return $t->('input_file_id') if $input_file->{input_file_id};
     return $input_file->{project} . ':' . $filename if $input_file->{project};
     return $filename . ':' . $t->('sha256sum') if $input_file->{sha256sum};
-    return $filename . ':' . sha256file($fname);
+    return input_file_id_hash($fname, $filename);
+}
+
+sub recursive_copy {
+    my ($fname, $name, $dest_dir) = @_;
+    if (-f $fname) {
+        copy($fname, "$dest_dir/$name");
+        return ($name);
+    }
+    my @copied;
+    mkdir "$dest_dir/$name";
+    foreach my $f (read_dir($fname)) {
+        push @copied, recursive_copy("$fname/$f", "$name/$f", $dest_dir);
+    }
+    return @copied;
 }
 
 sub input_files {
@@ -753,10 +775,12 @@ sub input_files {
         exit_error "Missing file $name" unless $fname;
         if ($t->('sha256sum')
             && $t->('sha256sum') ne sha256_hex(read_file($fname))) {
+            exit_error "Can't have sha256sum on directory: $fname" if -d $fname;
             exit_error "Wrong sha256sum for $fname.\n" .
                        "Expected sha256sum: " . $t->('sha256sum');
         }
         if ($file_gpg_id) {
+            exit_error "Can't have gpg sig on directory: $fname" if -d $fname;
             my $sig_ext = $t->('sig_ext');
             $sig_ext = ref $sig_ext eq 'ARRAY' ? $sig_ext : [ $sig_ext ];
             my $sig_file;
@@ -784,10 +808,10 @@ sub input_files {
                 exit_error "File $name is not signed with a valid key";
             }
         }
-        print "Using file $fname\n";
+        my $file_type = -d $fname ? 'directory' : 'file';
+        print "Using $file_type $fname\n";
         mkdir dirname("$dest_dir/$name");
-        copy($fname, "$dest_dir/$name");
-        push @res_copy, $name;
+        push @res_copy, recursive_copy($fname, $name, $dest_dir);
     }
     chdir $old_cwd;
     RETURN_RES:

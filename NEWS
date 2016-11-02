@@ -75,6 +75,8 @@
 
 - Change default remote_mktemp to use /var/tmp
 
+- the filename in input_files can now point to a directory
+
 
 Version 0.4
 
