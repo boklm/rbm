@@ -178,7 +178,7 @@ my @tests = (
         build => [ 'mozmill-automation', 'build' ],
         files => {
             'out/mozmill-automation-bbad7215c713_sha256sum.txt' =>
-            '0ef263a660c5021013620b07c5d2c8344a6f6ee579b8aa1edab15f92e36924e8  '
+            '13660d3f3ebbc363056ccbd3794f8f78a940dd394a464093bee5fc0575ee4090  '
             . "mozmill-automation-bbad7215c713.tar\n",
         },
     },
