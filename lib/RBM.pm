@@ -396,7 +396,7 @@ sub hg_need_fetch {
 
 sub hg_clone_fetch_chdir {
     my ($project, $options) = @_;
-    my $hg = create_dir(project_config($project, 'hg', $options));
+    my $hg = project_config($project, 'hg', $options);
     my $clonedir = create_dir(path(project_config($project,
                                 'hg_clone_dir', $options)));
     my $hg_url = shell_quote(project_config($project, 'hg_url', $options))
