@@ -361,9 +361,15 @@ sub git_clone_fetch_chdir {
                                 'git_clone_dir', $options)));
     my $git_url = project_config($project, 'git_url', $options)
                 || exit_error "git_url is undefined";
+    my @clone_submod = ();
+    my @fetch_submod = ();
+    if (project_config($project, 'git_submodule', $options)) {
+        @clone_submod = ('--recurse-submodules');
+        @fetch_submod = ('--recurse-submodules=on-demand');
+    }
     if (!chdir path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
-        if (system('git', 'clone', $git_url, $project) != 0) {
+        if (system('git', 'clone', @clone_submod, $git_url, $project) != 0) {
             exit_error "Error cloning $git_url";
         }
         chdir($project) || exit_error "Error entering $project directory";
@@ -373,9 +379,11 @@ sub git_clone_fetch_chdir {
                 || exit_error "Error setting git remote";
         system('git', 'checkout', '-q', '--detach') == 0
                 || exit_error "Error running git checkout --detach";
-        system('git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*') == 0
+        system('git', 'fetch', @fetch_submod, 'origin',
+                                '+refs/heads/*:refs/heads/*') == 0
                 || exit_error "Error fetching git repository";
-        system('git', 'fetch', 'origin', '+refs/tags/*:refs/tags/*') == 0
+        system('git', 'fetch', @fetch_submod, 'origin',
+                                '+refs/tags/*:refs/tags/*') == 0
                 || exit_error "Error fetching git repository";
         $config->{projects}{$project}{fetched} = 1;
     }
@@ -442,6 +450,12 @@ sub execute {
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $git_hash);
         exit_error "Cannot checkout $git_hash" unless $success;
+        if (project_config($project, 'git_submodule', $options)) {
+            ($stdout, $stderr, $success, $exit_code)
+                = capture_exec('git', 'submodule', 'update', '--init');
+            exit_error "Error running git submodule update:\n$stderr"
+                unless $success;
+        }
     } elsif (project_config($project, 'hg_url', $options)) {
         my $hg_hash = project_config($project, 'hg_hash', $options)
                 || exit_error "No hg_hash specified for project $project";
@@ -507,6 +521,27 @@ sub maketar {
         system('git', 'archive', "--prefix=$project-$version/",
             "--output=$dest_dir/$tar_file", $commit_hash) == 0
                 || exit_error 'Error running git archive.';
+        if (project_config($project, 'git_submodule', $options)) {
+            my $tmpdir = File::Temp->newdir(
+                project_config($project, 'tmp_dir', $options) . '/rbm-XXXXX');
+            my ($stdout, $stderr, $success, $exit_code)
+                = capture_exec('git', 'checkout', $commit_hash);
+            exit_error "Cannot checkout $commit_hash: $stderr" unless $success;
+            ($stdout, $stderr, $success, $exit_code)
+                = capture_exec('git', 'submodule', 'update', '--init');
+            exit_error "Error running git submodule update:\n$stderr"
+                unless $success;
+            ($stdout, $stderr, $success, $exit_code)
+                = capture_exec('git', 'submodule', 'foreach',
+                    "git archive --prefix=$project-$version/\$path/"
+                    . " --output=$tmpdir/submodule-\$name.tar \$sha1");
+            exit_error 'Error running git archive on submodules.' unless $success;
+            foreach my $file (sort glob "$tmpdir/*.tar") {
+                ($stdout, $stderr, $success, $exit_code)
+                   = capture_exec('tar', '-Af', "$dest_dir/$tar_file", $file);
+                exit_error "Error appending submodule tar:\n$stderr" unless $success;
+            }
+        }
     } else {
         system('hg', 'archive', '-r', $commit_hash, '-t', 'tar',
             '--prefix', "$project-$version", "$dest_dir/$tar_file") == 0
