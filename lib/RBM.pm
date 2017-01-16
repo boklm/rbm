@@ -663,9 +663,9 @@ sub input_file_id_need_dl {
     my ($input_file, $t, $fname) = @_;
     return undef if $input_file->{input_file_id};
     return undef if $input_file->{sha256sum};
+    return undef if $input_file->{exec};
     return undef if $fname;
     return 1 if $input_file->{URL};
-    return 1 if $input_file->{exec};
     return 1 if $input_file->{content};
     return undef if $input_file->{project};
     return undef;
@@ -685,6 +685,8 @@ sub input_file_id {
     return $t->('input_file_id') if $input_file->{input_file_id};
     return $input_file->{project} . ':' . $filename if $input_file->{project};
     return $filename . ':' . $t->('sha256sum') if $input_file->{sha256sum};
+    return $filename . ':' . sha256_hex($t->('exec', { output_dir => '/out' }))
+                if $input_file->{exec};
     return input_file_id_hash($fname, $filename);
 }
 
@@ -724,7 +726,8 @@ sub input_files {
         next unless $input_file;
         my $t = sub {
             project_config($project, $_[0], {$options ? %$options : (),
-                    %$input_file, output_dir => $src_dir});
+                    %$input_file, output_dir => $src_dir,
+                    $_[1] ? %{$_[1]} : ()});
         };
         if ($input_file->{enable} && !$t->('enable')) {
             next;
