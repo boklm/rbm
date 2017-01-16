@@ -783,7 +783,9 @@ sub input_files {
             } elsif ($t->('URL')) {
                 urlget($project, {%$input_file, filename => $name}, 1);
             } elsif ($t->('exec')) {
-                if (run_script($project, $t->('exec'),
+                my $exec_script = project_config($project, 'exec',
+                    { $options ? %$options : (), %$input_file });
+                if (run_script($project, $exec_script,
                         sub { system(@_) }) != 0) {
                     exit_error "Error creating $name";
                 }
