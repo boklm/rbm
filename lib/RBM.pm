@@ -10,6 +10,7 @@ use IO::Handle;
 use IO::CaptureOutput qw(capture_exec);
 use File::Temp;
 use File::Copy;
+use File::Copy::Recursive qw(fcopy);
 use File::Slurp;
 use File::Path qw(make_path);
 use File::Basename;
@@ -692,8 +693,8 @@ sub input_file_id {
 
 sub recursive_copy {
     my ($fname, $name, $dest_dir) = @_;
-    if (-f $fname) {
-        copy($fname, "$dest_dir/$name");
+    if (-f $fname || -l $fname) {
+        fcopy($fname, "$dest_dir/$name");
         return ($name);
     }
     my @copied;
