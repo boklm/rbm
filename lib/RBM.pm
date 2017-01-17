@@ -676,6 +676,7 @@ sub input_file_id_need_dl {
 sub input_file_id_hash {
     my ($fname, $filename) = @_;
     return $filename . ':' . sha256file($fname) if -f $fname;
+    return $filename . ':' . sha256file(readlink $fname) if -l $fname;
     my @hashes = map { input_file_id_hash("$fname/$_", "$filename/$_") }
                                 sort(read_dir($fname));
     return join("\n", @hashes);
