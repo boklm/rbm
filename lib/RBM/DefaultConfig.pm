@@ -446,8 +446,9 @@ OPT_END
     SET src = c('put_src', { error_if_undef => 1 });
     SET dst = c('put_dst', { error_if_undef => 1 });
     SET p = fileparse(src);
-    SET src_filename = p.0;
-    SET src_dir = p.1;
+    SET src_filename = shell_quote(p.0);
+    SET src_dir = shell_quote(p.1);
+    SET dst = shell_quote(dst);
     GET c("docker_remote_exec", { docker_opt => '-v ' _ src_dir _ ':/rbm_copy',
                              exec_as_root => 1,
                              exec_cmd => 'su ' _ c('docker_user') _ " -c 'mkdir -p " _ dst _ "';"
