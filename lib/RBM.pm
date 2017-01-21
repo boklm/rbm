@@ -577,6 +577,15 @@ sub sha256file {
 
 sub process_template {
     my ($project, $tmpl, $dest_dir) = @_;
+    return undef unless defined $tmpl;
+    exit_error "Can't process template on a hash" if ref $tmpl eq 'HASH';
+    if (ref $tmpl eq 'ARRAY') {
+        my $res = [];
+        foreach my $t (@$tmpl) {
+            push @$res, process_template($project, $t, $dest_dir);
+        }
+        return $res;
+    }
     $dest_dir //= path(project_config($project, 'output_dir'));
     my $projects_dir = path(project_config($project, 'projects_dir'));
     my $template = Template->new(
