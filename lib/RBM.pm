@@ -743,6 +743,11 @@ sub input_files {
         if ($input_file->{enable} && !$t->('enable')) {
             next;
         }
+        if ($input_file->{target} && ! $input_file->{_target_processed}) {
+            $input_file->{target} = process_template($project,
+                                                $input_file->{target});
+            $input_file->{_target_processed} = 1;
+        }
         $options->{origin_project} = $project;
         if ($action eq 'getfnames') {
             my $getfnames_name;
