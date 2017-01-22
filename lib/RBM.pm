@@ -234,9 +234,7 @@ sub project_step_config {
     if ($_[2] && $_[2]->{step}) {
         $config->{step} = $_[2]->{step};
     }
-    $config->{run} = {
-        target => process_template($_[2]->{origin_project}, $_[2]->{target}),
-    };
+    $config->{run} = { target => $_[2]->{target} };
     $config->{run}{target} //= $run_save->{target};
     my $res = project_config(@_);
     $config->{run} = $run_save;
@@ -809,9 +807,7 @@ sub input_files {
                 my $p = $t->('project');
                 print "Building project $p - $name\n";
                 my $run_save = $config->{run};
-                $config->{run} = {
-                    target => process_template($project, $input_file->{target}),
-                };
+                $config->{run} = { target => $input_file->{target} };
                 $config->{run}{target} //= $run_save->{target};
                 build_pkg($p, {%$options, %$input_file, output_dir => $proj_out_dir});
                 $config->{run} = $run_save;
