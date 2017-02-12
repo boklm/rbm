@@ -86,6 +86,21 @@ sub get_arch {
     return $stdout;
 }
 
+sub docker_version {
+    my ($stdout, $stderr, $success)
+        = capture_exec('docker', 'version', '--format', '{{.Client.Version}}');
+    if ($success) {
+        chomp $stdout;
+        return $stdout;
+    }
+    ($stdout, $stderr, $success) = capture_exec('docker', 'version');
+    RBM::exit_error("Error running 'docker version'") unless $success;
+    foreach my $line (split "\n", $stdout) {
+        return $1 if ($line =~ m/Client version: (.*)$/);
+    }
+    RBM::exit_error("Could not find docker version");
+}
+
 our %default_config = (
     sysconf_file  => '/etc/rbm.conf',
     tmp_dir       => '/tmp',
@@ -382,6 +397,10 @@ OPT_END
 ####
 ####
 ####
+    docker_version     => \&docker_version,
+####
+####
+####
     docker_build_image => 'rbm-[% sha256(c("build_id")).substr(0, 12) %]',
 ####
 ####
@@ -408,7 +427,7 @@ OPT_END
 #!/bin/sh
 set -e
 [% IF c('docker_save_image') -%]
-docker tag -f [% c('docker_build_image') %] [% c('docker_save_image') %]
+docker tag [% IF versioncmp(c('docker_version'), '1.10.0') == -1; GET '-f'; END; %] [% c('docker_build_image') %] [% c('docker_save_image') %]
 [% END -%]
 docker rmi -f [% c('docker_build_image') %] > /dev/null
 OPT_END
