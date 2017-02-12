@@ -103,7 +103,7 @@ sub docker_version {
 
 our %default_config = (
     sysconf_file  => '/etc/rbm.conf',
-    tmp_dir       => '/tmp',
+    tmp_dir       => '[% GET ENV.TMPDIR ? ENV.TMPDIR : "/tmp"; %]',
     projects_dir  => 'projects',
     output_dir    => 'out',
     git_clone_dir => 'git_clones',
