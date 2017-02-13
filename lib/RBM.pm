@@ -61,6 +61,13 @@ sub load_system_config {
     $config->{system} = -f $cfile ? load_config_file($cfile) : {};
 }
 
+sub load_local_config {
+    my ($project) = @_;
+    my $cfile = project_config($project ? $project : 'undef', 'localconf_file');
+    $cfile = path($cfile);
+    $config->{local} = -f $cfile ? load_config_file($cfile) : {};
+}
+
 sub find_config_file {
     for (my $dir = getcwd; $dir ne '/'; $dir = dirname($dir)) {
         return "$dir/rbm.conf" if -f "$dir/rbm.conf";
@@ -209,7 +216,8 @@ sub project_config {
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
     $res = config($project, $name, $options, ['opt'], ['run'],
-                        ['projects', $project], [], ['system'], ['default']);
+                        ['projects', $project], ['local'], [],
+                        ['system'], ['default']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
         $res = process_template($project, $res,

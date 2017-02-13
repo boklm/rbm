@@ -1,3 +1,5 @@
+- Add support for optional local configuration file rbm.local.conf
+
 - add the git_submodule option
 
 - add the hg_opt option

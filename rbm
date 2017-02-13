@@ -95,7 +95,7 @@ sub set_options {
                      gpg-keyring=s gpg-keyring-dir=s gpg-args=s gpg-bin=s
                      sysconf-file=s debsign-keyid=s use-pbuilder!
                      step=s target=s@ publish-src-dir=s debug! hg-clone-dir=s
-                     hg-hash=s);
+                     hg-hash=s localconf-file=s);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
     foreach my $k (keys %val) {
@@ -108,6 +108,7 @@ sub set_options {
         $RBM::config->{run}{$l} = $val{$k};
     }
     RBM::load_system_config(@_);
+    RBM::load_local_config(@_);
     return $RBM::config->{run}{args} = \@_;
 }
 
