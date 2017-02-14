@@ -569,6 +569,8 @@ TAR_END
 ####
     zip    => <<ZIP_END,
 [%- SET src = c('zip_src', { error_if_undef => 1 }) -%]
+[% USE date -%]
+find [% src.join(' ') %] -exec touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %] -- {} +
 find [% src.join(' ') %] [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 700 {} \\;
 find [% src.join(' ') %] ! [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 600 {} \\;
 find [% src.join(' ') %] | sort | \
