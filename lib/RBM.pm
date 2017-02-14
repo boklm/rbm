@@ -884,6 +884,18 @@ sub input_files {
     return \%res_getfnames if $action eq 'getfnames';
 }
 
+sub system_log {
+    my ($log_file, @args) = @_;
+    return system(@args) if $log_file eq '-';
+    if (my $pid = fork) {
+        waitpid($pid, 0);
+        return ${^CHILD_ERROR_NATIVE};
+    }
+    exit_error "Could not open $log_file" unless open(STDOUT, '>>', $log_file);
+    open(STDERR, '>&', *STDOUT);
+    exec(@args);
+}
+
 sub build_run {
     my ($project, $script_name, $options) = @_;
     my $old_step = $config->{step};
@@ -959,6 +971,14 @@ sub build_run {
         write_file("$srcdir/$s", $build_script{$s});
         chmod 0700, "$srcdir/$s";
     }
+    my $build_log = project_config($project, "build_log", $options);
+    if ($build_log ne '-') {
+        $build_log = path($build_log);
+        make_path(dirname($build_log));
+        my $now = localtime;
+        write_file($build_log, {append => 1}, "Starting build: $now\n");
+        print "Build log: $build_log\n";
+    }
     chdir $srcdir;
     my $res;
     if ($remote_tmp_src && $remote_tmp_dst) {
@@ -982,7 +1002,7 @@ sub build_run {
                     exec_name => $s,
                     exec_as_root => $scripts_root{$s},
                 });
-            if (run_script($project, $cmd, sub { system(@_) }) != 0) {
+            if (run_script($project, $cmd, sub { system_log($build_log, @_) }) != 0) {
                 $error = "Error running $script_name";
                 if (project_config($project, 'debug', $options)) {
                     print STDERR $error, "\nOpening debug shell\n";
@@ -1019,7 +1039,7 @@ sub build_run {
         foreach my $s (@scripts) {
             my $cmd = $scripts_root{$s} ? project_config($project, 'suexec',
                 { suexec_cmd => "$srcdir/$s" }) : "$srcdir/$s";
-            if (system($cmd) != 0) {
+            if (system_log($build_log, $cmd) != 0) {
                 $error = "Error running $script_name";
                 if (project_config($project, 'debug', $options)) {
                     print STDERR $error, "\nOpening debug shell\n";

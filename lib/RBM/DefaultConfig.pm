@@ -112,6 +112,7 @@ our %default_config = (
     fetch         => 'if_needed',
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
+    build_log     => '-',
     notmpl        => [ qw(projects_dir) ],
     describe      => \&git_describe,
     abbrev_lenght => '12',
