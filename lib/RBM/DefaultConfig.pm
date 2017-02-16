@@ -497,7 +497,7 @@ tmpdir=\$(mktemp -d)
 %]
 cd \$tmpdir
 tar -cf - . | tar -C [% dst %] --no-same-owner -xf -
-cd -
+cd - > /dev/null
 rm -Rf \$tmpdir
 OPT_END
 ####
