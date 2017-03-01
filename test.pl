@@ -19,6 +19,7 @@ sub set_step {
 BEGIN { use_ok('RBM') };
 chdir 'test';
 RBM::load_config;
+RBM::set_default_env;
 ok($RBM::config, 'load config');
 
 my @tests = (

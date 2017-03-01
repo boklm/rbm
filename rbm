@@ -198,6 +198,7 @@ if (@ARGV == 0 || !$actions{$ARGV[0]}) {
 }
 usage('usage', $ARGV[0]) if grep { $_ eq '--help' } @ARGV[1..(@ARGV - 1)];
 RBM::load_config unless $actions{$ARGV[0]}->{no_config};
+RBM::set_default_env unless $actions{$ARGV[0]}->{no_config};
 $actions{$ARGV[0]}->{run}->(@ARGV);
 
 # vim: expandtab sw=4

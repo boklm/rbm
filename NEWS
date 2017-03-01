@@ -1,3 +1,5 @@
+- Add the ENV option
+
 - Add the build_log option
 
 - Add support for optional local configuration file rbm.local.conf

@@ -75,6 +75,10 @@ sub find_config_file {
     exit_error("Can't find config file");
 }
 
+sub set_default_env {
+    %ENV = (%ENV, %{$config->{ENV}}) if ref $config->{ENV} eq 'HASH';
+}
+
 sub path {
     my ($path, $basedir) = @_;
     $basedir //= $config->{basedir};
