@@ -1,3 +1,5 @@
+- Add the input_files_paths option
+
 - Add the ENV option
 
 - Add the build_log option

@@ -731,8 +731,9 @@ sub input_files {
     my ($action, $project, $options, $dest_dir) = @_;
     my @res_copy;
     my %res_getfnames;
+    my @res_getfpaths;
     my $getfnames_noname = 0;
-    my $need_dl = 1;
+    my $need_dl = $action ne 'getfpaths';
     my $input_files_id = '';
     $options = {$options ? %$options : ()};
     my $input_files = project_config($project, 'input_files', $options,);
@@ -840,6 +841,25 @@ sub input_files {
             $input_files_id .= "\n";
             next;
         }
+        if ($action eq 'getfpaths') {
+            push @res_getfpaths, $fname if $fname;
+            if ($file_gpg_id && $fname) {
+                my $sig_ext = $t->('sig_ext');
+                $sig_ext = ref $sig_ext eq 'ARRAY' ? $sig_ext : [ $sig_ext ];
+                foreach my $s (@$sig_ext) {
+                    if (-f "$fname.$s") {
+                        push @res_getfpaths, "$fname.$s";
+                        last;
+                    }
+                }
+            }
+            if ($input_file->{project} && $t->('project')) {
+                my $r = RBM::project_step_config($t->('project'), 'input_files_paths',
+                            {%$options, step => $t->('pkg_type'), %$input_file});
+                push @res_getfpaths, @$r if @$r;
+            }
+            next;
+        }
         exit_error "Missing file $name" unless $fname;
         if ($t->('sha256sum')
             && $t->('sha256sum') ne sha256_hex(read_file($fname))) {
@@ -886,6 +906,7 @@ sub input_files {
     return sha256_hex($input_files_id) if $action eq 'input_files_id';
     return @res_copy if $action eq 'copy';
     return \%res_getfnames if $action eq 'getfnames';
+    return \@res_getfpaths if $action eq 'getfpaths';
 }
 
 sub system_log {
