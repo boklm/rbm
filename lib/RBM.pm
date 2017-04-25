@@ -949,7 +949,10 @@ sub build_run {
     my @scripts = ('pre', $script_name, 'post');
     my %scripts_root = ( pre => 1, post => 1);
     if (project_config($project, "remote_exec", $options)) {
-        my $cmd = project_config($project, "remote_start", $options);
+        my $cmd = project_config($project, "remote_start", {
+                %$options,
+                remote_srcdir => $srcdir,
+            });
         if ($cmd) {
             my ($stdout, $stderr, $success, $exit_code)
                 = run_script($project, $cmd, \&capture_exec);
