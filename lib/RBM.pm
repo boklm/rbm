@@ -751,7 +751,8 @@ sub input_files {
     my $src_dir = "$proj_dir/$project";
     my $old_cwd = getcwd;
     chdir $src_dir || exit_error "cannot chdir to $src_dir";
-    foreach my $input_file (@$input_files) {
+    foreach my $input_file_alias (@$input_files) {
+        my $input_file = $input_file_alias;
         if (!ref $input_file) {
             $input_file = project_config($project,
                 process_template_opt($project, $input_file, $options), $options);
@@ -765,10 +766,10 @@ sub input_files {
         if ($input_file->{enable} && !$t->('enable')) {
             next;
         }
-        if ($input_file->{target} && ! $input_file->{_target_processed}) {
+        if ($input_file->{target}) {
+            $input_file = { %$input_file };
             $input_file->{target} = process_template_opt($project,
                                         $input_file->{target}, $options);
-            $input_file->{_target_processed} = 1;
         }
         if ($action eq 'getfnames') {
             my $getfnames_name;
