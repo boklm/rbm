@@ -745,7 +745,7 @@ sub input_files {
     my $need_dl = $action ne 'getfpaths';
     my $input_files_id = '';
     $options = {$options ? %$options : ()};
-    my $input_files = project_config($project, 'input_files', $options,);
+    my $input_files = project_config($project, 'input_files', $options);
     goto RETURN_RES unless $input_files;
     my $proj_dir = path(project_config($project, 'projects_dir', $options));
     my $src_dir = "$proj_dir/$project";
