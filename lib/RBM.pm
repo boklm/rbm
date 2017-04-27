@@ -587,6 +587,15 @@ sub sha256file {
     return $res{$f} = -f $f ? sha256_hex(scalar read_file($f)) : '';
 }
 
+sub process_template_opt {
+    my ($project, $tmpl, $opt, $dest_dir) = @_;
+    my $save_opt = $config->{opt};
+    $config->{opt} = {%{$config->{opt}}, %$opt} if $opt;
+    my $res = process_template($project, $tmpl, $dest_dir);
+    $config->{opt} = $save_opt;
+    return $res;
+}
+
 sub process_template {
     my ($project, $tmpl, $dest_dir) = @_;
     return undef unless defined $tmpl;
@@ -745,7 +754,7 @@ sub input_files {
     foreach my $input_file (@$input_files) {
         if (!ref $input_file) {
             $input_file = project_config($project,
-                process_template($project, $input_file), $options);
+                process_template_opt($project, $input_file, $options), $options);
         }
         next unless $input_file;
         my $t = sub {
@@ -757,8 +766,8 @@ sub input_files {
             next;
         }
         if ($input_file->{target} && ! $input_file->{_target_processed}) {
-            $input_file->{target} = process_template($project,
-                                                $input_file->{target});
+            $input_file->{target} = process_template_opt($project,
+                                        $input_file->{target}, $options);
             $input_file->{_target_processed} = 1;
         }
         if ($action eq 'getfnames') {
