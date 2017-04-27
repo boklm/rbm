@@ -761,7 +761,6 @@ sub input_files {
                                                 $input_file->{target});
             $input_file->{_target_processed} = 1;
         }
-        $options->{origin_project} = $project;
         if ($action eq 'getfnames') {
             my $getfnames_name;
             if ($input_file->{name}) {
@@ -773,7 +772,10 @@ sub input_files {
             $res_getfnames{$getfnames_name} = sub {
                 my ($project, $options) = @_;
                 $options //= {};
-                $options->{origin_project} = $project;
+                if ($input_file->{project}) {
+                    $options = {%$options};
+                    $options->{origin_project} = $project;
+                }
                 my $t = sub {
                     RBM::project_config($project, $_[0], { %$options, %$input_file })
                 };
@@ -791,6 +793,7 @@ sub input_files {
         if ($input_file->{project}) {
             $proj_out_dir = path(project_step_config($t->('project'), 'output_dir',
                     { %$options, step => $t->('pkg_type'),
+                        origin_project => $project,
                         output_dir => undef, %$input_file }));
         } else {
             $proj_out_dir = path(project_config($project, 'output_dir',
@@ -802,7 +805,8 @@ sub input_files {
                    $url ? basename($url) :
                    undef;
         $name //= project_step_config($t->('project'), 'filename',
-            {%$options, step => $t->('pkg_type'), %$input_file})
+            {%$options, step => $t->('pkg_type'),
+                origin_project => $project, %$input_file})
                 if $input_file->{project};
         exit_error("Missing filename:\n" . pp($input_file)) unless $name;
         my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
@@ -827,7 +831,8 @@ sub input_files {
                 my $run_save = $config->{run};
                 $config->{run} = { target => $input_file->{target} };
                 $config->{run}{target} //= $run_save->{target};
-                build_pkg($p, {%$options, %$input_file, output_dir => $proj_out_dir});
+                build_pkg($p, {%$options, origin_project => $project, %$input_file,
+                        output_dir => $proj_out_dir});
                 $config->{run} = $run_save;
                 print "Finished build of project $p - $name\n";
             } else {
