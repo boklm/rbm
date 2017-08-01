@@ -390,8 +390,12 @@ sub git_clone_fetch_chdir {
     if (git_need_fetch($project, $options)) {
         system('git', 'remote', 'set-url', 'origin', $git_url) == 0
                 || exit_error "Error setting git remote";
-        system('git', 'checkout', '-q', '--detach') == 0
+        my ($ref, undef, $success) = capture_exec('git', 'symbolic-ref', 'HEAD');
+        chomp $ref;
+        if ($success && -e ".git/$ref") {
+            system('git', 'checkout', '-q', '--detach') == 0
                 || exit_error "Error running git checkout --detach";
+        }
         system('git', 'fetch', @fetch_submod, 'origin',
                                 '+refs/heads/*:refs/heads/*') == 0
                 || exit_error "Error fetching git repository";
