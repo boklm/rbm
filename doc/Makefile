@@ -35,6 +35,7 @@ MAN1_ASC += rbm-deb-src.asc
 MAN1_ASC += rbm-deb.asc
 MAN1_ASC += rbm-pkg.asc
 MAN1_ASC += rbm-publish.asc
+MAN1_ASC += rbm-build.asc
 
 MAN7_ASC += rbm_tutorial.asc
 MAN7_ASC += rbm_layout.asc
