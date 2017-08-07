@@ -8,5 +8,5 @@ to allow reproducing the build.
 
 For more information, visit the website :
 
-  http://rbm.boklm.eu/
+  https://people.torproject.org/~boklm/rbm/
 
