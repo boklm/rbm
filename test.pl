@@ -196,7 +196,7 @@ my @tests = (
 
 foreach my $test (@tests) {
     set_target($test->{target} ? @{$test->{target}} : ());
-    set_step($test->{step} ? $test->{step} : 'init');
+    set_step($test->{step} ? $test->{step} : 'rbm_init');
     if ($test->{config}) {
         is(
             RBM::project_config(@{$test->{config}}),

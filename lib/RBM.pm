@@ -46,7 +46,7 @@ sub load_config {
     $config = load_config_file($config_file);
     $config->{default} = \%default_config;
     $config->{basedir} = dirname($config_file);
-    $config->{step} = 'init';
+    $config->{step} = 'rbm_init';
     $config->{opt} = {};
     my $pdir = $config->{projects_dir} || $config->{default}{projects_dir};
     foreach my $p (glob path($pdir) . '/*') {

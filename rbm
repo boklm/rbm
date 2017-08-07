@@ -173,6 +173,7 @@ sub build_script {
     my $cmd = shift;
     my $args = set_options(@_);
     usageexit($cmd) unless @$args == 1;
+    $script_name = $RBM::config->{step} if $RBM::config->{step} ne 'rbm_init';
     RBM::build_pkg($args->[0], { pkg_type => $script_name });
 }
 
