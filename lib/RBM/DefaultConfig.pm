@@ -13,6 +13,7 @@ use File::Basename;
 use RBM;
 use Cwd qw(getcwd);
 use IO::CaptureOutput qw(capture_exec);
+use File::Temp;
 
 sub git_describe {
     my ($project, $options) = @_;
@@ -101,10 +102,22 @@ sub docker_version {
     RBM::exit_error("Could not find docker version");
 }
 
+sub rbm_tmp_dir {
+    my ($project, $options) = @_;
+    CORE::state $rbm_tmp_dir;
+    return $rbm_tmp_dir->dirname if $rbm_tmp_dir;
+    my $tmp_dir = RBM::project_config($project, 'tmp_dir', $options)
+                  || RBM::exit_error('No tmp_dir specified');
+    $rbm_tmp_dir = File::Temp->newdir(TEMPLATE => 'rbm-XXXXXX',
+                                      DIR => $tmp_dir);
+    return $rbm_tmp_dir->dirname;
+}
+
 our %default_config = (
     sysconf_file  => '/etc/rbm.conf',
     localconf_file=> 'rbm.local.conf',
     tmp_dir       => '[% GET ENV.TMPDIR ? ENV.TMPDIR : "/tmp"; %]',
+    rbm_tmp_dir   => \&rbm_tmp_dir,
     projects_dir  => 'projects',
     output_dir    => 'out',
     git_clone_dir => 'git_clones',

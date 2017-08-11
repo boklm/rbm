@@ -1,3 +1,5 @@
+- Add the rbm_tmp_dir option
+
 - Add the input_files_paths option
 
 - Add the ENV option
