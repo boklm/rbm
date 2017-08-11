@@ -1020,10 +1020,11 @@ sub build_run {
     }
     my $build_log = project_config($project, "build_log", $options);
     if ($build_log ne '-') {
+        my $append = project_config($project, "build_log_append", $options);
         $build_log = path($build_log);
         make_path(dirname($build_log));
         my $now = localtime;
-        write_file($build_log, {append => 1}, "Starting build: $now\n");
+        write_file($build_log, {append => $append}, "Starting build: $now\n");
         print "Build log: $build_log\n";
     }
     chdir $srcdir;

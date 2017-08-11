@@ -126,6 +126,7 @@ our %default_config = (
     rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
     build         => '[% INCLUDE build -%]',
     build_log     => '-',
+    build_log_append => '1',
     notmpl        => [ qw(projects_dir) ],
     describe      => \&git_describe,
     abbrev_lenght => '12',
