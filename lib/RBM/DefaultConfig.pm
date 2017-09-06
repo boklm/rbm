@@ -106,7 +106,7 @@ sub rbm_tmp_dir {
     my ($project, $options) = @_;
     CORE::state $rbm_tmp_dir;
     return $rbm_tmp_dir->dirname if $rbm_tmp_dir;
-    my $tmp_dir = RBM::project_config($project, 'tmp_dir', $options)
+    my $tmp_dir = RBM::get_tmp_dir($project, $options)
                   || RBM::exit_error('No tmp_dir specified');
     $rbm_tmp_dir = File::Temp->newdir(TEMPLATE => 'rbm-XXXXXX',
                                       DIR => $tmp_dir);

@@ -259,11 +259,17 @@ sub exit_error {
     exit (exists $_[1] ? $_[1] : 1);
 }
 
+sub get_tmp_dir {
+    my ($project, $options) = @_;
+    my $tmp_dir = project_config($project, 'tmp_dir', $options);
+    make_path($tmp_dir);
+    return $tmp_dir;
+}
+
 sub set_git_gpg_wrapper {
     my ($project) = @_;
     my $w = project_config($project, 'gpg_wrapper');
-    my (undef, $tmp) = File::Temp::tempfile(DIR =>
-                        project_config($project, 'tmp_dir'));
+    my (undef, $tmp) = File::Temp::tempfile(DIR => get_tmp_dir($project));
     write_file($tmp, $w);
     chmod 0700, $tmp;
     system('git', 'config', 'gpg.program', $tmp) == 0
@@ -314,7 +320,7 @@ sub git_tag_sign_id {
 sub file_sign_id {
     my ($project, $options) = @_;
     my (undef, $gpg_wrapper) = File::Temp::tempfile(DIR =>
-                        project_config($project, 'tmp_dir', $options));
+                                get_tmp_dir($project, $options));
     write_file($gpg_wrapper, project_config($project, 'gpg_wrapper', $options));
     chmod 0700, $gpg_wrapper;
     my ($stdout, $stderr, $success, $exit_code) =
@@ -445,8 +451,7 @@ sub run_script {
     $f //= \&capture_exec;
     my @res;
     if ($cmd =~ m/^#/) {
-        my (undef, $tmp) = File::Temp::tempfile(DIR =>
-                                project_config($project, 'tmp_dir'));
+        my (undef, $tmp) = File::Temp::tempfile(DIR => get_tmp_dir($project));
         write_file($tmp, $cmd);
         chmod 0700, $tmp;
         @res = $f->($tmp);
@@ -540,7 +545,7 @@ sub maketar {
                 || exit_error 'Error running git archive.';
         if (project_config($project, 'git_submodule', $options)) {
             my $tmpdir = File::Temp->newdir(
-                project_config($project, 'tmp_dir', $options) . '/rbm-XXXXX');
+                get_tmp_dir($project, $options) . '/rbm-XXXXX');
             my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $commit_hash);
             exit_error "Cannot checkout $commit_hash: $stderr" unless $success;
@@ -952,7 +957,7 @@ sub build_run {
     my $old_cwd = getcwd;
     my $srcdir = project_config($project, 'build_srcdir', $options);
     my $use_srcdir = $srcdir;
-    my $tmpdir = File::Temp->newdir(project_config($project, 'tmp_dir', $options)
+    my $tmpdir = File::Temp->newdir(get_tmp_dir($project, $options)
                                 . '/rbm-XXXXX');
     my @cfiles;
     if ($use_srcdir) {
@@ -1119,7 +1124,7 @@ sub publish {
     project_config($project, 'publish', { error_if_undef => 1 });
     my $publish_src_dir = project_config($project, 'publish_src_dir');
     if (!$publish_src_dir) {
-        $publish_src_dir = File::Temp->newdir(project_config($project, 'tmp_dir')
+        $publish_src_dir = File::Temp->newdir(get_tmp_dir($project)
                                 . '/rbm-XXXXXX');
         build_pkg($project, {output_dir => $publish_src_dir});
     }
