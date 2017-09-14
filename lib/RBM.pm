@@ -1103,7 +1103,7 @@ sub build_run {
         }
     }
     EXIT:
-    if ($remote_tmp_src && $remote_tmp_dst) {
+    if (project_config($project, "remote_exec", $options)) {
         my $cmd = project_config($project, "remote_finish", $options);
         if ($cmd && (run_script($project, $cmd, sub { system(@_) }) != 0)) {
             $error ||= "Error finishing remote";
