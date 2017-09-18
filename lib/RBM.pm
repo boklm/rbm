@@ -699,17 +699,25 @@ sub file_in_dir {
     return map { -e "$_/$filename" ? "$_/$filename" : () } @dir;
 }
 
-sub input_file_id_need_dl {
-    my ($input_file, $t, $fname) = @_;
-    return undef if $input_file->{input_file_id};
-    return undef if $input_file->{sha256sum};
-    return undef if $input_file->{exec};
-    return undef if $fname;
-    return 1 if $input_file->{URL};
-    return 1 if $input_file->{content};
-    return undef if $input_file->{project};
-    return undef;
-    exit_error "Missing file" unless $fname;
+sub input_file_need_dl {
+    my ($input_file, $t, $fname, $action) = @_;
+    return undef if $action eq 'getfpaths';
+    if ($fname
+        && $input_file->{sha256sum}
+        && $t->('sha256sum') ne sha256_hex(read_file($fname))) {
+        $fname = undef;
+    }
+    if ($action eq 'input_files_id') {
+        return undef if $input_file->{input_file_id};
+        return undef if $input_file->{sha256sum};
+        return undef if $input_file->{exec};
+        return undef if $fname;
+        return 1 if $input_file->{URL};
+        return 1 if $input_file->{content};
+        return undef;
+    }
+    return $t->('refresh_input') if $fname;
+    return 1;
 }
 
 sub input_file_id_hash {
@@ -751,7 +759,6 @@ sub input_files {
     my %res_getfnames;
     my @res_getfpaths;
     my $getfnames_noname = 0;
-    my $need_dl = $action ne 'getfpaths';
     my $input_files_id = '';
     $options = {$options ? %$options : ()};
     my $input_files = project_config($project, 'input_files', $options);
@@ -829,10 +836,8 @@ sub input_files {
                 if $input_file->{project};
         exit_error("Missing filename:\n" . pp($input_file)) unless $name;
         my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
-        $need_dl = input_file_id_need_dl($input_file, $t, $fname)
-                        if $action eq 'input_files_id';
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
-        if ($need_dl && (!$fname || $t->('refresh_input'))) {
+        if (input_file_need_dl($input_file, $t, $fname, $action)) {
             if ($t->('content')) {
                 write_file("$proj_out_dir/$name", $t->('content'));
             } elsif ($t->('URL')) {
