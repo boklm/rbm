@@ -131,7 +131,8 @@ sub show_conf {
 sub fetch {
     shift;
     $RBM::config->{run}{fetch} = 1;
-    my @l = @_ ? @_ : (RBM::projectslist());
+    my $args = set_options(@_);
+    my @l = @$args ? @$args : (RBM::projectslist());
     foreach my $project (@l) {
         RBM::valid_project($project);
         if (RBM::project_config($project, 'git_url')) {
