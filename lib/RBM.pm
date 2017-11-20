@@ -2,6 +2,7 @@ package RBM;
 
 use warnings;
 use strict;
+use Encode qw(encode);
 use Cwd qw(getcwd);
 use YAML::XS qw(LoadFile);
 use Template;
@@ -639,7 +640,9 @@ sub process_template {
         tmpl       => sub { process_template($project, $_[0], $dest_dir) },
         shell_quote => \&shell_quote,
         versioncmp  => \&versioncmp,
-        sha256      => \&sha256_hex,
+        sha256      => sub {
+            return sha256_hex(encode("utf8", $_[0]));
+        },
         sha256file  => \&sha256file,
         fileparse   => \&fileparse,
         ENV         => \%ENV,
