@@ -2,6 +2,7 @@ package RBM;
 
 use warnings;
 use strict;
+use Path::Tiny;
 use Encode qw(encode);
 use Cwd qw(getcwd);
 use YAML::XS qw(LoadFile);
@@ -12,7 +13,6 @@ use IO::CaptureOutput qw(capture_exec);
 use File::Temp;
 use File::Copy;
 use File::Copy::Recursive qw(fcopy);
-use File::Slurp;
 use File::Path qw(make_path);
 use File::Basename;
 use String::ShellQuote;
@@ -50,7 +50,7 @@ sub load_config {
     $config->{step} = 'rbm_init';
     $config->{opt} = {};
     my $pdir = $config->{projects_dir} || $config->{default}{projects_dir};
-    foreach my $p (glob path($pdir) . '/*') {
+    foreach my $p (glob rbm_path($pdir) . '/*') {
         next unless -f "$p/config";
         $config->{projects}{basename($p)} = load_config_file("$p/config");
     }
@@ -65,7 +65,7 @@ sub load_system_config {
 sub load_local_config {
     my ($project) = @_;
     my $cfile = project_config($project ? $project : 'undef', 'localconf_file');
-    $cfile = path($cfile);
+    $cfile = rbm_path($cfile);
     $config->{local} = -f $cfile ? load_config_file($cfile) : {};
 }
 
@@ -80,7 +80,7 @@ sub set_default_env {
     %ENV = (%ENV, %{$config->{ENV}}) if ref $config->{ENV} eq 'HASH';
 }
 
-sub path {
+sub rbm_path {
     my ($path, $basedir) = @_;
     $basedir //= $config->{basedir};
     return ( $path =~ m|^/| ) ? $path : "$basedir/$path";
@@ -271,7 +271,7 @@ sub set_git_gpg_wrapper {
     my ($project) = @_;
     my $w = project_config($project, 'gpg_wrapper');
     my (undef, $tmp) = File::Temp::tempfile(DIR => get_tmp_dir($project));
-    write_file($tmp, $w);
+    path($tmp)->spew_utf8($w);
     chmod 0700, $tmp;
     system('git', 'config', 'gpg.program', $tmp) == 0
         || exit_error 'Error setting gpg.program';
@@ -322,7 +322,7 @@ sub file_sign_id {
     my ($project, $options) = @_;
     my (undef, $gpg_wrapper) = File::Temp::tempfile(DIR =>
                                 get_tmp_dir($project, $options));
-    write_file($gpg_wrapper, project_config($project, 'gpg_wrapper', $options));
+    path($gpg_wrapper)->spew_utf8(project_config($project, 'gpg_wrapper', $options));
     chmod 0700, $gpg_wrapper;
     my ($stdout, $stderr, $success, $exit_code) =
         capture_exec($gpg_wrapper, '--verify',
@@ -377,7 +377,7 @@ sub git_need_fetch {
 
 sub git_clone_fetch_chdir {
     my ($project, $options) = @_;
-    my $clonedir = create_dir(path(project_config($project,
+    my $clonedir = create_dir(rbm_path(project_config($project,
                                 'git_clone_dir', $options)));
     my $git_url = project_config($project, 'git_url', $options)
                 || exit_error "git_url is undefined";
@@ -387,7 +387,7 @@ sub git_clone_fetch_chdir {
         @clone_submod = ('--recurse-submodules');
         @fetch_submod = ('--recurse-submodules=on-demand');
     }
-    if (!chdir path("$clonedir/$project")) {
+    if (!chdir rbm_path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
         if (system('git', 'clone', @clone_submod, $git_url, $project) != 0) {
             exit_error "Error cloning $git_url";
@@ -429,12 +429,12 @@ sub hg_need_fetch {
 sub hg_clone_fetch_chdir {
     my ($project, $options) = @_;
     my $hg = project_config($project, 'hg', $options);
-    my $clonedir = create_dir(path(project_config($project,
+    my $clonedir = create_dir(rbm_path(project_config($project,
                                 'hg_clone_dir', $options)));
     my $hg_url = shell_quote(project_config($project, 'hg_url', $options))
                 || exit_error "hg_url is undefined";
     my $sq_project = shell_quote($project);
-    if (!chdir path("$clonedir/$project")) {
+    if (!chdir rbm_path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
         if (system("$hg clone -q $hg_url $sq_project") != 0) {
             exit_error "Error cloning $hg_url";
@@ -453,7 +453,7 @@ sub run_script {
     my @res;
     if ($cmd =~ m/^#/) {
         my (undef, $tmp) = File::Temp::tempfile(DIR => get_tmp_dir($project));
-        write_file($tmp, $cmd);
+        path($tmp)->spew_utf8($cmd);
         chmod 0700, $tmp;
         @res = $f->($tmp);
         unlink $tmp;
@@ -505,7 +505,7 @@ sub gpg_id {
 
 sub maketar {
     my ($project, $options, $dest_dir) = @_;
-    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
+    $dest_dir //= create_dir(rbm_path(project_config($project, 'output_dir')));
     valid_project($project);
     my $old_cwd = getcwd;
     my $commit_hash;
@@ -592,9 +592,9 @@ sub maketar {
 
 sub sha256file {
     CORE::state %res;
-    my $f = path(shift);
+    my $f = rbm_path(shift);
     return $res{$f} if exists $res{$f};
-    return $res{$f} = -f $f ? sha256_hex(scalar read_file($f)) : '';
+    return $res{$f} = -f $f ? sha256_hex(path($f)->slurp_raw) : '';
 }
 
 sub process_template_opt {
@@ -617,8 +617,8 @@ sub process_template {
         }
         return $res;
     }
-    $dest_dir //= path(project_config($project, 'output_dir'));
-    my $projects_dir = path(project_config($project, 'projects_dir'));
+    $dest_dir //= rbm_path(project_config($project, 'output_dir'));
+    my $projects_dir = rbm_path(project_config($project, 'projects_dir'));
     my $template = Template->new(
         ENCODING        => 'utf8',
         INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
@@ -636,7 +636,7 @@ sub process_template {
         dest_dir   => $dest_dir,
         exit_error => \&exit_error,
         exec       => sub { execute($project, @_) },
-        path       => \&path,
+        path       => \&rbm_path,
         tmpl       => sub { process_template($project, $_[0], $dest_dir) },
         shell_quote => \&shell_quote,
         versioncmp  => \&versioncmp,
@@ -655,12 +655,12 @@ sub process_template {
 
 sub rpmspec {
     my ($project, $dest_dir) = @_;
-    $dest_dir //= create_dir(path(project_config($project, 'output_dir')));
+    $dest_dir //= create_dir(rbm_path(project_config($project, 'output_dir')));
     valid_project($project);
     my $timestamp = project_config($project, 'timestamp');
     my $rpmspec = project_config($project, 'rpmspec')
                 || exit_error "Undefined config for rpmspec";
-    write_file("$dest_dir/$project.spec", $rpmspec);
+    path("$dest_dir/$project.spec")->spew_utf8($rpmspec);
     utime $timestamp, $timestamp, "$dest_dir/$project.spec" if $timestamp;
 }
 
@@ -673,7 +673,7 @@ sub copy_files {
     my @r;
     my $copy_files = project_config($project, 'copy_files');
     return unless $copy_files;
-    my $proj_dir = path(project_config($project, 'projects_dir'));
+    my $proj_dir = rbm_path(project_config($project, 'projects_dir'));
     my $src_dir = "$proj_dir/$project";
     foreach my $file (@$copy_files) {
         copy("$src_dir/$file", "$dest_dir/$file");
@@ -719,8 +719,8 @@ sub input_file_id_hash {
     my ($fname, $filename) = @_;
     return $filename . ':' . sha256file($fname) if -f $fname;
     return $filename . ':' . sha256file(readlink $fname) if -l $fname;
-    my @hashes = map { input_file_id_hash("$fname/$_", "$filename/$_") }
-                                sort(read_dir($fname));
+    my @subdirs = sort(map { $_->basename } path($fname)->children);
+    my @hashes = map { input_file_id_hash("$fname/$_", "$filename/$_") } @subdirs;
     return join("\n", @hashes);
 }
 
@@ -742,7 +742,7 @@ sub recursive_copy {
     }
     my @copied;
     mkdir "$dest_dir/$name";
-    foreach my $f (read_dir($fname)) {
+    foreach my $f (map { $_->basename } path($fname)->children) {
         push @copied, recursive_copy("$fname/$f", "$name/$f", $dest_dir);
     }
     return @copied;
@@ -759,7 +759,7 @@ sub input_files {
     $options = {$options ? %$options : ()};
     my $input_files = project_config($project, 'input_files', $options);
     goto RETURN_RES unless $input_files;
-    my $proj_dir = path(project_config($project, 'projects_dir', $options));
+    my $proj_dir = rbm_path(project_config($project, 'projects_dir', $options));
     my $src_dir = "$proj_dir/$project";
     my $old_cwd = getcwd;
     chdir $src_dir || exit_error "cannot chdir to $src_dir";
@@ -813,12 +813,12 @@ sub input_files {
         }
         my $proj_out_dir;
         if ($input_file->{project}) {
-            $proj_out_dir = path(project_step_config($t->('project'), 'output_dir',
+            $proj_out_dir = rbm_path(project_step_config($t->('project'), 'output_dir',
                     { %$options, step => $t->('pkg_type'),
                         origin_project => $project,
                         output_dir => undef, %$input_file }));
         } else {
-            $proj_out_dir = path(project_config($project, 'output_dir',
+            $proj_out_dir = rbm_path(project_config($project, 'output_dir',
                     { %$input_file, output_dir => undef }));
         }
         create_dir($proj_out_dir);
@@ -837,7 +837,7 @@ sub input_files {
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
         if ($need_dl && (!$fname || $t->('refresh_input'))) {
             if ($t->('content')) {
-                write_file("$proj_out_dir/$name", $t->('content'));
+                path("$proj_out_dir/$name")->spew_utf8($t->('content'));
             } elsif ($t->('URL')) {
                 urlget($project, {%$input_file, filename => $name}, 1);
             } elsif ($t->('exec')) {
@@ -889,7 +889,7 @@ sub input_files {
         }
         exit_error "Missing file $name" unless $fname;
         if ($t->('sha256sum')
-            && $t->('sha256sum') ne sha256_hex(read_file($fname))) {
+            && $t->('sha256sum') ne sha256_hex(path($fname)->slurp_raw)) {
             exit_error "Can't have sha256sum on directory: $fname" if -d $fname;
             exit_error "Wrong sha256sum for $fname.\n" .
                        "Expected sha256sum: " . $t->('sha256sum');
@@ -954,7 +954,7 @@ sub build_run {
     $config->{step} = $script_name;
     $options //= {};
     my $error;
-    my $dest_dir = create_dir(path(project_config($project, 'output_dir', $options)));
+    my $dest_dir = create_dir(rbm_path(project_config($project, 'output_dir', $options)));
     valid_project($project);
     $options = { %$options, build_id => Data::UUID->new->create_str };
     my $old_cwd = getcwd;
@@ -1023,16 +1023,16 @@ sub build_run {
     @scripts = grep { $build_script{$_} } @scripts;
     push @cfiles, @scripts unless $use_srcdir;
     foreach my $s (@scripts) {
-        write_file("$srcdir/$s", $build_script{$s});
+        path("$srcdir/$s")->spew_utf8($build_script{$s});
         chmod 0700, "$srcdir/$s";
     }
     my $build_log = project_config($project, "build_log", $options);
     if ($build_log ne '-') {
         my $append = project_config($project, "build_log_append", $options);
-        $build_log = path($build_log);
+        $build_log = rbm_path($build_log);
         make_path(dirname($build_log));
         my $now = localtime;
-        write_file($build_log, {append => $append}, "Starting build: $now\n");
+        path($build_log)->append_utf8("Starting build: $now\n");
         print "Build log: $build_log\n";
     }
     chdir $srcdir;
