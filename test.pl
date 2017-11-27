@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
-use File::Slurp;
+use Path::Tiny;
 use Test::More tests => 29;
 use lib 'lib/';
 
@@ -207,7 +207,7 @@ foreach my $test (@tests) {
     if ($test->{build}) {
         unlink keys %{$test->{files}};
         RBM::build_run(@{$test->{build}});
-        my $res = grep { read_file($_) ne $test->{files}{$_} } keys %{$test->{files}};
+        my $res = grep { path($_)->slurp_utf8 ne $test->{files}{$_} } keys %{$test->{files}};
         ok(!$res, $test->{name});
     }
 }
