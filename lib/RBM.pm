@@ -707,7 +707,7 @@ sub input_file_need_dl {
     return undef if $action eq 'getfpaths';
     if ($fname
         && $input_file->{sha256sum}
-        && $t->('sha256sum') ne sha256_hex(read_file($fname))) {
+        && $t->('sha256sum') ne sha256_hex(path($fname)->slurp_raw)) {
         $fname = undef;
     }
     if ($action eq 'input_files_id') {
