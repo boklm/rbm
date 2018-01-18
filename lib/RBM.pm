@@ -1035,6 +1035,7 @@ sub build_run {
     if ($build_log ne '-') {
         my $append = project_config($project, "build_log_append", $options);
         $build_log = rbm_path($build_log);
+        unlink $build_log unless $append;
         make_path(dirname($build_log));
         my $now = localtime;
         path($build_log)->append_utf8("Starting build: $now\n");
