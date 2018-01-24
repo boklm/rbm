@@ -129,10 +129,10 @@ our %default_config = (
     build_log_append => '1',
     notmpl        => [ qw(projects_dir) ],
     describe      => \&git_describe,
-    abbrev_lenght => '12',
+    abbrev_length => '12',
     abbrev        => '[%
                          IF c("git_url");
-                                exec("git log -1 --abbrev=" _ c("abbrev_lenght") _ " --format=%h " _ c("git_hash"));
+                                exec("git log -1 --abbrev=" _ c("abbrev_length") _ " --format=%h " _ c("git_hash"));
                          ELSE;
                                 exec(c("hg") _ " id -i -r " _ c("hg_hash"));
                          END;
