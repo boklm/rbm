@@ -472,7 +472,7 @@ sub execute {
         git_clone_fetch_chdir($project, $options);
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $git_hash);
-        exit_error "Cannot checkout $git_hash" unless $success;
+        exit_error "Cannot checkout $git_hash:\n$stderr" unless $success;
         if (project_config($project, 'git_submodule', $options)) {
             ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'submodule', 'update', '--init');
@@ -485,7 +485,7 @@ sub execute {
         hg_clone_fetch_chdir($project, $options);
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('hg', 'update', '-C', $hg_hash);
-        exit_error "Cannot checkout $hg_hash" unless $success;
+        exit_error "Cannot checkout $hg_hash:\n$stderr" unless $success;
     }
     my ($stdout, $stderr, $success, $exit_code)
                 = run_script($project, $cmd, \&capture_exec);
