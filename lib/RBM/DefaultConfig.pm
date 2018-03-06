@@ -216,7 +216,8 @@ OPT_END
 export LC_ALL=C
 [%
     IF c('gpg_keyring');
-        SET gpg_kr = '--keyring ' _ path(c('gpg_keyring'), path(c('gpg_keyring_dir'))) _ ' --no-default-keyring';
+        SET gpg_kr = '--keyring ' _ path(c('gpg_keyring'), path(c('gpg_keyring_dir')))
+                     _ ' --no-default-keyring --no-auto-check-trustdb --trust-model always';
     END;
 -%]
 exec [% c('gpg_bin') %] [% c('gpg_args') %] --with-fingerprint [% gpg_kr %] "\$@"
