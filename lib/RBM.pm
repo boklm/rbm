@@ -557,13 +557,9 @@ sub maketar {
             ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'submodule', 'foreach',
                     "git archive --prefix=$project-$version/\$path/"
-                    . " --output=$tmpdir/submodule-\$name.tar \$sha1");
+                    . " --output=$tmpdir/submodule.tar \$sha1;"
+                    . "tar -Af \"$dest_dir/$tar_file\" $tmpdir/submodule.tar");
             exit_error 'Error running git archive on submodules.' unless $success;
-            foreach my $file (sort glob "$tmpdir/*.tar") {
-                ($stdout, $stderr, $success, $exit_code)
-                   = capture_exec('tar', '-Af', "$dest_dir/$tar_file", $file);
-                exit_error "Error appending submodule tar:\n$stderr" unless $success;
-            }
         }
     } else {
         system('hg', 'archive', '-r', $commit_hash, '-t', 'tar',
