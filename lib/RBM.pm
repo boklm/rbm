@@ -893,8 +893,9 @@ sub input_files {
                 dd $input_file;
                 exit_error "Missing file $name";
             }
+            ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
+            exit_error "Error getting file $name" unless $fname;
         }
-        ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
         if ($action eq 'input_files_id') {
             $input_files_id .= input_file_id($input_file, $t, $fname, $name);
             $input_files_id .= "\n";
