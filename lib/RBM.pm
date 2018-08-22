@@ -220,8 +220,8 @@ sub project_config {
     goto FINISH unless @$name;
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
-    $res = config($project, $name, $options, ['opt'], ['run'],
-                        ['projects', $project], ['local'], [],
+    $res = config($project, $name, $options, ['opt', 'norec'], ['opt'],
+                        ['run'], ['projects', $project], ['local'], [],
                         ['system'], ['default']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
@@ -747,7 +747,7 @@ sub input_file_id {
     return $t->('input_file_id') if $input_file->{input_file_id};
     return $input_file->{project} . ':' . $filename if $input_file->{project};
     return $filename . ':' . $t->('sha256sum') if $input_file->{sha256sum};
-    return $filename . ':' . sha256_hex($t->('exec', { output_dir => '/out' }))
+    return $filename . ':' . sha256_hex($t->('exec', { norec => { output_dir => '/out' } }))
                 if $input_file->{exec};
     return input_file_id_hash($fname, $filename);
 }
@@ -774,6 +774,7 @@ sub input_files {
     my $getfnames_noname = 0;
     my $input_files_id = '';
     $options = {$options ? %$options : ()};
+    $options->{norec} = {};
     my $input_files = project_config($project, 'input_files', $options);
     goto RETURN_RES unless $input_files;
     my $proj_dir = rbm_path(project_config($project, 'projects_dir', $options));
@@ -789,8 +790,7 @@ sub input_files {
         next unless $input_file;
         my $t = sub {
             project_config($project, $_[0], {$options ? %$options : (),
-                    %$input_file, output_dir => $src_dir,
-                    $_[1] ? %{$_[1]} : ()});
+                    %$input_file, $_[1] ? %{$_[1]} : ()});
         };
         if ($input_file->{enable} && !$t->('enable')) {
             next;
@@ -849,11 +849,10 @@ sub input_files {
         if ($input_file->{project}) {
             $proj_out_dir = rbm_path(project_step_config($t->('project'), 'output_dir',
                     { %$options, step => $t->('pkg_type'),
-                        origin_project => $project,
-                        output_dir => undef, %$input_file }));
+                        origin_project => $project, %$input_file }));
         } else {
             $proj_out_dir = rbm_path(project_config($project, 'output_dir',
-                    { %$input_file, output_dir => undef }));
+                    { %$options, %$input_file }));
         }
         create_dir($proj_out_dir);
         my $url = $t->('URL');
@@ -871,7 +870,7 @@ sub input_files {
             if ($t->('content')) {
                 path("$proj_out_dir/$name")->spew_utf8($t->('content'));
             } elsif ($t->('URL')) {
-                urlget($project, {%$input_file, filename => $name}, 1);
+                urlget($project, {%$options, %$input_file, filename => $name}, 1);
             } elsif ($t->('exec')) {
                 my $exec_script = project_config($project, 'exec',
                     { $options ? %$options : (), %$input_file });
@@ -885,8 +884,8 @@ sub input_files {
                 my $run_save = $config->{run};
                 $config->{run} = { target => $input_file->{target} };
                 $config->{run}{target} //= $run_save->{target};
-                build_pkg($p, {%$options, origin_project => $project, %$input_file,
-                        output_dir => $proj_out_dir});
+                build_pkg($p, {%$options, origin_project => $project,
+                               %$input_file});
                 $config->{run} = $run_save;
                 print "Finished build of project $p - $name\n";
             } else {
@@ -940,8 +939,8 @@ sub input_files {
             }
             foreach my $s ($sig_file ? () : @$sig_ext) {
                 if ($url) {
-                    my $f = { %$input_file, 'override.URL' => "$url.$s",
-                        filename => "$name.$s" };
+                    my $f = { %$options, %$input_file,
+                        'override.URL' => "$url.$s", filename => "$name.$s" };
                     if (urlget($project, $f, 0)) {
                         $sig_file = "$fname.$s";
                         last;
@@ -1039,7 +1038,7 @@ sub build_run {
         }
         my $o = {
             %$options,
-            output_dir => $remote_tmp_dst,
+            norec => { output_dir => $remote_tmp_dst },
         };
         foreach my $s (@scripts) {
             $build_script{$s} = project_config($project, $s, $o);
@@ -1163,7 +1162,7 @@ sub publish {
     if (!$publish_src_dir) {
         $publish_src_dir = File::Temp->newdir(get_tmp_dir($project)
                                 . '/rbm-XXXXXX');
-        build_pkg($project, {output_dir => $publish_src_dir});
+        build_pkg($project, { norec => { output_dir => $publish_src_dir } });
     }
     build_run($project, 'publish', { build_srcdir => $publish_src_dir });
 }
