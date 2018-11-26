@@ -474,10 +474,12 @@ sub execute {
                 = capture_exec('git', 'checkout', $git_hash);
         exit_error "Cannot checkout $git_hash:\n$stderr" unless $success;
         if (project_config($project, 'git_submodule', $options)) {
-            ($stdout, $stderr, $success, $exit_code)
-                = capture_exec('git', 'submodule', 'update', '--init');
-            exit_error "Error running git submodule update:\n$stderr"
-                unless $success;
+            foreach my $action (qw(init sync update)) {
+                ($stdout, $stderr, $success, $exit_code)
+                    = capture_exec('git', 'submodule', $action);
+                exit_error "Error running git submodule $action\n$stderr"
+                    unless $success;
+            }
         }
     } elsif (project_config($project, 'hg_url', $options)) {
         my $hg_hash = project_config($project, 'hg_hash', $options)
@@ -550,10 +552,12 @@ sub maketar {
             my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $commit_hash);
             exit_error "Cannot checkout $commit_hash: $stderr" unless $success;
-            ($stdout, $stderr, $success, $exit_code)
-                = capture_exec('git', 'submodule', 'update', '--init');
-            exit_error "Error running git submodule update:\n$stderr"
-                unless $success;
+            foreach my $action (qw(init sync update)) {
+                ($stdout, $stderr, $success, $exit_code)
+                    = capture_exec('git', 'submodule', $action);
+                exit_error "Error running git submodule $action\n$stderr"
+                    unless $success;
+            }
             ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'submodule', 'foreach',
                     "git archive --prefix=$project-$version/\$path/"
