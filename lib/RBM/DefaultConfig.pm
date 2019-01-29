@@ -540,7 +540,7 @@ OPT_END
         my $dnf = 'rpm -q [% c("pkg_name") %] > /dev/null || dnf install -y [% c("pkg_name") %]';
         my $zypper = 'rpm -q [% c("pkg_name") %] > /dev/null || zypper install [% c("pkg_name") %]';
         my $urpmi = 'rpm -q [% c("pkg_name") %] > /dev/null || urpmi [% c("pkg_name") %]';
-        my $apt = 'dpkg -s [% c("pkg_name") %] 2> /dev/null | grep -q "^Status: install ok installed\$" || apt-get install -y [% c("pkg_name") %]';
+        my $apt = 'dpkg -s [% c("pkg_name") %] 2> /dev/null | grep -q "^Status: install ok installed\$" || DEBIAN_FRONTEND=noninteractive apt-get install -q -y [% c("pkg_name") %]';
         my %install = (
             Fedora      => $dnf,
             'Fedora-20' => $yum,
