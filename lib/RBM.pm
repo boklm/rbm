@@ -397,9 +397,8 @@ sub git_clone_fetch_chdir {
     if (git_need_fetch($project, $options)) {
         system('git', 'remote', 'set-url', 'origin', $git_url) == 0
                 || exit_error "Error setting git remote";
-        my ($ref, undef, $success) = capture_exec('git', 'symbolic-ref', 'HEAD');
-        chomp $ref;
-        if ($success && -e ".git/$ref") {
+        my (undef, undef, $success) = capture_exec('git', 'rev-parse', '--verify', 'HEAD');
+        if ($success) {
             system('git', 'checkout', '-q', '--detach') == 0
                 || exit_error "Error running git checkout --detach";
         }
