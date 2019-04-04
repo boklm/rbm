@@ -1,3 +1,5 @@
+- Add the target_append and target_prepend input_files options
+
 - Add the build_log_append option
 
 - Add the rbm_tmp_dir option

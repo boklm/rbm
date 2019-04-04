@@ -784,10 +784,27 @@ sub input_files {
         if ($input_file->{enable} && !$t->('enable')) {
             next;
         }
-        if ($input_file->{target}) {
+        if ($input_file->{target} || $input_file->{target_append}
+                                  || $input_file->{target_prepend}) {
             $input_file = { %$input_file };
-            $input_file->{target} = process_template_opt($project,
-                                        $input_file->{target}, $options);
+            if (ref $input_file->{target} eq 'ARRAY') {
+                $input_file->{target} = process_template_opt($project,
+                                            $input_file->{target}, $options);
+            } else {
+                $input_file->{target} = $config->{run}{target};
+            }
+            if (ref $input_file->{target_prepend} eq 'ARRAY') {
+                $input_file->{target} = [ @{ process_template_opt($project,
+                                               $input_file->{target_prepend},
+                                               $options) },
+                                          @{$input_file->{target}} ];
+            }
+            if (ref $input_file->{target_append} eq 'ARRAY') {
+                $input_file->{target} = [ @{$input_file->{target}},
+                                          @{ process_template_opt($project,
+                                               $input_file->{target_append},
+                                               $options) } ];
+            }
         }
         if ($action eq 'getfnames') {
             my $getfnames_name;
