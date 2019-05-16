@@ -308,6 +308,16 @@ sub git_commit_sign_id {
     return gpg_get_fingerprint(@l);
 }
 
+sub git_get_signed_tagname {
+    foreach my $l (split(/\n/, $_[0])) {
+        # the tag message is separated from headers by an empty line, so we
+        # ignore anything after the first empty line
+        return '' unless $l;
+        return $1 if $l =~ m/^tag (.*)$/;
+    }
+    return '';
+}
+
 sub git_tag_sign_id {
     my ($project, $tag) = @_;
     my $w = set_git_gpg_wrapper($project);
@@ -315,6 +325,7 @@ sub git_tag_sign_id {
         = capture_exec('git', 'tag', '-v', $tag);
     unset_git_gpg_wrapper($w);
     return undef unless $success;
+    return undef unless git_get_signed_tagname($stdout) eq $tag;
     return gpg_get_fingerprint(split /\n/, $stderr);
 }
 
