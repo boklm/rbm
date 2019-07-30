@@ -575,7 +575,7 @@ OPT_END
 find [% src.join(' ') %] [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 700 {} \\;
 find [% src.join(' ') %] ! [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 600 {} \\;
 find [% src.join(' ') %] | sort | \
-        tar --no-recursion [% IF c('gnu_utils') -%]
+        GZIP="--no-name \${GZIP}" tar --no-recursion [% IF c('gnu_utils') -%]
                 --owner=root --group=root --mtime=@[% c('timestamp') %]
                 [%- END -%]
                 [% c('tar_args', { error_if_undef => 1 }) %] -T -

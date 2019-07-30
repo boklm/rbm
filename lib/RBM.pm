@@ -582,7 +582,7 @@ sub maketar {
     }
     my %compress = (
         xz  => ['xz', '-f'],
-        gz  => ['gzip', '-f'],
+        gz  => ['gzip', '--no-name', '-f'],
         bz2 => ['bzip2', '-f'],
     );
     if (my $c = project_config($project, 'compress_tar', $options)) {
