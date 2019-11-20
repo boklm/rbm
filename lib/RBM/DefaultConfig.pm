@@ -555,7 +555,13 @@ OPT_END
         return $install{"$distro-$release"} if $install{"$distro-$release"};
         return $install{$distro};
     },
-    urlget => 'wget -O[% shell_quote(dest_dir _ "/" _ c("filename")) %] [% shell_quote(c("URL")) %]',
+    urlget => <<URLGET,
+#!/bin/sh
+set -e
+tmpfile="\$(mktemp -p [% shell_quote(c("tmp_dir")) %])"
+wget -O"\$tmpfile" [% shell_quote(c("URL")) %]
+mv -f "\$tmpfile" [% shell_quote(dest_dir _ "/" _ c("filename")) %]
+URLGET
     sig_ext => [ qw(gpg asc sig) ],
     enable => 1,
     gnu_utils => sub {
