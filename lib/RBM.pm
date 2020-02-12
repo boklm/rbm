@@ -610,6 +610,11 @@ sub maketar {
 sub sha256file {
     CORE::state %res;
     my $f = rbm_path(shift);
+    my $opt = shift;
+    if (ref $opt eq 'HASH' && $opt->{remove_cache}) {
+        delete $res{$f};
+        return;
+    }
     return $res{$f} if exists $res{$f};
     return $res{$f} = -f $f ? sha256_hex(path($f)->slurp_raw) : '';
 }
@@ -724,7 +729,8 @@ sub input_file_need_dl {
     return undef if $action eq 'getfpaths';
     if ($fname
         && $input_file->{sha256sum}
-        && $t->('sha256sum') ne sha256_hex(path($fname)->slurp_raw)) {
+        && $t->('sha256sum') ne sha256file($fname)) {
+        sha256file($fname, { remove_cache => 1 });
         $fname = undef;
     }
     if ($action eq 'input_files_id') {
@@ -928,7 +934,7 @@ sub input_files {
         }
         exit_error "Missing file $name" unless $fname;
         if ($t->('sha256sum')
-            && $t->('sha256sum') ne sha256_hex(path($fname)->slurp_raw)) {
+            && $t->('sha256sum') ne sha256file($fname)) {
             exit_error "Can't have sha256sum on directory: $fname" if -d $fname;
             exit_error "Wrong sha256sum for $fname.\n" .
                        "Expected sha256sum: " . $t->('sha256sum');
