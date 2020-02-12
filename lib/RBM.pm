@@ -475,10 +475,14 @@ sub run_script {
 
 sub execute {
     my ($project, $cmd, $options) = @_;
+    CORE::state %cache;
+    my $res_name;
     my $old_cwd = getcwd;
     if (project_config($project, 'git_url', $options)) {
         my $git_hash = project_config($project, 'git_hash', $options)
                 || exit_error "No git_hash specified for project $project";
+        $res_name = "git-$git_hash-$cmd";
+        return $cache{$res_name} if exists $cache{$res_name};
         git_clone_fetch_chdir($project, $options);
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $git_hash);
@@ -494,6 +498,8 @@ sub execute {
     } elsif (project_config($project, 'hg_url', $options)) {
         my $hg_hash = project_config($project, 'hg_hash', $options)
                 || exit_error "No hg_hash specified for project $project";
+        $res_name = "hg-$hg_hash-$cmd";
+        return $cache{$res_name} if exists $cache{$res_name};
         hg_clone_fetch_chdir($project, $options);
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('hg', 'update', '-C', $hg_hash);
@@ -503,7 +509,8 @@ sub execute {
                 = run_script($project, $cmd, \&capture_exec);
     chdir($old_cwd);
     chomp $stdout;
-    return $success ? $stdout : undef;
+    $cache{$res_name} = $success ? $stdout : undef;
+    return $cache{$res_name};
 }
 
 sub gpg_id {
