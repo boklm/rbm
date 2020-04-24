@@ -109,6 +109,9 @@ sub set_options {
     }
     RBM::load_system_config(@_);
     RBM::load_local_config(@_);
+    if (!defined $val{step} && @_) {
+        $RBM::config->{step} = RBM::project_config($_[0], 'pkg_type');
+    }
     return $RBM::config->{run}{args} = \@_;
 }
 
@@ -172,9 +175,9 @@ sub build_script {
     my $script_name = shift;
     usageexit($_[0]) unless @_ >= 2;
     my $cmd = shift;
-    my $args = set_options(@_);
+    my $args = set_options("--step=$script_name", @_);
     usageexit($cmd) unless @$args == 1;
-    $script_name = $RBM::config->{step} if $RBM::config->{step} ne 'rbm_init';
+    $script_name = $RBM::config->{step};
     RBM::build_pkg($args->[0], { pkg_type => $script_name });
 }
 
