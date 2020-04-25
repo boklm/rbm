@@ -811,19 +811,24 @@ sub input_files {
         if ($input_file->{target} || $input_file->{target_append}
                                   || $input_file->{target_prepend}) {
             $input_file = { %$input_file };
-            if (ref $input_file->{target} eq 'ARRAY') {
+            foreach my $t (qw/target target_append target_prepend/) {
+                if ($input_file->{$t} && ref $input_file->{$t} ne 'ARRAY') {
+                    exit_error("$t should be an ARRAY:\n" . pp($input_file));
+                }
+            }
+            if ($input_file->{target}) {
                 $input_file->{target} = process_template_opt($project,
                                             $input_file->{target}, $options);
             } else {
                 $input_file->{target} = $config->{run}{target};
             }
-            if (ref $input_file->{target_prepend} eq 'ARRAY') {
+            if ($input_file->{target_prepend}) {
                 $input_file->{target} = [ @{ process_template_opt($project,
                                                $input_file->{target_prepend},
                                                $options) },
                                           @{$input_file->{target}} ];
             }
-            if (ref $input_file->{target_append} eq 'ARRAY') {
+            if ($input_file->{target_append}) {
                 $input_file->{target} = [ @{$input_file->{target}},
                                           @{ process_template_opt($project,
                                                $input_file->{target_append},
