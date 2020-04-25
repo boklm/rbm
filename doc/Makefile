@@ -27,14 +27,7 @@ MAN1_ASC += rbm.asc
 MAN1_ASC += rbm-usage.asc
 MAN1_ASC += rbm-tar.asc
 MAN1_ASC += rbm-showconf.asc
-MAN1_ASC += rbm-srpm.asc
-MAN1_ASC += rbm-rpm.asc
-MAN1_ASC += rbm-rpmspec.asc
 MAN1_ASC += rbm-fetch.asc
-MAN1_ASC += rbm-deb-src.asc
-MAN1_ASC += rbm-deb.asc
-MAN1_ASC += rbm-pkg.asc
-MAN1_ASC += rbm-publish.asc
 MAN1_ASC += rbm-build.asc
 
 MAN7_ASC += rbm_tutorial.asc

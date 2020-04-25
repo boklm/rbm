@@ -15,23 +15,6 @@ use Cwd qw(getcwd);
 use IO::CaptureOutput qw(capture_exec);
 use File::Temp;
 
-sub git_describe {
-    my ($project, $options) = @_;
-    my $git_hash = RBM::project_config($project, 'git_hash', $options)
-                || RBM::exit_error('No git_hash specified');
-    my %res;
-    $RBM::config->{projects}{$project}{describe} = {};
-    my $old_cwd = getcwd;
-    RBM::git_clone_fetch_chdir($project, $options);
-    my ($stdout, $stderr, $success, $exit_code)
-        = capture_exec('git', 'describe', '--long', $git_hash);
-    if ($success) {
-        @res{qw(tag tag_reach hash)} = $stdout =~ m/^(.+)-(\d+)-g([^-\n]+)$/;
-    }
-    chdir($old_cwd);
-    return $success ? \%res : undef;
-}
-
 sub lsb_release {
     my ($project, $options) = @_;
     my $distribution = RBM::project_config($project, 'distribution', $options);
@@ -123,12 +106,11 @@ our %default_config = (
     git_clone_dir => 'git_clones',
     hg_clone_dir  => 'hg_clones',
     fetch         => 'if_needed',
-    rpmspec       => '[% SET tmpl = project _ ".spec"; INCLUDE $tmpl -%]',
+    pkg_type      => 'build',
     build         => '[% INCLUDE build -%]',
     build_log     => '-',
     build_log_append => '1',
     notmpl        => [ qw(projects_dir) ],
-    describe      => \&git_describe,
     abbrev_length => '12',
     abbrev        => '[%
                          IF c("git_url");
@@ -155,56 +137,7 @@ our %default_config = (
         return '946684800';
     },
     debug         => 0,
-    version       => <<END,
-[%-
-    IF c('version_command');
-        exec(c('version_command'));
-    ELSIF c(['describe', 'tag']);
-        c(['describe', 'tag']);
-    ELSE;
-        exit_error('No version specified');
-    END;
--%]
-END
-####
-####
-####
-    pkg_type      => 'build',
-    rpm           => '[% c("rpmbuild", { rpmbuild_action => "-ba" }) %]',
-    srpm          => '[% c("rpmbuild", { rpmbuild_action => "-bs" }) %]',
-####
-####
-####
-    rpmbuild      => <<END,
-[% USE date -%]
-#!/bin/sh
-set -e -x
-srcdir=\$(pwd)
-cat > '[% project %].spec' << 'RBM_END_RPM_SPEC'
-[% c('rpmspec') %]
-RBM_END_RPM_SPEC
-touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %] [% project %].spec
-rpmbuild [% c('rpmbuild_action', {error_if_undef => 1}) %] --define "_topdir \$srcdir" \\
-        --define "_sourcedir \$srcdir" \\
-        --define '_srcrpmdir [% dest_dir %]' \\
-        --define '_rpmdir [% dest_dir %]' \\
-        --define '_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm' \\
-        "\$srcdir/[% project %].spec"
-END
-####
-####
-####
-    rpm_rel         => <<OPT_END,
-[%-
-  IF c('pkg_rel').defined;
-        GET c('pkg_rel');
-  ELSIF c('describe/tag_reach');
-        GET '1.' _ c('describe/tag_reach') _ '.g' _ c('describe/hash');
-  ELSE;
-        GET '1.g' _ c('abbrev');
-  END;
--%]
-OPT_END
+    version       => "[%- exit_error('No version specified'); -%]",
 ####
 ####
 ####
@@ -222,87 +155,6 @@ export LC_ALL=C
 -%]
 exec [% c('gpg_bin') %] [% c('gpg_args') %] --with-fingerprint [% gpg_kr %] "\$@"
 GPGEND
-####
-####
-####
-    debian_create => <<DEBEND,
-[%-
-    FOREACH f IN c('debian_files');
-      GET 'cat > ' _ tmpl(f.name) _ " << 'END_DEBIAN_FILE'\n";
-      GET tmpl(f.content);
-      GET "\nEND_DEBIAN_FILE\n\n";
-    END;
--%]
-DEBEND
-####
-####
-####
-    deb_src => <<DEBEND,
-#!/bin/sh
-set -e -x
-[% SET tarfile = project _ '-' _ c('version') _ '.tar.' _ c('compress_tar') -%]
-tar xvf [% tarfile %]
-mv [% tarfile %] [% dest_dir %]/[% project %]_[% c('version') %].orig.tar.[% c('compress_tar') %]
-cd [% project %]-[% c('version') %]
-builddir=\$(pwd)
-mkdir debian debian/source
-cd debian
-[% c('debian_create') %]
-cd [% dest_dir %]
-dpkg-source -b "\$builddir"
-DEBEND
-####
-####
-####
-    deb => <<DEBEND,
-#!/bin/sh
-set -e -x
-[% SET tarfile = project _ '-' _ c('version') _ '.tar.' _ c('compress_tar') -%]
-tar xvf [% tarfile %]
-mv [% tarfile %] [% project %]_[% c('version') %].orig.tar.[% c('compress_tar') %]
-cd [% project %]-[% c('version') %]
-builddir=\$(pwd)
-mkdir debian debian/source
-cd debian
-[% c('debian_create') %]
-cd ..
-ls ..
-[% IF c('debsign_keyid');
-    pdebuild_sign = '--debsign-k ' _ c('debsign_keyid');
-    debuild_sign = '-k' _ c('debsign_keyid');
-ELSE;
-    pdebuild_sign = '';
-    debuild_sign = '-uc -us';
-END -%]
-[% IF c('use_pbuilder') -%]
-pdebuild [% pdebuild_sign %] --buildresult [% dest_dir %]
-[% ELSE -%]
-debuild [% debuild_sign %]
-cd ..
-rm -f build
-for file in *
-do
-        if [ -f "\$file" ]
-        then
-                mv "\$file" [% dest_dir %]
-        fi
-done
-[% END -%]
-DEBEND
-####
-####
-####
-    debian_revision => <<OPT_END,
-[%-
-IF c('pkg_rel');
-        GET c('pkg_rel').defined;
-ELSIF c('describe/tag_reach');
-        GET '1.' _ c('describe/tag_reach') _ '~g' _ c('describe/hash');
-ELSE;
-        GET '1';
-END;
--%]
-OPT_END
 ####
 ####
 ####
@@ -519,19 +371,6 @@ OPT_END
 ####
 ####
     lsb_release => \&lsb_release,
-    pkg_type =>  sub {
-        my ($project, $options) = @_;
-        my $distro = RBM::project_config($project, 'lsb_release/id', $options);
-        my %pkg_types = qw(
-            Fedora   rpm
-            CentOS   rpm
-            Mageia   rpm
-            openSuSe rpm
-            Debian   deb
-            Ubuntu   deb
-        );
-        return $pkg_types{$distro};
-    },
     install_package => sub {
         my ($project, $options) = @_;
         my $distro = RBM::project_config($project, 'lsb_release/id', $options);
@@ -606,8 +445,6 @@ ZIP_END
     input_files_id => sub { RBM::input_files('input_files_id', @_); },
     input_files_paths => sub { RBM::input_files('getfpaths', @_); },
     steps => {
-        srpm => 'rpm',
-        'deb-src' => 'deb',
     },
     suexec => 'sudo -- [% c("suexec_cmd") %]',
     hg => 'hg [% c("hg_opt") %]',

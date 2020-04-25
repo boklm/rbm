@@ -134,14 +134,14 @@ my @tests = (
         expected => 'aZa AZa aZa',
     },
     {
-        name => 'srpm step',
-        step => 'srpm',
+        name => 'rpm step',
+        step => 'rpm',
         config => [ 'c', 'option_rpm' ],
         expected => '1',
     },
     {
-        name => 'deb-src step',
-        step => 'deb-src',
+        name => 'deb step',
+        step => 'deb',
         config => [ 'c', 'option_deb' ],
         expected => '1',
     },

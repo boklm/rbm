@@ -1,3 +1,8 @@
+- Remove the version_command, rpm, srpm, rpmbuild, rpmspec, rpm_rel,
+  debian_create, deb, deb_src, use_pbuilder, and debian_revision options,
+  as well as the rpmspec, rpm, srpm, deb-src, deb, pkg, and the publish
+  commands. All of these features can still be implemented externally.
+
 - Add the target_append and target_prepend input_files options
 
 - Add the build_log_append option

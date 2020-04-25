@@ -21,37 +21,9 @@ my %actions = (
         run   => \&tar,
         descr => 'Create source tarball',
     },
-    rpmspec => {
-        run => \&rpmspec,
-        descr => 'Create rpm spec file',
-    },
-    rpm => {
-        run => sub { build_script('rpm', @_) },
-        descr => 'Build an rpm package',
-    },
-    srpm => {
-        run => sub { build_script('srpm', @_) },
-        descr => 'Create source rpm file',
-    },
-    'deb-src' => {
-        run => sub { build_script('deb_src', @_) },
-        descr => 'Create debian source package',
-    },
-    'deb' => {
-        run => sub { build_script('deb', @_) },
-        descr => 'Create debian package',
-    },
     build => {
         run => sub { build_script('build', @_) },
         descr => 'Build project with a custom build script',
-    },
-    pkg => {
-        run => \&pkg,
-        descr => 'Build a package',
-    },
-    publish => {
-        run => \&publish,
-        descr => 'Publish a package',
     },
     showconf => {
         run => \&show_conf,
@@ -91,10 +63,9 @@ sub usageexit {
 sub set_options {
     my @options = qw(distribution=s version=s tag-gpg-id=s@ commit-gpg-id=s@
                      projects-dir=s git-clone-dir=s git-hash=s output-dir=s
-                     compress_tar=s pkg-rel=s timestamp=i fetch!
-                     gpg-keyring=s gpg-keyring-dir=s gpg-args=s gpg-bin=s
-                     sysconf-file=s debsign-keyid=s use-pbuilder!
-                     step=s target=s@ publish-src-dir=s debug! hg-clone-dir=s
+                     compress_tar=s timestamp=i fetch! gpg-keyring=s
+                     gpg-keyring-dir=s gpg-args=s gpg-bin=s sysconf-file=s
+                     step=s target=s@ debug! hg-clone-dir=s
                      hg-hash=s localconf-file=s build-log=s);
     my %val;
     Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
@@ -158,14 +129,6 @@ sub tar {
     RBM::maketar($args->[0]);
 }
 
-sub rpmspec {
-    usageexit($_[0]) unless @_ >= 2;
-    shift;
-    my $args = set_options(@_);
-    usageexit('rpmspec') unless @$args == 1;
-    RBM::rpmspec($args->[0]);
-}
-
 sub print_projects {
     usageexit($_[0]) unless @_ == 1;
     print join("\n", RBM::projectslist()), "\n";
@@ -179,22 +142,6 @@ sub build_script {
     usageexit($cmd) unless @$args == 1;
     $script_name = $RBM::config->{step};
     RBM::build_pkg($args->[0], { pkg_type => $script_name });
-}
-
-sub pkg {
-    usageexit($_[0]) unless @_ >= 2;
-    my $cmd = shift;
-    my $args = set_options(@_);
-    usageexit($cmd) unless @$args == 1;
-    RBM::build_pkg($args->[0]);
-}
-
-sub publish {
-    usageexit($_[0]) unless @_ >= 2;
-    my $cmd = shift;
-    my $args = set_options(@_);
-    usageexit($cmd) unless @$args == 1;
-    RBM::publish($args->[0]);
 }
 
 if (@ARGV == 0 || !$actions{$ARGV[0]}) {

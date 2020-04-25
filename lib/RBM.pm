@@ -686,17 +686,6 @@ sub process_template {
     return $output;
 }
 
-sub rpmspec {
-    my ($project, $dest_dir) = @_;
-    $dest_dir //= create_dir(rbm_path(project_config($project, 'output_dir')));
-    valid_project($project);
-    my $timestamp = project_config($project, 'timestamp');
-    my $rpmspec = project_config($project, 'rpmspec')
-                || exit_error "Undefined config for rpmspec";
-    path("$dest_dir/$project.spec")->spew_utf8($rpmspec);
-    utime $timestamp, $timestamp, "$dest_dir/$project.spec" if $timestamp;
-}
-
 sub projectslist {
     keys %{$config->{projects}};
 }
@@ -1020,20 +1009,13 @@ sub build_run {
     valid_project($project);
     $options = { %$options, build_id => Data::UUID->new->create_str };
     my $old_cwd = getcwd;
-    my $srcdir = project_config($project, 'build_srcdir', $options);
-    my $use_srcdir = $srcdir;
-    my $tmpdir = File::Temp->newdir(get_tmp_dir($project, $options)
+    my $srcdir = File::Temp->newdir(get_tmp_dir($project, $options)
                                 . '/rbm-XXXXX');
     my @cfiles;
-    if ($use_srcdir) {
-        @cfiles = ($srcdir);
-    } else {
-        $srcdir = $tmpdir->dirname;
-        my $tarfile = maketar($project, $options, $srcdir);
-        push @cfiles, $tarfile if $tarfile;
-        push @cfiles, copy_files($project, $srcdir);
-        push @cfiles, input_files('copy', $project, $options, $srcdir);
-    }
+    my $tarfile = maketar($project, $options, $srcdir);
+    push @cfiles, $tarfile if $tarfile;
+    push @cfiles, copy_files($project, $srcdir);
+    push @cfiles, input_files('copy', $project, $options, $srcdir);
     my ($remote_tmp_src, $remote_tmp_dst, %build_script);
     my @scripts = ('pre', $script_name, 'post');
     my %scripts_root = ( pre => 1, post => 1);
@@ -1083,7 +1065,7 @@ sub build_run {
         goto EXIT;
     }
     @scripts = grep { $build_script{$_} } @scripts;
-    push @cfiles, @scripts unless $use_srcdir;
+    push @cfiles, @scripts;
     foreach my $s (@scripts) {
         path("$srcdir/$s")->spew_utf8($build_script{$s});
         chmod 0700, "$srcdir/$s";
@@ -1183,18 +1165,6 @@ sub build_run {
 sub build_pkg {
     my ($project, $options) = @_;
     build_run($project, project_config($project, 'pkg_type', $options), $options);
-}
-
-sub publish {
-    my ($project) = @_;
-    project_config($project, 'publish', { error_if_undef => 1 });
-    my $publish_src_dir = project_config($project, 'publish_src_dir');
-    if (!$publish_src_dir) {
-        $publish_src_dir = File::Temp->newdir(get_tmp_dir($project)
-                                . '/rbm-XXXXXX');
-        build_pkg($project, { norec => { output_dir => $publish_src_dir } });
-    }
-    build_run($project, 'publish', { build_srcdir => $publish_src_dir });
 }
 
 1;
