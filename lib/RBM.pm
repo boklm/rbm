@@ -461,8 +461,9 @@ sub run_script {
     my ($project, $cmd, $f) = @_;
     $f //= \&capture_exec;
     my @res;
+    local $ENV{TMPDIR} = project_config($project, 'rbm_tmp_dir');
     if ($cmd =~ m/^#/) {
-        my (undef, $tmp) = File::Temp::tempfile(DIR => get_tmp_dir($project));
+        my (undef, $tmp) = File::Temp::tempfile(DIR => $ENV{TMPDIR});
         path($tmp)->spew_utf8($cmd);
         chmod 0700, $tmp;
         @res = $f->($tmp);
@@ -1146,7 +1147,7 @@ sub build_run {
         foreach my $s (@scripts) {
             my $cmd = $scripts_root{$s} ? project_config($project, 'suexec',
                 { suexec_cmd => "$srcdir/$s" }) : "$srcdir/$s";
-            if (system_log($build_log, $cmd) != 0) {
+            if (run_script($project, $cmd, sub { system_log($build_log, @_) }) != 0) {
                 $error = "Error running $script_name";
                 if (project_config($project, 'debug', $options)) {
                     print STDERR $error, "\nOpening debug shell\n";
