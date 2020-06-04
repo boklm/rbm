@@ -14,6 +14,7 @@ use RBM;
 use Cwd qw(getcwd);
 use IO::CaptureOutput qw(capture_exec);
 use File::Temp;
+use File::Path qw(make_path);
 
 sub lsb_release {
     my ($project, $options) = @_;
@@ -89,8 +90,9 @@ sub rbm_tmp_dir {
     my ($project, $options) = @_;
     CORE::state $rbm_tmp_dir;
     return $rbm_tmp_dir->dirname if $rbm_tmp_dir;
-    my $tmp_dir = RBM::get_tmp_dir($project, $options)
+    my $tmp_dir = RBM::project_config($project, 'tmp_dir', $options)
                   || RBM::exit_error('No tmp_dir specified');
+    make_path($tmp_dir);
     $rbm_tmp_dir = File::Temp->newdir(TEMPLATE => 'rbm-XXXXXX',
                                       DIR => $tmp_dir);
     return $rbm_tmp_dir->dirname;
@@ -397,7 +399,14 @@ OPT_END
     urlget => <<URLGET,
 #!/bin/sh
 set -e
-tmpfile="\$(mktemp -p [% shell_quote(c("tmp_dir")) %])"
+[%
+    IF c("getting_id");
+        SET rbm_tmp_dir = '/tmp';
+    ELSE;
+        SET rbm_tmp_dir = c("rbm_tmp_dir");
+    END;
+    -%]
+tmpfile="\$(mktemp -p [% shell_quote(rbm_tmp_dir) %])"
 wget -O"\$tmpfile" [% shell_quote(c("URL")) %]
 mv -f "\$tmpfile" [% shell_quote(dest_dir _ "/" _ c("filename")) %]
 URLGET

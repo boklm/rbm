@@ -270,17 +270,11 @@ sub exit_error {
     exit (exists $_[1] ? $_[1] : 1);
 }
 
-sub get_tmp_dir {
-    my ($project, $options) = @_;
-    my $tmp_dir = project_config($project, 'tmp_dir', $options);
-    make_path($tmp_dir);
-    return $tmp_dir;
-}
-
 sub set_git_gpg_wrapper {
     my ($project) = @_;
     my $w = project_config($project, 'gpg_wrapper');
-    my (undef, $tmp) = File::Temp::tempfile(DIR => get_tmp_dir($project));
+    my (undef, $tmp) = File::Temp::tempfile(
+                        DIR => project_config($project, 'rbm_tmp_dir'));
     path($tmp)->spew_utf8($w);
     chmod 0700, $tmp;
     system('git', 'config', 'gpg.program', $tmp) == 0
@@ -342,7 +336,7 @@ sub git_tag_sign_id {
 sub file_sign_id {
     my ($project, $options) = @_;
     my (undef, $gpg_wrapper) = File::Temp::tempfile(DIR =>
-                                get_tmp_dir($project, $options));
+                                project_config($project, 'rbm_tmp_dir', $options));
     path($gpg_wrapper)->spew_utf8(project_config($project, 'gpg_wrapper', $options));
     chmod 0700, $gpg_wrapper;
     my ($stdout, $stderr, $success, $exit_code) =
@@ -576,7 +570,7 @@ sub maketar {
                 || exit_error 'Error running git archive.';
         if (project_config($project, 'git_submodule', $options)) {
             my $tmpdir = File::Temp->newdir(
-                get_tmp_dir($project, $options) . '/rbm-XXXXX');
+                project_config($project, 'rbm_tmp_dir', $options) . '/rbm-XXXXX');
             my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $commit_hash);
             exit_error "Cannot checkout $commit_hash: $stderr" unless $success;
@@ -760,7 +754,8 @@ sub input_file_id {
     return $t->('input_file_id') if $input_file->{input_file_id};
     return $input_file->{project} . ':' . $filename if $input_file->{project};
     return $filename . ':' . $t->('sha256sum') if $input_file->{sha256sum};
-    return $filename . ':' . sha256_hex($t->('exec', { norec => { output_dir => '/out' } }))
+    my $opts = { norec => { output_dir => '/out', getting_id => 1, }};
+    return $filename . ':' . sha256_hex($t->('exec', $opts))
                 if $input_file->{exec};
     return input_file_id_hash($fname, $filename);
 }
@@ -1029,7 +1024,7 @@ sub build_run {
     valid_project($project);
     $options = { %$options, build_id => Data::UUID->new->create_str };
     my $old_cwd = getcwd;
-    my $tmpdir = File::Temp->newdir(get_tmp_dir($project, $options)
+    my $tmpdir = File::Temp->newdir(project_config($project, 'rbm_tmp_dir', $options)
                                 . '/rbm-XXXXX');
     my $srcdir = $tmpdir->dirname;
     my @cfiles;
