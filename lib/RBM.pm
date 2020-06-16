@@ -21,6 +21,7 @@ use RBM::DefaultConfig;
 use Digest::SHA qw(sha256_hex);
 use Data::UUID;
 use Data::Dump qw(dd pp);
+use FindBin;
 use feature "state";
 
 
@@ -54,6 +55,7 @@ sub load_config {
     $config = load_config_file($config_file);
     $config->{default} = \%default_config;
     $config->{basedir} = dirname($config_file);
+    $config->{rbmdir} = $FindBin::Bin;
     $config->{step} = 'rbm_init';
     $config->{opt} = {};
     my $pdir = $config->{projects_dir} || $config->{default}{projects_dir};
