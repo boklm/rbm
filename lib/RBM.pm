@@ -23,6 +23,13 @@ use Data::UUID;
 use Data::Dump qw(dd pp);
 use feature "state";
 
+
+BEGIN {
+    require Exporter;
+    our @ISA = qw(Exporter);
+    our @EXPORT = qw(exit_error);
+}
+
 our $config;
 
 sub load_config_file {
