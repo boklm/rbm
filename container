@@ -1,0 +1,296 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use File::Basename;
+use lib dirname($0) . '/lib';
+use RBM qw(exit_error);
+use English;
+use Getopt::Long;
+use Path::Tiny;
+use File::Path qw(make_path);
+use File::Copy::Recursive qw(pathrmdir rcopy fcopy);
+require "syscall.ph";
+
+*CLONE_NEWNS   = \0x20000;
+*CLONE_NEWUTS  = \0x4000000;
+*CLONE_NEWIPC  = \0x8000000;
+*CLONE_NEWUSER = \0x10000000;
+*CLONE_NEWPID  = \0x20000000;
+*CLONE_NEWNET  = \0x40000000;
+our (
+    $CLONE_NEWNS,   $CLONE_NEWUTS, $CLONE_NEWIPC,
+    $CLONE_NEWUSER, $CLONE_NEWPID, $CLONE_NEWNET
+);
+
+my @bind_mounts = qw(/dev/console /dev/full /dev/null /dev/ptmx /dev/random
+                     /dev/tty /dev/urandom /dev/zero);
+
+sub create_devfiles {
+    my ($rootfsdir) = @_;
+    my @dirs = qw(pts shm);
+    my %links = (
+        fd     => '/proc/self/fd',
+        stderr => '/proc/self/fd/2',
+        stdin  => '/proc/self/fd/0',
+        stdout => '/proc/self/fd/1',
+    );
+    make_path("$rootfsdir/dev");
+    foreach my $dir (@dirs) {
+        make_path("$rootfsdir/dev/$dir");
+        chmod 0755, "$rootfsdir/dev/$dir";
+    }
+    foreach my $l (keys %links) {
+        next if -e "$rootfsdir/dev/$l";
+        symlink $links{$l}, "$rootfsdir/dev/$l"
+            or exit_error "Error creating symlink $l";
+    }
+}
+
+sub do_mounts {
+    my ($rootfsdir) = @_;
+    foreach my $mount (@bind_mounts) {
+        open my $fh, '>', "$rootfsdir$mount"
+                or exit_error "error opening $rootfsdir$mount: $!";
+        close $fh;
+        system('mount', '-o', 'bind', $mount, "$rootfsdir$mount") == 0
+                or exit_error "Error bind mounting $mount";
+    }
+    system('mount', '-o', 'rbind', '/sys', "$rootfsdir/sys") == 0
+                or exit_error 'Error rbind mounting /sys';
+    system('mount', '-t', 'proc', 'proc', "$rootfsdir/proc") == 0
+                or exit_error 'Error mounting /proc';
+    chmod oct(1777), "$rootfsdir/dev/shm";
+    system('mount', '-t', 'tmpfs', 'none', "$rootfsdir/dev/shm") == 0
+                or exit_error "Error mounting /dev/shm";
+}
+
+sub do_unmounts {
+    my ($rootfsdir) = @_;
+    my @othermounts = qw(/proc /dev/shm);
+    foreach my $mount (@bind_mounts, @othermounts) {
+        system('umount', '--no-mtab', "$rootfsdir$mount") == 0
+                or warn "Error unmounting $mount";
+    }
+    system('umount', '--no-mtab', '--lazy', "$rootfsdir/sys") == 0
+                or warn "Error unmounting /sys";
+}
+
+sub extract_tar {
+    my ($rootfsdir, $tarfile) = @_;
+    make_path($rootfsdir);
+    system('tar', '--exclude=./dev', '-C', $rootfsdir, '-xf', $tarfile);
+};
+
+sub create_tar {
+    my ($rootfsdir, $tarfile) = @_;
+    system('tar', '--exclude=./dev', '-C', $rootfsdir, '-caf', $tarfile, '.');
+}
+
+sub run_chroot {
+    my ($rootfsdir, $cmd) = @_;
+    create_devfiles($rootfsdir);
+    do_mounts($rootfsdir);
+    fcopy('/etc/resolv.conf', "$rootfsdir/etc/resolv.conf");
+    local %ENV = ();
+    system('hostname', 'rbm');
+    my $res = system('/usr/sbin/chroot', $rootfsdir, @$cmd);
+    do_unmounts($rootfsdir);
+    return $res;
+}
+
+sub copy_file_to {
+    my ($rootfsdir, $src, $dst, $owner) = @_;
+    make_path("$rootfsdir/$dst");
+    my $filename = fileparse($src);
+    rcopy($src, "$rootfsdir/$dst/$filename")
+        or exit_error "Failed to copy $src to $rootfsdir/$dst/$filename";
+    return run_chroot($rootfsdir, ['chown', '-R', $owner, $dst]);
+}
+
+sub copy_file_from {
+    my ($rootfsdir, $src, $dst) = @_;
+    make_path($dst);
+    rcopy("$rootfsdir/$src", $dst)
+        or exit_error "Failed to copy $rootfsdir/$src to $dst";
+}
+
+sub get_guidmapcmd {
+    my ($guid) = (@_);
+    my $config_file = "/etc/sub${guid}";
+    my ($id) = ${guid} eq 'uid' ? ($UID) : split(' ', $GID);
+    my ($current_usergroup) = ${guid} eq 'uid' ? getpwuid($id) : getgrgid($id);
+    for my $line (path($config_file)->lines) {
+        chomp $line;
+        my ($usergroup, $lowerid, $count) = split(':', $line);
+        next unless ($usergroup eq $current_usergroup || $usergroup eq $id);
+        return "0 $id 1 1 $lowerid $count";
+    }
+    exit_error "Could not find $guid in $config_file";
+}
+
+sub unshare_run {
+    my ($s, $options) = @_;
+    my $f1 = fork();
+    if ($f1 == 0) {
+        my $ppid = $$;
+        pipe my $rfh, my $wfh;
+        my $pid = fork() // exit_error("fork() failed: $!");
+        if ($pid == 0) {
+            close $wfh;
+            exit_error("read() did not receive EOF")
+              unless sysread($rfh, my $c, 1) == 0;
+            my $uidmapcmd = get_guidmapcmd('uid');
+            exit_error("newuidmap $ppid $uidmapcmd failed: $!")
+              unless system("newuidmap $ppid $uidmapcmd") == 0;
+            my $gidmapcmd = get_guidmapcmd('gid');
+            exit_error("newgidmap $ppid $gidmapcmd failed: $!")
+              unless system("newgidmap $ppid $gidmapcmd") == 0;
+            exit 0;
+        }
+
+        my $unshare_flags = $CLONE_NEWUSER | $CLONE_NEWNS | $CLONE_NEWPID | $CLONE_NEWUTS
+                            | $CLONE_NEWIPC;
+        $unshare_flags |= $CLONE_NEWNET if $options->{'disable-network'};
+        syscall &SYS_unshare, $unshare_flags;
+        close $wfh;
+        waitpid($pid, 0) or exit_error("waitpid() failed: $!");
+        exit_error("failed to set uidmap") if $? >> 8;
+        syscall(&SYS_setgid, 0) == 0 or exit_error("setgid failed: $!");
+        syscall(&SYS_setuid, 0) == 0 or exit_error("setuid failed: $!");
+        syscall(&SYS_setgroups, 0, 0) == 0 or exit_error("setgroups failed: $!");
+
+        my $f2 = fork() // exit_error("fork() failed: $!");
+        if ($f2) {
+            waitpid($f2, 0) or exit_error("waitpid() failed: $!");
+            exit $? >> 8;
+        }
+        my $res = $s->();
+        exit($res ? $res >> 8 : 0);
+    }
+    waitpid($f1, 0) or exit_error("waitpid() failed: $!");
+    exit $? >> 8;
+}
+
+my %actions = (
+    archive => {
+        descr => 'Archive a container directory',
+        usage => "$0 archive <container-dir> <dest-tarball>",
+        run => sub {
+            usageexit($ARGV[0]) unless @ARGV == 3;
+            unshare_run(
+                sub {
+                    return create_tar($ARGV[1], $ARGV[2]);
+                }
+            );
+        },
+    },
+    extract => {
+        descr => 'Extract a container',
+        usage => "$0 extract <container-dir> <tarball>",
+        run   => sub {
+            usageexit($ARGV[0]) unless @ARGV == 3;
+            exit_error "$ARGV[0] already exists" if -e $ARGV[1];
+            unshare_run(
+                sub {
+                    return extract_tar($ARGV[1], $ARGV[2]);
+                }
+            );
+        },
+    },
+    remove => {
+        descr => "Remove a container directory",
+        usage => "$0 remove <container-dir>",
+        run   => sub {
+            usageexit($ARGV[0]) unless @ARGV == 2;
+            exit_error "$ARGV[1] is not a directory" unless -d $ARGV[1];
+            unshare_run(
+                sub {
+                    return pathrmdir($ARGV[1]);
+                }
+            );
+        },
+    },
+    put => {
+        descr => "Copy a file or directory to the container directory",
+        usage => "$0 put <container-dir> <src> <dst> <owner>",
+        run   => sub {
+            usageexit($ARGV[0]) unless @ARGV == 5;
+            exit_error "$ARGV[1] is not a directory" unless -d $ARGV[1];
+            my (undef, @args) = @ARGV;
+            unshare_run(
+                sub {
+                    return copy_file_to(@args);
+                }
+            );
+        },
+    },
+    get => {
+        descr => "Copy a file or a directory from the container directory",
+        usage => "$0 get <container-dir> <src> <dst>",
+        run   => sub {
+            usageexit($ARGV[0]) unless @ARGV == 4;
+            exit_error "$ARGV[1] is not a directory" unless -d $ARGV[1];
+            my (undef, @args) = @ARGV;
+            unshare_run(
+                sub {
+                    return copy_file_from(@args);
+                }
+            );
+        },
+    },
+    run => {
+        descr => "Run a command in a container",
+        usage => "$0 run [--disable-network] [--chroot=<container-dir>] [--] <command> [<arg>...]",
+        run => sub {
+            usageexit($_[0]) unless @_>= 2;
+            shift;
+            my @options = qw(disable-network! chroot=s);
+            my %val;
+            Getopt::Long::GetOptionsFromArray(\@_, \%val, @options) || exit 1;
+            my (@cmd) = @_;
+            unshare_run(
+                sub {
+                    return $val{chroot} ? run_chroot($val{chroot}, [@cmd]) : system(@cmd);
+                },
+                \%val
+            );
+        },
+    },
+    usage => {
+        run => \&usage,
+        descr => 'Show usage information for an action',
+    },
+    '--help' => {
+        run => \&usage,
+    },
+);
+
+sub usage {
+    if ($_[1] && $actions{$_[1]} && $actions{$_[1]}->{usage}) {
+        print $actions{$_[1]}{usage}, "\n";
+    } else {
+        print STDERR "$0 <action> [options]\n";
+        print STDERR "$0 usage [action]\n\n";
+        print STDERR "Available actions:\n";
+        my @actions = grep { $actions{$_}->{descr} } keys %actions;
+        print STDERR map { " - $_: $actions{$_}->{descr}\n" } @actions;
+        print STDERR "\nSee '$0 usage <action>' for usage information\n";
+    }
+    exit 0;
+}
+sub usageexit {
+    my $cmd = shift;
+    print STDERR "Incorrect argument(s).\n";
+    print STDERR "See '$0 usage $cmd' for usage information\n";
+    exit 1;
+}
+
+
+if (@ARGV == 0 || !$actions{$ARGV[0]}) {
+    usage();
+    exit 1;
+}
+usage('usage', $ARGV[0]) if grep { $_ eq '--help' } @ARGV[1..(@ARGV - 1)];
+$actions{$ARGV[0]}->{run}->(@ARGV);
