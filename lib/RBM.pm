@@ -102,21 +102,17 @@ sub as_array {
 
 sub get_target {
     my ($project, $options, $paths, $target) = @_;
-    my @res;
     foreach my $path (@$paths) {
         foreach my $step ([ 'steps', $config->{step} ], []) {
             my $z = config_p($config, $project, $options, @$path, @$step,
                              'targets', $target);
             next unless $z;
-            if (ref $z eq 'HASH') {
-                push @res, $target unless grep { $_ eq $target } @res;
-                next;
-            }
+            return [ $target ] if ref $z eq 'HASH';
             my @z = ref $z eq 'ARRAY' ? (@{$z}) : ($z);
-            push @res, map { @{get_target($project, $options, $paths, $_)} } @z;
+            return [ map { @{get_target($project, $options, $paths, $_)} } @z ];
         }
     }
-    return \@res;
+    return [];
 }
 
 sub get_targets {
