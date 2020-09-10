@@ -141,38 +141,47 @@ sub config {
     my @targets = @{get_targets($project, $options, \@_)};
     my @step = ('steps', get_step($project, $options, $config->{step}, \@_));
     my $as_array = $options->{as_array};
+    my %ok_config = ( HASH => 1, CODE => 1 );
     foreach my $path (@_) {
+        my $config_path = config_p($config, $project, $options, @$path);
+        next unless $ok_config{ref $config_path};
         my @l;
-        push @l, config_p($config, $project, $options, @$path, "override.$name->[0]")
+        push @l, config_p($config_path, $project, $options, "override.$name->[0]")
                 if @$name == 1;
         if (!$as_array) {
             @l = grep { defined $_ } @l;
             return $l[0] if @l;
         }
         # 1st priority: targets + step matching
-        foreach my $t (@targets) {
-            push @l, config_p($config, $project, $options, @$path, @step, 'targets', $t, @$name);
-            if (!$as_array) {
-                @l = grep { defined $_ } @l;
-                return $l[0] if @l;
+        my $config_step_targets = config_p($config_path, $project, $options, @step, 'targets');
+        if ($ok_config{ref $config_step_targets}) {
+            foreach my $t (@targets) {
+                push @l, config_p($config_step_targets, $project, $options, $t, @$name);
+                if (!$as_array) {
+                    @l = grep { defined $_ } @l;
+                    return $l[0] if @l;
+                }
             }
         }
         # 2nd priority: step maching
-        push @l, config_p($config, $project, $options, @$path, @step, @$name);
+        push @l, config_p($config_path, $project, $options, @step, @$name);
         if (!$as_array) {
             @l = grep { defined $_ } @l;
             return $l[0] if @l;
         }
         # 3rd priority: target matching
-        foreach my $t (@targets) {
-            push @l, config_p($config, $project, $options, @$path, 'targets', $t, @$name);
-            if (!$as_array) {
-                @l = grep { defined $_ } @l;
-                return $l[0] if @l;
+        my $config_targets = config_p($config_path, $project, $options, 'targets');
+        if ($ok_config{ref $config_targets}) {
+            foreach my $t (@targets) {
+                push @l, config_p($config_targets, $project, $options, $t, @$name);
+                if (!$as_array) {
+                    @l = grep { defined $_ } @l;
+                    return $l[0] if @l;
+                }
             }
         }
         # last priority: no target and no step matching
-        push @l, config_p($config, $project, $options, @$path, @$name);
+        push @l, config_p($config_path, $project, $options, @$name);
         if (!$as_array) {
             @l = grep { defined $_ } @l;
             return $l[0] if @l;
