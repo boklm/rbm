@@ -42,7 +42,7 @@ sub lsb_release {
     my $res = {};
 
     if (-f '/usr/bin/sw_vers') {
-        # If sw_vers exists, we assume we are on OSX and use it
+        # If sw_vers exists, we assume we are on macOS and use it
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('/usr/bin/sw_vers', '-productName');
         RBM::exit_error("sw_vers: unknown ProductName")
