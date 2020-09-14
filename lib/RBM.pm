@@ -206,19 +206,16 @@ sub confkey_str {
 
 sub project_config {
     my ($project, $name, $options) = @_;
-    CORE::state $cache;
+    CORE::state %config_cache;
     my $res;
     my $error_if_undef = $options->{error_if_undef};
-    my $cache_save = $cache;
-    if ($options) {
-        $options = {%$options, error_if_undef => 0};
-        my %ignore_options = map { $_ => 1 } qw(error_if_undef step);
-        $cache = {} if grep { !$ignore_options{$_} } keys %$options;
-    }
+    $options = {%$options, error_if_undef => 0} if $options;
+    my $cache_id = pp($config->{run})
+                        . pp({ %{$config->{opt}}, $options ? %$options : () });
     my $name_str = ref $name eq 'ARRAY' ? join '/', @$name : $name;
     my $step = $config->{step};
-    if (exists $cache->{$project}{$step}{$name_str}) {
-        $res = $cache->{$project}{$step}{$name_str};
+    if (exists $config_cache{$project}{$step}{$name_str}{$cache_id}) {
+        $res = $config_cache{$project}{$step}{$name_str}{$cache_id};
         goto FINISH;
     }
     $name = [ split '/', $name ] unless ref $name eq 'ARRAY';
@@ -233,10 +230,9 @@ sub project_config {
         $res = process_template($project, $res,
             confkey_str($name) eq 'output_dir' ? '.' : undef);
     }
-    $cache->{$project}{$step}{$name_str} = $res;
+    $config_cache{$project}{$step}{$name_str}{$cache_id} = $res;
     $config->{opt} = $opt_save;
     FINISH:
-    $cache = $cache_save;
     if (!defined($res) && $error_if_undef) {
         my $msg = $error_if_undef eq '1' ?
                 "Option " . confkey_str($name) . " is undefined"
