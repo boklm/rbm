@@ -483,7 +483,7 @@ sub execute {
     if (project_config($project, 'git_url', $options)) {
         my $git_hash = project_config($project, 'git_hash', $options)
                 || exit_error "No git_hash specified for project $project";
-        $res_name = "git-$git_hash-$cmd";
+        $res_name = "git-$project-/-$git_hash-/-$cmd";
         return $cache{$res_name} if exists $cache{$res_name};
         git_clone_fetch_chdir($project, $options);
         my ($stdout, $stderr, $success, $exit_code)
@@ -500,7 +500,7 @@ sub execute {
     } elsif (project_config($project, 'hg_url', $options)) {
         my $hg_hash = project_config($project, 'hg_hash', $options)
                 || exit_error "No hg_hash specified for project $project";
-        $res_name = "hg-$hg_hash-$cmd";
+        $res_name = "hg-$project-/-$hg_hash-/-$cmd";
         return $cache{$res_name} if exists $cache{$res_name};
         hg_clone_fetch_chdir($project, $options);
         my ($stdout, $stderr, $success, $exit_code)
