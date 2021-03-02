@@ -92,6 +92,8 @@ sub run_chroot {
     my ($rootfsdir, $cmd) = @_;
     create_devfiles($rootfsdir);
     do_mounts($rootfsdir);
+    # On some systems resolv.conf is a symlink (see #40015)
+    local $File::Copy::Recursive::CopyLink = 0;
     fcopy('/etc/resolv.conf', "$rootfsdir/etc/resolv.conf");
     local %ENV = ();
     system('hostname', 'rbm');
