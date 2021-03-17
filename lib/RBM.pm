@@ -943,7 +943,8 @@ sub input_files {
             }
             if ($input_file->{project} && $t->('project')) {
                 my $r = RBM::project_step_config($t->('project'), 'input_files_paths',
-                            {%$options, step => $t->('pkg_type'), %$input_file});
+                            {%$options, step => $t->('pkg_type'),
+                                origin_project => $project, %$input_file});
                 push @res_getfpaths, @$r if @$r;
             }
             next;
