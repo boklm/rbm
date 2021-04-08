@@ -2,6 +2,7 @@ package RBM;
 
 use warnings;
 use strict;
+use DateTime;
 use Path::Tiny;
 use Encode qw(encode);
 use Cwd qw(getcwd);
@@ -999,6 +1000,24 @@ sub system_log {
     exec(@args);
 }
 
+sub log_start_time {
+    my ($log_file, $script_name) = @_;
+    my $start_time = DateTime->now;
+    my $start_time_txt = $start_time->ymd . ' ' . $start_time->hms;
+    path($log_file)->append_utf8("Starting build (script: $script_name): $start_time_txt\n");
+    return $start_time;
+}
+
+sub log_end_time {
+    my ($log_file, $script_name, $start_time) = @_;
+    my $end_time = DateTime->now;
+    my $end_time_txt = $end_time->ymd . ' ' . $end_time->hms;
+    path($log_file)->append_utf8("Finishing build (script: $script_name): $end_time_txt\n");
+    my $build_time = $end_time - $start_time;
+    my ($bth, $btm, $bts) = $build_time->in_units('hours', 'minutes', 'seconds');
+    path($log_file)->append_utf8("Build time: $bth hours $btm minutes and $bts seconds\n");
+}
+
 sub build_run {
     my ($project, $script_name, $options) = @_;
     my $old_step = $config->{step};
@@ -1076,8 +1095,10 @@ sub build_run {
         $build_log = rbm_path($build_log);
         unlink $build_log unless $append;
         make_path(dirname($build_log));
-        my $now = localtime;
-        path($build_log)->append_utf8("Starting build: $now\n");
+        if (!-f $build_log) {
+            my $now = localtime;
+            path($build_log)->append_utf8("Opening log file: $now\n");
+        }
         print "Build log: $build_log\n";
     }
     chdir $srcdir;
@@ -1103,7 +1124,10 @@ sub build_run {
                     exec_name => $s,
                     exec_as_root => $scripts_root{$s},
                 });
-            if (run_script($project, $cmd, sub { system_log($build_log, @_) }) != 0) {
+            my $start_time = log_start_time($build_log, $s) if $build_log ne '-';
+            my $res = run_script($project, $cmd, sub { system_log($build_log, @_) });
+            log_end_time($build_log, $s, $start_time) if $build_log ne '-';
+            if ($res != 0) {
                 $error = "Error running $script_name";
                 if (project_config($project, 'debug', $options)) {
                     print STDERR $error, "\nOpening debug shell\n";
@@ -1140,7 +1164,10 @@ sub build_run {
         foreach my $s (@scripts) {
             my $cmd = $scripts_root{$s} ? project_config($project, 'suexec',
                 { suexec_cmd => "$srcdir/$s" }) : "$srcdir/$s";
-            if (run_script($project, $cmd, sub { system_log($build_log, @_) }) != 0) {
+            my $start_time = log_start_time($build_log, $s) if $build_log ne '-';
+            my $res = run_script($project, $cmd, sub { system_log($build_log, @_) });
+            log_end_time($build_log, $s, $start_time) if $build_log ne '-';
+            if ($res != 0) {
                 $error = "Error running $script_name";
                 if (project_config($project, 'debug', $options)) {
                     print STDERR $error, "\nOpening debug shell\n";

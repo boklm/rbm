@@ -1,0 +1,9 @@
+# this project can be used for checking that log files are working
+filename: test-log
+build_log: 'logs/test-log.txt'
+build: |
+  #!/bin/sh
+  echo blablabla
+  sleep 2
+  echo ttttttttt
+  echo Z > [% dest_dir %]/[% c('filename') %]
