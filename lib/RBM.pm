@@ -793,6 +793,7 @@ sub input_files {
     goto RETURN_RES unless $input_files;
     my $proj_dir = rbm_path(project_config($project, 'projects_dir', $options));
     my $src_dir = "$proj_dir/$project";
+    my $common_dir = "$proj_dir/common";
     my $old_cwd = getcwd;
     chdir $src_dir || exit_error "cannot chdir to $src_dir";
     foreach my $input_file_alias (@$input_files) {
@@ -883,7 +884,7 @@ sub input_files {
                 origin_project => $project, %$input_file})
                 if $input_file->{project};
         exit_error("Missing filename:\n" . pp($input_file)) unless $name;
-        my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
+        my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir, $common_dir);
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
         if (input_file_need_dl($input_file, $t, $fname, $action)) {
             if ($t->('content')) {
@@ -911,7 +912,7 @@ sub input_files {
                 dd $input_file;
                 exit_error "Missing file $name";
             }
-            ($fname) = file_in_dir($name, $src_dir, $proj_out_dir);
+            ($fname) = file_in_dir($name, $src_dir, $proj_out_dir, $common_dir);
             exit_error "Error getting file $name" unless $fname;
         }
         if ($action eq 'input_files_id') {
