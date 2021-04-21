@@ -253,16 +253,15 @@ sub project_config {
 }
 
 sub project_step_config {
-    my $run_save = $config->{run};
-    my $step_save = $config->{step};
-    if ($_[2] && $_[2]->{step}) {
-        $config->{step} = $_[2]->{step};
-    }
+    my ($run_save, $step_save, $origin_step_save) =
+                ($config->{run}, $config->{step}, $config->{origin_step});
+    $config->{origin_step} = $config->{step};
+    $config->{step} = $_[2]->{step} if $_[2]->{step};
     $config->{run} = { target => $_[2]->{target} };
     $config->{run}{target} //= $run_save->{target};
     my $res = project_config(@_);
-    $config->{run} = $run_save;
-    $config->{step} = $step_save;
+    ($config->{run}, $config->{step}, $config->{origin_step}) =
+                                ($run_save, $step_save, $origin_step_save);
     return $res;
 }
 
@@ -1021,7 +1020,8 @@ sub log_end_time {
 
 sub build_run {
     my ($project, $script_name, $options) = @_;
-    my $old_step = $config->{step};
+    my ($old_step, $old_origin_step) = ($config->{step}, $config->{origin_step});
+    $config->{origin_step} = $config->{step};
     $config->{step} = $script_name;
     $options //= {};
     my $error;
@@ -1185,7 +1185,7 @@ sub build_run {
             $error ||= "Error finishing remote";
         }
     }
-    $config->{step} = $old_step;
+    ($config->{step}, $config->{origin_step}) = ($old_step, $old_origin_step);
     chdir $old_cwd;
     exit_error $error if $error;
 }
