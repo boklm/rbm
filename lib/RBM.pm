@@ -1029,8 +1029,9 @@ sub build_run {
     valid_project($project);
     $options = { %$options, build_id => Data::UUID->new->create_str };
     my $old_cwd = getcwd;
-    my $srcdir = File::Temp->newdir(get_tmp_dir($project, $options)
+    my $tmpdir = File::Temp->newdir(get_tmp_dir($project, $options)
                                 . '/rbm-XXXXX');
+    my $srcdir = $tmpdir->dirname;
     my @cfiles;
     my $tarfile = maketar($project, $options, $srcdir);
     push @cfiles, $tarfile if $tarfile;
