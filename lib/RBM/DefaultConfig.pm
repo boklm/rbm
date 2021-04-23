@@ -444,6 +444,7 @@ ZIP_END
     input_files_by_name => sub { RBM::input_files('getfnames', @_); },
     input_files_id => sub { RBM::input_files('input_files_id', @_); },
     input_files_paths => sub { RBM::input_files('getfpaths', @_); },
+    link_input_files => '[% IF c("remote_exec") %]1[% END %]',
     steps => {
     },
     suexec => 'sudo -- [% c("suexec_cmd") %]',

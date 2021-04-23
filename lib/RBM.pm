@@ -766,7 +766,10 @@ sub input_file_id {
 }
 
 sub recursive_copy {
-    my ($fname, $name, $dest_dir) = @_;
+    my ($fname, $name, $dest_dir, $action) = @_;
+    if (-f $fname && $action eq 'link') {
+        return ($name) if link $fname, "$dest_dir/$name";
+    }
     if (-f $fname || -l $fname) {
         fcopy($fname, "$dest_dir/$name");
         return ($name);
@@ -774,7 +777,7 @@ sub recursive_copy {
     my @copied;
     mkdir "$dest_dir/$name";
     foreach my $f (map { $_->basename } path($fname)->children) {
-        push @copied, recursive_copy("$fname/$f", "$name/$f", $dest_dir);
+        push @copied, recursive_copy("$fname/$f", "$name/$f", $dest_dir, $action);
     }
     return @copied;
 }
@@ -978,12 +981,12 @@ sub input_files {
         my $file_type = -d $fname ? 'directory' : 'file';
         print "Using $file_type $fname\n";
         mkdir dirname("$dest_dir/$name");
-        push @res_copy, recursive_copy($fname, $name, $dest_dir);
+        push @res_copy, recursive_copy($fname, $name, $dest_dir, $action);
     }
     chdir $old_cwd;
     RETURN_RES:
     return sha256_hex($input_files_id) if $action eq 'input_files_id';
-    return @res_copy if $action eq 'copy';
+    return @res_copy if ($action eq 'copy' || $action eq 'link');
     return \%res_getfnames if $action eq 'getfnames';
     return \@res_getfpaths if $action eq 'getfpaths';
 }
@@ -1034,7 +1037,9 @@ sub build_run {
     my $srcdir = $tmpdir->dirname;
     my @cfiles;
     push @cfiles, copy_files($project, $srcdir);
-    push @cfiles, input_files('copy', $project, $options, $srcdir);
+    my $if_action = project_config($project, 'link_input_files', $options) ?
+                                'link' : 'copy';
+    push @cfiles, input_files($if_action, $project, $options, $srcdir);
     my $tarfile = maketar($project, $options, $srcdir);
     push @cfiles, $tarfile if $tarfile;
     my ($remote_tmp_src, $remote_tmp_dst, %build_script);
