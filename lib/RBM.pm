@@ -1033,10 +1033,10 @@ sub build_run {
                                 . '/rbm-XXXXX');
     my $srcdir = $tmpdir->dirname;
     my @cfiles;
-    my $tarfile = maketar($project, $options, $srcdir);
-    push @cfiles, $tarfile if $tarfile;
     push @cfiles, copy_files($project, $srcdir);
     push @cfiles, input_files('copy', $project, $options, $srcdir);
+    my $tarfile = maketar($project, $options, $srcdir);
+    push @cfiles, $tarfile if $tarfile;
     my ($remote_tmp_src, $remote_tmp_dst, %build_script);
     my @scripts = ('pre', $script_name, 'post');
     my %scripts_root = ( pre => 1, post => 1);
