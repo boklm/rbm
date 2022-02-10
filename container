@@ -121,15 +121,15 @@ sub copy_file_from {
 sub get_guidmapcmd {
     my ($guid) = (@_);
     my $config_file = "/etc/sub${guid}";
-    my ($id) = ${guid} eq 'uid' ? ($UID) : split(' ', $GID);
-    my ($current_usergroup) = ${guid} eq 'uid' ? getpwuid($id) : getgrgid($id);
+    my ($current_user) = getpwuid($UID);
     for my $line (path($config_file)->lines) {
         chomp $line;
-        my ($usergroup, $lowerid, $count) = split(':', $line);
-        next unless ($usergroup eq $current_usergroup || $usergroup eq $id);
+        my ($user, $lowerid, $count) = split(':', $line);
+        next unless ($user eq $current_user || $user eq $UID);
+        my ($id) = $guid eq 'uid' ? ($UID) : split(' ', $GID);
         return "0 $id 1 1 $lowerid $count";
     }
-    exit_error "Could not find $guid in $config_file";
+    exit_error "Could not find uid in $config_file";
 }
 
 sub unshare_run {
