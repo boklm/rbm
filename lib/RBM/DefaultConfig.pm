@@ -412,18 +412,7 @@ mv -f "\$tmpfile" [% shell_quote(dest_dir _ "/" _ c("filename")) %]
 URLGET
     sig_ext => [ qw(gpg asc sig) ],
     enable => 1,
-    gnu_utils => sub {
-        my ($project, $options) = @_;
-        my $distro = RBM::project_config($project, 'lsb_release/id', $options);
-        my %non_gnu = (
-            'Mac OS X'  => 1,
-            NetBSD      => 1,
-            OpenBSD     => 1,
-            FreeBSD     => 1,
-            DragonFly   => 1,
-        );
-        return ! $non_gnu{$distro};
-    },
+    gnu_utils => 1,
     tar    => <<TAR_END,
 [%- SET src = c('tar_src', { error_if_undef => 1 }) -%]
 find [% src.join(' ') %] [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 700 {} \\;
