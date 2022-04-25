@@ -478,6 +478,19 @@ sub run_script {
     return @res == 1 ? $res[0] : @res;
 }
 
+sub git_submodule_init_sync_update {
+    foreach my $action (
+        ['init'],
+        ['sync', '--recursive'],
+        ['update', '--recursive']
+    ) {
+        my ($stdout, $stderr, $success, $exit_code) =
+                                capture_exec('git', 'submodule', @$action);
+        exit_error "Error running git submodule " . join(' ', @$action) . "\n$stderr"
+                    unless $success;
+    }
+}
+
 sub execute {
     my ($project, $cmd, $options) = @_;
     CORE::state %cache;
@@ -492,14 +505,8 @@ sub execute {
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $git_hash);
         exit_error "Cannot checkout $git_hash:\n$stderr" unless $success;
-        if (project_config($project, 'git_submodule', $options)) {
-            foreach my $action (qw(init sync update)) {
-                ($stdout, $stderr, $success, $exit_code)
-                    = capture_exec('git', 'submodule', $action);
-                exit_error "Error running git submodule $action\n$stderr"
-                    unless $success;
-            }
-        }
+        git_submodule_init_sync_update()
+                if project_config($project, 'git_submodule', $options);
     } elsif (project_config($project, 'hg_url', $options)) {
         my $hg_hash = project_config($project, 'hg_hash', $options)
                 || exit_error "No hg_hash specified for project $project";
@@ -574,15 +581,10 @@ sub maketar {
             my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $commit_hash);
             exit_error "Cannot checkout $commit_hash: $stderr" unless $success;
-            foreach my $action (qw(init sync update)) {
-                ($stdout, $stderr, $success, $exit_code)
-                    = capture_exec('git', 'submodule', $action);
-                exit_error "Error running git submodule $action\n$stderr"
-                    unless $success;
-            }
+            git_submodule_init_sync_update();
             ($stdout, $stderr, $success, $exit_code)
-                = capture_exec('git', 'submodule', 'foreach',
-                    "git archive --prefix=$project-$version/\$path/"
+                = capture_exec('git', 'submodule', 'foreach', '--recursive',
+                    "git archive --prefix=$project-$version/\$displaypath/"
                     . " --output=$tmpdir/submodule.tar \$sha1;"
                     . "tar -Af \"$dest_dir/$tar_file\" $tmpdir/submodule.tar");
             exit_error 'Error running git archive on submodules.' unless $success;
