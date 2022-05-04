@@ -139,7 +139,7 @@ our %default_config = (
         return '946684800';
     },
     debug         => 0,
-    version       => "[%- exit_error('No version specified'); -%]",
+    version       => "[%- exit_error('No version specified for ' _ project); -%]",
 ####
 ####
 ####
