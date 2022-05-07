@@ -447,6 +447,11 @@ sub git_clone_fetch_chdir {
         push @clone_opts, ("--depth=$git_depth");
         push @fetch_opts, ("--depth=$git_depth");
     }
+    my @fetch_refs = ('+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*');
+    if (my $git_branch = project_config($project, 'git_branch', $options)) {
+        push @clone_opts, ('--branch', $git_branch, '--single-branch');
+        @fetch_refs = ($git_branch);
+    }
     if (!chdir rbm_path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
         if (system('git', 'clone', @clone_opts, $git_url, $project) != 0) {
@@ -462,12 +467,10 @@ sub git_clone_fetch_chdir {
             system('git', 'checkout', '-q', '--detach') == 0
                 || exit_error "Error running git checkout --detach";
         }
-        system('git', 'fetch', @fetch_opts, 'origin',
-                                '+refs/heads/*:refs/heads/*') == 0
-                || exit_error "Error fetching git repository";
-        system('git', 'fetch', @fetch_opts, 'origin',
-                                '+refs/tags/*:refs/tags/*') == 0
-                || exit_error "Error fetching git repository";
+        for my $fetch_ref (@fetch_refs) {
+            system('git', 'fetch', @fetch_opts, 'origin', $fetch_ref) == 0
+                || exit_error "Error fetching $fetch_ref from git repository $git_url";
+        }
         $config->{_rbm}{fetched_projects}{$project} = 1;
     }
 }
