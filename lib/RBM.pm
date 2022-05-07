@@ -437,15 +437,19 @@ sub git_clone_fetch_chdir {
                                 'git_clone_dir', $options)));
     my $git_url = project_config($project, 'git_url', $options)
                 || exit_error "git_url is undefined";
-    my @clone_submod = ();
-    my @fetch_submod = ();
+    my @clone_opts = ();
+    my @fetch_opts = ();
     if (project_config($project, 'git_submodule', $options)) {
-        @clone_submod = ('--recurse-submodules');
-        @fetch_submod = ('--recurse-submodules=on-demand');
+        push @clone_opts, ('--recurse-submodules');
+        push @fetch_opts, ('--recurse-submodules=on-demand');
+    }
+    if (my $git_depth = project_config($project, 'git_depth', $options)) {
+        push @clone_opts, ("--depth=$git_depth");
+        push @fetch_opts, ("--depth=$git_depth");
     }
     if (!chdir rbm_path("$clonedir/$project")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
-        if (system('git', 'clone', @clone_submod, $git_url, $project) != 0) {
+        if (system('git', 'clone', @clone_opts, $git_url, $project) != 0) {
             exit_error "Error cloning $git_url";
         }
         chdir($project) || exit_error "Error entering $project directory";
@@ -458,10 +462,10 @@ sub git_clone_fetch_chdir {
             system('git', 'checkout', '-q', '--detach') == 0
                 || exit_error "Error running git checkout --detach";
         }
-        system('git', 'fetch', @fetch_submod, 'origin',
+        system('git', 'fetch', @fetch_opts, 'origin',
                                 '+refs/heads/*:refs/heads/*') == 0
                 || exit_error "Error fetching git repository";
-        system('git', 'fetch', @fetch_submod, 'origin',
+        system('git', 'fetch', @fetch_opts, 'origin',
                                 '+refs/tags/*:refs/tags/*') == 0
                 || exit_error "Error fetching git repository";
         $config->{_rbm}{fetched_projects}{$project} = 1;
