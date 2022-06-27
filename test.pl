@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Path::Tiny;
-use Test::More tests => 31;
+use Test::More tests => 34;
 use lib 'lib/';
 
 sub set_target {
@@ -157,6 +157,21 @@ my @tests = (
         target => [],
         config => [ 'b', 'module_m'],
         expected => '1',
+    },
+    {
+        name => 'Using option defined in a module project',
+        config => [ 'm1_a', 'm1_a' ],
+        expected => 'm1_a',
+    },
+    {
+        name => 'Using option defined in a module project and rbm.module.conf',
+        config => [ 'm1_a', 'project_m' ],
+        expected => 'm1_a',
+    },
+    {
+        name => 'Using option defined in main projects and a module project',
+        config => [ 'a', 'project_a' ],
+        expected => 'a',
     },
     {
         name => 'build + steps config - 1',

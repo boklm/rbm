@@ -90,6 +90,13 @@ sub load_modules_config {
             my $cfile = "$d/$module/rbm.module.conf";
             $config->{modules}{$module} = load_config_file($cfile)
                 if -f $cfile;
+            next unless -d "$d/$module/projects";
+            for my $project (map { $_->basename } path("$d/$module/projects")->children) {
+                next if $config->{projects}{$project};
+                next unless -f "$d/$module/projects/$project/config";
+                $config->{modules}{$module}{projects}{$project} =
+                        load_config_file("$d/$module/projects/$project/config");
+            }
         }
     }
 }
@@ -249,8 +256,17 @@ sub project_config {
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
     my @modules = map { [ 'modules', $_ ] }
                         sort keys %{ $config->{modules} };
+    my $project_path = ['projects', $project];
+    if (!$config->{projects}{$project}) {
+        for my $module (sort keys %{ $config->{modules} }) {
+            if ($config->{modules}{$module}{projects}{$project}) {
+                $project_path = [ 'modules', $module, 'projects', $project ];
+                last;
+            }
+        }
+    }
     $res = config($project, $name, $options, ['opt', 'norec'], ['opt'],
-                        ['run'], ['projects', $project], ['local'], [],
+                        ['run'], $project_path, ['local'], [],
                         @modules, ['system'], ['default']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
@@ -381,8 +397,11 @@ sub valid_id {
 
 sub valid_project {
     my ($project) = @_;
-    exists $config->{projects}{$project}
-        || exit_error "Unknown project $project";
+    return 1 if $config->{projects}{$project};
+    for my $module (keys %{$config->{modules}}) {
+        return 1 if $config->{modules}{$module}{projects}{$project};
+    }
+    exit_error "Unknown project $project";
 }
 
 sub create_dir {
@@ -395,7 +414,7 @@ sub create_dir {
 
 sub git_need_fetch {
     my ($project, $options) = @_;
-    return 0 if $config->{projects}{$project}{fetched};
+    return 0 if $config->{_rbm}{fetched_projects}{$project};
     my $fetch = project_config($project, 'fetch', $options);
     if ($fetch eq 'if_needed') {
         my $git_hash = project_config($project, 'git_hash', $options)
@@ -440,13 +459,13 @@ sub git_clone_fetch_chdir {
         system('git', 'fetch', @fetch_submod, 'origin',
                                 '+refs/tags/*:refs/tags/*') == 0
                 || exit_error "Error fetching git repository";
-        $config->{projects}{$project}{fetched} = 1;
+        $config->{_rbm}{fetched_projects}{$project} = 1;
     }
 }
 
 sub hg_need_fetch {
     my ($project, $options) = @_;
-    return 0 if $config->{projects}{$project}{fetched};
+    return 0 if $config->{_rbm}{fetched_projects}{$project};
     my $fetch = project_config($project, 'fetch', $options);
     if ($fetch eq 'if_needed') {
         my $hg_hash = project_config($project, 'hg_hash', $options)
