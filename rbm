@@ -80,6 +80,7 @@ sub set_options {
     }
     RBM::load_system_config(@_);
     RBM::load_local_config(@_);
+    RBM::load_modules_config(@_);
     if (!defined $val{step} && @_) {
         $RBM::config->{step} = RBM::project_config($_[0], 'pkg_type');
     }

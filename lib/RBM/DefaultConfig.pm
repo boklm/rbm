@@ -104,6 +104,7 @@ our %default_config = (
     tmp_dir       => '[% GET ENV.TMPDIR ? ENV.TMPDIR : "/tmp"; %]',
     rbm_tmp_dir   => \&rbm_tmp_dir,
     projects_dir  => 'projects',
+    modules_dir   => 'modules',
     output_dir    => 'out',
     git_clone_dir => 'git_clones',
     hg_clone_dir  => 'hg_clones',
@@ -112,7 +113,7 @@ our %default_config = (
     build         => '[% INCLUDE build -%]',
     build_log     => '-',
     build_log_append => '1',
-    notmpl        => [ qw(projects_dir) ],
+    notmpl        => [ qw(projects_dir modules_dir) ],
     abbrev_length => '12',
     abbrev        => '[%
                          IF c("git_url");

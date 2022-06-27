@@ -79,6 +79,21 @@ sub load_local_config {
     $config->{local} = -f $cfile ? load_config_file($cfile) : {};
 }
 
+sub load_modules_config {
+    my ($project) = @_;
+    $config->{modules} = {};
+    my $modules_dir = project_config($project ? $project : 'undef', 'modules_dir');
+    for my $dir (reverse @{as_array($modules_dir)}) {
+        my $d = rbm_path($dir);
+        next unless -d $d;
+        for my $module (map { $_->basename } path($d)->children) {
+            my $cfile = "$d/$module/rbm.module.conf";
+            $config->{modules}{$module} = load_config_file($cfile)
+                if -f $cfile;
+        }
+    }
+}
+
 sub find_config_file {
     for (my $dir = getcwd; $dir ne '/'; $dir = dirname($dir)) {
         return "$dir/rbm.conf" if -f "$dir/rbm.conf";
@@ -232,9 +247,11 @@ sub project_config {
     goto FINISH unless @$name;
     my $opt_save = $config->{opt};
     $config->{opt} = { %{$config->{opt}}, %$options } if $options;
+    my @modules = map { [ 'modules', $_ ] }
+                        sort keys %{ $config->{modules} };
     $res = config($project, $name, $options, ['opt', 'norec'], ['opt'],
                         ['run'], ['projects', $project], ['local'], [],
-                        ['system'], ['default']);
+                        @modules, ['system'], ['default']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
         && !notmpl(confkey_str($name), $project)) {
         $res = process_template($project, $res,

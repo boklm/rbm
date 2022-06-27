@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Path::Tiny;
-use Test::More tests => 29;
+use Test::More tests => 31;
 use lib 'lib/';
 
 sub set_target {
@@ -19,6 +19,7 @@ sub set_step {
 BEGIN { use_ok('RBM') };
 chdir 'test';
 RBM::load_config;
+RBM::load_modules_config;
 RBM::set_default_env;
 ok($RBM::config, 'load config');
 
@@ -143,6 +144,18 @@ my @tests = (
         name => 'deb step',
         step => 'deb',
         config => [ 'c', 'option_deb' ],
+        expected => '1',
+    },
+    {
+        name => 'Using option from rbm.module.conf',
+        target => [],
+        config => [ 'b', 'module_3'],
+        expected => '3',
+    },
+    {
+        name => 'Using option defined in multiple rbm.module.conf',
+        target => [],
+        config => [ 'b', 'module_m'],
         expected => '1',
     },
     {
