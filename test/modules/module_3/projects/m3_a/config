@@ -1,0 +1,7 @@
+filename: m3-output
+build: |
+  #!/bin/sh
+  echo 1 - [% c('pkg_type') %] > [% dest_dir %]/[% c('filename') %]
+  cat m3.txt >> [% dest_dir %]/[% c('filename') %]
+input_files:
+ - filename: m3.txt

@@ -683,10 +683,11 @@ sub process_template {
         return $res;
     }
     $dest_dir //= rbm_path(project_config($project, 'output_dir'));
-    my $projects_dir = rbm_path(project_config($project, 'projects_dir'));
+    my $project_dir = modules_project_dir($project);
+    my $common_dirs = join(':', modules_common_dirs($project));
     my $template = Template->new(
         ENCODING        => 'utf8',
-        INCLUDE_PATH    => "$projects_dir/$project:$projects_dir/common",
+        INCLUDE_PATH    => "$project_dir:$common_dirs",
     );
     my $vars = {
         config     => $config,
@@ -815,6 +816,39 @@ sub recursive_copy {
     return @copied;
 }
 
+sub modules_project_dir {
+    my ($project, $options) = @_;
+    my $proj_dir = rbm_path(project_config($project, 'projects_dir', $options));
+    return "$proj_dir/$project" if -f "$proj_dir/$project/config";
+    my $modules_dir = project_config($project, 'modules_dir');
+    for my $dir (@{as_array($modules_dir)}) {
+        my $d = rbm_path($dir);
+        next unless -d $d;
+        for my $module (sort map { $_->basename } path($d)->children) {
+            my $pdir = "$d/$module/projects/$project";
+            return $pdir if -f "$pdir/config";
+        }
+    }
+    return "$proj_dir/$project";
+}
+
+sub modules_common_dirs {
+    my ($project, $options) = @_;
+    #my $proj_dir = rbm_path(project_config($project, 'projects_dir', $options));
+    my $proj_dir = rbm_path('projects');
+    my @cdirs = ("$proj_dir/common");
+    my $modules_dir = project_config($project, 'modules_dir');
+    for my $dir (@{as_array($modules_dir)}) {
+        my $d = rbm_path($dir);
+        next unless -d $d;
+        for my $module (sort map { $_->basename } path($d)->children) {
+            push @cdirs, "$d/$module/projects/common"
+                if -d "$d/$module/projects/common";
+        }
+    }
+    return @cdirs;
+}
+
 sub input_files {
     my ($action, $project, $options, $dest_dir) = @_;
     my @res_copy;
@@ -827,8 +861,8 @@ sub input_files {
     my $input_files = project_config($project, 'input_files', $options);
     goto RETURN_RES unless $input_files;
     my $proj_dir = rbm_path(project_config($project, 'projects_dir', $options));
-    my $src_dir = "$proj_dir/$project";
-    my $common_dir = "$proj_dir/common";
+    my $src_dir = modules_project_dir($project, $options);
+    my @modules_common_dirs = modules_common_dirs($project, $options);
     my $old_cwd = getcwd;
     chdir $src_dir || exit_error "cannot chdir to $src_dir";
     foreach my $input_file_alias (@$input_files) {
@@ -919,7 +953,8 @@ sub input_files {
                 origin_project => $project, %$input_file})
                 if $input_file->{project};
         exit_error("Missing filename:\n" . pp($input_file)) unless $name;
-        my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir, $common_dir);
+        my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir,
+                                        @modules_common_dirs);
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
         if (input_file_need_dl($input_file, $t, $fname, $action)) {
             if ($t->('content')) {
@@ -947,7 +982,8 @@ sub input_files {
                 dd $input_file;
                 exit_error "Missing file $name";
             }
-            ($fname) = file_in_dir($name, $src_dir, $proj_out_dir, $common_dir);
+            ($fname) = file_in_dir($name, $src_dir, $proj_out_dir,
+                                        @modules_common_dirs);
             exit_error "Error getting file $name" unless $fname;
         }
         if ($action eq 'input_files_id') {

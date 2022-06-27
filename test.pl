@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Path::Tiny;
-use Test::More tests => 34;
+use Test::More tests => 40;
 use lib 'lib/';
 
 sub set_target {
@@ -174,6 +174,31 @@ my @tests = (
         expected => 'a',
     },
     {
+        name => 'Using template file from common project',
+        config => [ 'a', 'c_1' ],
+        expected => "c1\n",
+    },
+    {
+        name => 'Using template file from common project in a module',
+        config => [ 'a', 'c_2' ],
+        expected => "c2\n",
+    },
+    {
+        name => 'Using template file in multiple common directories',
+        config => [ 'a', 'c_3' ],
+        expected => "c3_main\n",
+    },
+    {
+        name => 'Using template file in multiple modules common directories',
+        config => [ 'a', 'c_4' ],
+        expected => "c4_module1\n",
+    },
+    {
+        name => 'Using template file in project directories in a module',
+        config => [ 'm1_a', 'i' ],
+        expected => "i1\n",
+    },
+    {
         name => 'build + steps config - 1',
         target => [ 'version_1' ],
         build => [ 'c', 'build' ],
@@ -193,6 +218,14 @@ my @tests = (
             'out/r1' => "1 - build\n",
             'out/r2' => "1 - build\n2 - build\n",
             'out/r3' => "1 - build\n2 - build\n3 - build\n",
+        },
+    },
+    {
+        name => 'build project in a module',
+        target => [],
+        build => [ 'm3_a', 'build', { pkg_type => 'build' } ],
+        files => {
+          'out/m3-output' => "1 - build\n___m3\n"
         },
     },
     {
