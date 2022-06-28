@@ -146,13 +146,25 @@ our %default_config = (
 ####
     gpg_bin         => 'gpg',
     gpg_args        => '',
-    gpg_keyring_dir => '[% config.basedir %]/keyring',
+    gpg_keyring_path => sub {
+        my ($project, $options) = @_;
+        my $gpg_keyring = RBM::project_config($project, 'gpg_keyring', $options);
+        return undef unless $gpg_keyring;
+        return $gpg_keyring if $gpg_keyring =~ m|^/|;
+        my $rootpath = RBM::rbm_path("keyring/$gpg_keyring");
+        return $rootpath if -f $rootpath;
+        for my $module (sort keys %{$RBM::config->{modules}}) {
+            my $modulepath = RBM::rbm_path("modules/$module/keyring/$gpg_keyring");
+            return $modulepath if -f $modulepath;
+        }
+        RBM::exit_error("keyring file $gpg_keyring is missing")
+    },
     gpg_wrapper     => <<GPGEND,
 #!/bin/sh
 export LC_ALL=C
 [%
-    IF c('gpg_keyring');
-        SET gpg_kr = '--keyring ' _ path(c('gpg_keyring'), path(c('gpg_keyring_dir')))
+    IF c('gpg_keyring_path');
+        SET gpg_kr = '--keyring ' _ c('gpg_keyring_path')
                      _ ' --no-default-keyring --no-auto-check-trustdb --trust-model always';
     END;
 -%]
