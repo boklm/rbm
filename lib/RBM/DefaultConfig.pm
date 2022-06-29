@@ -102,6 +102,14 @@ our %default_config = (
     sysconf_file  => '/etc/rbm.conf',
     localconf_file=> 'rbm.local.conf',
     tmp_dir       => '[% GET ENV.TMPDIR ? ENV.TMPDIR : "/tmp"; %]',
+    num_procs     => sub {
+        return $ENV{RBM_NUM_PROCS} if $ENV{RBM_NUM_PROCS};
+        CORE::state $nproc;
+        return $nproc if $nproc;
+        my ($stdout, $stderr, $success) = capture_exec('nproc');
+        chomp $stdout;
+        return $nproc = $success ? $stdout : '4';
+    },
     rbm_tmp_dir   => \&rbm_tmp_dir,
     projects_dir  => 'projects',
     modules_dir   => 'modules',
@@ -140,12 +148,14 @@ our %default_config = (
         return '946684800';
     },
     debug         => 0,
+    compress_tar  => 'gz',
     version       => "[%- exit_error('No version specified for ' _ project); -%]",
 ####
 ####
 ####
     gpg_bin         => 'gpg',
     gpg_args        => '',
+    gpg_allow_expired_keys => 0,
     gpg_keyring_path => sub {
         my ($project, $options) = @_;
         my $gpg_keyring = RBM::project_config($project, 'gpg_keyring', $options);
@@ -159,8 +169,11 @@ our %default_config = (
         }
         RBM::exit_error("keyring file $gpg_keyring is missing")
     },
+    # Make it possible for gpg_wrapper to allow git tag signed using an expired
+    # key.
+    # https://bugs.torproject.org/19737
     gpg_wrapper     => <<GPGEND,
-#!/bin/sh
+#!/bin/bash
 export LC_ALL=C
 [%
     IF c('gpg_keyring_path');
@@ -168,7 +181,18 @@ export LC_ALL=C
                      _ ' --no-default-keyring --no-auto-check-trustdb --trust-model always';
     END;
 -%]
-exec [% c('gpg_bin') %] [% c('gpg_args') %] --with-fingerprint [% gpg_kr %] "\$@"
+gpg_verify=0
+for opt in "\$@"
+do
+  test "\$opt" = '--verify' && gpg_verify=1
+done
+if [ \$gpg_verify = 1 ]
+then
+      [% c('gpg_bin') %] [% c('gpg_args') %] --with-fingerprint [% gpg_kr %] "\$@"[% IF c('gpg_allow_expired_keys') %] | sed 's/^\\[GNUPG:\\] EXPKEYSIG /\\[GNUPG:\\] GOODSIG /'[% END %]
+      exit \${PIPESTATUS[0]}
+else
+      exec [% c('gpg_bin') %] [% c('gpg_args') %] --with-fingerprint [% gpg_kr %] "\$@"
+fi
 GPGEND
 ####
 ####
@@ -448,6 +472,13 @@ find [% src.join(' ') %] ! [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +01
 find [% src.join(' ') %] | sort | \
         zip -q -@ -X [% c('zip_args', { error_if_undef => 1 }) %]
 ZIP_END
+####
+####
+####
+    touch => <<TOUCH_END,
+[% USE date -%]
+touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %] [% c('touch_args', { error_if_undef => 1 }) %]
+TOUCH_END
 ####
 ####
 ####

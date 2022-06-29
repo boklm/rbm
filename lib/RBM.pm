@@ -109,7 +109,12 @@ sub find_config_file {
 }
 
 sub set_default_env {
-    %ENV = (%ENV, %{$config->{ENV}}) if ref $config->{ENV} eq 'HASH';
+    if (ref $config->{ENV} eq 'HASH') {
+        %ENV = (%ENV, %{$config->{ENV}});
+    } else {
+        $ENV{TZ} = 'UTC';
+        $ENV{LC_ALL} = 'C';
+    }
 }
 
 sub rbm_path {
