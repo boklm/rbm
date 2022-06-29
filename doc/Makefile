@@ -33,6 +33,7 @@ MAN1_ASC += rbm-build.asc
 MAN7_ASC += rbm_tutorial.asc
 MAN7_ASC += rbm_layout.asc
 MAN7_ASC += rbm_config.asc
+MAN7_ASC += rbm_modules.asc
 MAN7_ASC += rbm_templates.asc
 MAN7_ASC += rbm_remote.asc
 MAN7_ASC += rbm_targets.asc
