@@ -692,7 +692,6 @@ sub process_template {
     my $vars = {
         config     => $config,
         project    => $project,
-        p          => $config->{projects}{$project},
         c          => sub { project_config($project, @_) },
         pc         => sub {
             my @args = @_;
