@@ -217,6 +217,10 @@ OPT_END
 ####
     remote_exec => <<OPT_END,
 [%
+    IF c("container/use_container") && !c("container/global_disable");
+        GET c("container/remote_exec");
+        RETURN;
+    END;
     IF c('remote_docker');
         GET c('docker_remote_exec');
         RETURN;
@@ -236,6 +240,10 @@ OPT_END
 ####
     remote_get => <<OPT_END,
 [%
+    IF c("container/use_container") && !c("container/global_disable");
+        GET c("container/remote_get");
+        RETURN;
+    END;
     IF c('remote_docker');
         GET c('docker_remote_get');
         RETURN;
@@ -260,6 +268,10 @@ OPT_END
 ####
     remote_put => <<OPT_END,
 [%
+    IF c("container/use_container") && !c("container/global_disable");
+        GET c("container/remote_put");
+        RETURN;
+    END;
     IF c('remote_docker');
         GET c('docker_remote_put');
         RETURN;
@@ -285,6 +297,10 @@ OPT_END
 ####
     remote_start => <<OPT_END,
 [%
+    IF c("container/use_container") && !c("container/global_disable");
+        GET c("container/remote_start");
+        RETURN;
+    END;
     IF c('remote_docker');
         GET c('docker_remote_start');
         RETURN;
@@ -296,6 +312,10 @@ OPT_END
 ####
     remote_finish => <<OPT_END,
 [%
+    IF c("container/use_container") && !c("container/global_disable");
+        GET c("container/remote_finish");
+        RETURN;
+    END;
     IF c('remote_docker');
         GET c('docker_remote_finish');
         RETURN;
@@ -406,6 +426,96 @@ tar -cf - . | tar -C [% dst %] --no-same-owner -xf -
 cd - > /dev/null
 rm -Rf \$tmpdir
 OPT_END
+####
+####
+####
+    container => {
+        remote_start => <<OPT_END,
+#!/bin/sh
+set -e
+if [ \$(ls -1 '[% c("remote_srcdir", { error_if_undef => 1 }) %]/container-image_'* | wc -l) -ne 1 ]
+then
+  echo "Can't find container image in input files" >&2
+  ls -l '[% c("remote_srcdir") %]' >&2
+  exit 1
+fi
+[% c("rbmdir") %]/container extract '[% c("container/dir") %]' '[% c("remote_srcdir", { error_if_undef => 1 }) %]/container-image_'*
+test -d '[% c("container/dir") %]'/home/rbm || \
+  [% c("rbmdir") %]/container run --chroot='[% c("container/dir") %]' -- /usr/sbin/useradd -m [% c("container/user") %]
+OPT_END
+####
+####
+####
+        remote_exec => <<OPT_END,
+#!/bin/sh
+set -e
+[% IF c("interactive") -%]
+  echo Container directory: [% shell_quote(c("container/dir")) %]
+[% END -%]
+mkdir -p '[% c("container/dir", { error_if_undef => 1 }) %]'/rbm
+echo '#!/bin/sh' > '[% c("container/dir") %]'/rbm/cmd
+echo [% shell_quote(c('exec_cmd')) %] >> '[% c("container/dir") %]'/rbm/cmd
+echo '#!/bin/sh' > '[% c("container/dir") %]'/rbm/run
+[% IF c("container/disable_network/" _ c("exec_name")) -%]
+  # Some programs such as gradle need the lo interface to be up.
+  # See for example tor-browser#31293
+  echo 'ip link set lo up' >> '[% c("container/dir") %]'/rbm/run
+[% END -%]
+[% IF c('exec_as_root'); SET user = 'root'; ELSE; SET user = c("container/user", { error_if_undef => 1 }); END; %]
+echo 'su - [% user %] -c /rbm/cmd' >> '[% c("container/dir") %]'/rbm/run
+chmod +x '[% c("container/dir") %]'/rbm/cmd
+chmod +x '[% c("container/dir") %]'/rbm/run
+[%
+  IF c("container/disable_network/" _ c("exec_name"));
+    SET disable_network = '--disable-network';
+  ELSE;
+    SET disable_network = '';
+  END;
+-%]
+[% c("rbmdir") %]/container run [% disable_network %] --chroot='[% c("container/dir") %]' -- /rbm/run
+OPT_END
+####
+####
+####
+        remote_put => <<OPT_END,
+#!/bin/sh
+set -e
+[%
+  SET src = shell_quote(c('put_src', { error_if_undef => 1 }));
+  SET dst = shell_quote(c('put_dst', { error_if_undef => 1 }));
+-%]
+[% c("rbmdir") %]/container put '[% c("container/dir") %]' [% src %] [% dst %] [% c("container/user") %]
+OPT_END
+####
+####
+####
+        remote_get => <<OPT_END,
+#!/bin/sh
+set -e
+[%
+  SET src = shell_quote(c('get_src', { error_if_undef => 1 }));
+  SET dst = shell_quote(c('get_dst', { error_if_undef => 1 }));
+-%]
+[% c("rbmdir") %]/container get '[% c("container/dir") %]' [% src %] [% dst %]
+OPT_END
+####
+####
+####
+        remote_finish => <<OPT_END,
+#!/bin/sh
+set -e
+[% c("rbmdir") %]/container remove '[% c("container/dir") %]'
+OPT_END
+####
+####
+####
+        dir => '[% c("rbm_tmp_dir") %]/rbm-containers/[% sha256(c("build_id")) %]',
+        user =>  'rbm',
+        disable_network => {
+            # disable network in the build scripts
+            build => '1',
+        },
+    },
 ####
 ####
 ####
