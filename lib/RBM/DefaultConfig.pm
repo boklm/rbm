@@ -475,13 +475,7 @@ ZIP_END
 ####
 ####
 ####
-    touch => <<TOUCH_END,
-[% USE date -%]
-touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %] [% c('touch_args', { error_if_undef => 1 }) %]
-TOUCH_END
-####
-####
-####
+    touch => "[% USE date %]touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %]",
     arch   => \&get_arch,
     input_files_by_name => sub { RBM::input_files('getfnames', @_); },
     input_files_id => sub { RBM::input_files('input_files_id', @_); },
