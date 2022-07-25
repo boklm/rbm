@@ -17,6 +17,7 @@ all:
 install:
 	install -d $(DESTDIR)$(bindir) $(DESTDIR)$(sysconfdir)
 	install -m 755 $(BINFILES) $(DESTDIR)$(bindir)
+	install -m 755 container $(DESTDIR)$(bindir)/rbmcontainer
 	install -d $(DESTDIR)$(perldir) $(DESTDIR)$(perldir)/RBM
 	install -m 644 $(PERL_MODULE_MAIN) $(DESTDIR)$(perldir)
 	install -m 644 $(PERL_MODULES) $(DESTDIR)$(perldir)/RBM
