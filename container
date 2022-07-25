@@ -96,6 +96,8 @@ sub run_chroot {
     local $File::Copy::Recursive::CopyLink = 0;
     fcopy('/etc/resolv.conf', "$rootfsdir/etc/resolv.conf");
     local %ENV = ();
+    path("$rootfsdir/etc/hosts")->append("\n127.0.1.1 rbm\n")
+        unless grep { m/^127.0.1.1 rbm$/ } path("$rootfsdir/etc/hosts")->lines;
     system('hostname', 'rbm');
     my $res = system('/usr/sbin/chroot', $rootfsdir, @$cmd);
     do_unmounts($rootfsdir);
