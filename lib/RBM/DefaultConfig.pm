@@ -116,6 +116,7 @@ our %default_config = (
     output_dir    => 'out',
     git_clone_dir => 'git_clones',
     hg_clone_dir  => 'hg_clones',
+    hg_clone_subdir  => '.',
     fetch         => 'if_needed',
     pkg_type      => 'build',
     build         => '[% INCLUDE build -%]',

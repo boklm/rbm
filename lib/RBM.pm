@@ -476,8 +476,8 @@ sub git_clone_fetch_chdir {
 }
 
 sub hg_need_fetch {
-    my ($project, $options) = @_;
-    return 0 if $config->{_rbm}{fetched_projects}{$project};
+    my ($project, $subdir, $options) = @_;
+    return 0 if $config->{_rbm}{hg_fetched_projects}{$project}{$subdir};
     my $fetch = project_config($project, 'fetch', $options);
     if ($fetch eq 'if_needed') {
         my $hg_hash = project_config($project, 'hg_hash', $options)
@@ -495,18 +495,25 @@ sub hg_clone_fetch_chdir {
                                 'hg_clone_dir', $options)));
     my $hg_url = shell_quote(project_config($project, 'hg_url', $options))
                 || exit_error "hg_url is undefined";
-    my $sq_project = shell_quote($project);
-    if (!chdir rbm_path("$clonedir/$project")) {
+    my $subdir = project_config($project, 'hg_clone_subdir', $options);
+    exit_error "hg_clone_subdir ($subdir) cannot be '..'" if $subdir eq '..';
+    exit_error "hg_clone_subdir ($subdir) cannot include / or \\"
+                if $subdir =~ m|[\\/]|;
+    my $destdir = $subdir eq '.' ? $project : "$project/$subdir";
+    my $sq_destdir = shell_quote($destdir);
+    if (!chdir rbm_path("$clonedir/$destdir")) {
         chdir $clonedir || exit_error "Can't enter directory $clonedir: $!";
-        if (system("$hg clone -q $hg_url $sq_project") != 0) {
+        mkdir $project if $subdir ne '.';
+        if (system("$hg clone -q $hg_url $sq_destdir") != 0) {
             exit_error "Error cloning $hg_url";
         }
-        chdir($project) || exit_error "Error entering $project directory";
+        chdir($destdir) || exit_error "Error entering $destdir directory";
     }
-    if (hg_need_fetch($project, $options)) {
+    if (hg_need_fetch($project, $subdir, $options)) {
         system("$hg pull -q $hg_url") == 0
                 || exit_error "Error pulling changes from $hg_url";
     }
+    $config->{_rbm}{hg_fetched_projects}{$project}{$subdir} = 1;
 }
 
 sub run_script {
