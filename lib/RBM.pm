@@ -595,7 +595,7 @@ sub maketar {
     } elsif (project_config($project, 'hg_url', $options)) {
         $commit_hash = project_config($project, 'hg_hash', $options)
                 || exit_error "No hg_hash specified for project $project";
-        hg_clone_fetch_chdir($project);
+        hg_clone_fetch_chdir($project, $options);
     } else {
         return undef;
     }
