@@ -157,18 +157,41 @@ our %default_config = (
     gpg_bin         => 'gpg',
     gpg_args        => '',
     gpg_allow_expired_keys => 0,
-    gpg_keyring_path => sub {
+    gpg_keyring_args => sub {
         my ($project, $options) = @_;
         my $gpg_keyring = RBM::project_config($project, 'gpg_keyring', $options);
         return undef unless $gpg_keyring;
-        return $gpg_keyring if $gpg_keyring =~ m|^/|;
-        my $rootpath = RBM::rbm_path("keyring/$gpg_keyring");
-        return $rootpath if -f $rootpath;
-        for my $module (sort keys %{$RBM::config->{modules}}) {
-            my $modulepath = RBM::rbm_path("modules/$module/keyring/$gpg_keyring");
-            return $modulepath if -f $modulepath;
+        # handle both gpg_keyring being an array or a string
+        $gpg_keyring = ref $gpg_keyring eq 'ARRAY' ? $gpg_keyring : [ $gpg_keyring ];
+        # construct list of keyring paths
+        my @keyring_args = ();
+        foreach my $current_keyring (@$gpg_keyring) {
+            # check for absolute path
+            if ($current_keyring =~ m|^/|) {
+                push(@keyring_args, "--keyring $current_keyring");
+                goto FOUND_KEYRING;
+            }
+            # check for existence in the keyring directory
+            my $rootpath = RBM::rbm_path("keyring/$current_keyring");
+            if (-f $rootpath) {
+                push(@keyring_args, "--keyring $rootpath");
+                goto FOUND_KEYRING;
+            }
+            # check for keyring in module's keyring directory
+            for my $module (sort keys %{$RBM::config->{modules}}) {
+                my $modulepath = RBM::rbm_path("modules/$module/keyring/$current_keyring");
+                if (-f $modulepath) {
+                    push(@keyring_args, "--keyring $modulepath");
+                    goto FOUND_KEYRING;
+                }
+            }
+
+            # fallthrough implies keyring file not found
+            RBM::exit_error("keyring file $current_keyring is missing");
+            FOUND_KEYRING:
         }
-        RBM::exit_error("keyring file $gpg_keyring is missing")
+        my $args = join(" ", @keyring_args);
+        return $args;
     },
     # Make it possible for gpg_wrapper to allow git tag signed using an expired
     # key.
@@ -177,9 +200,8 @@ our %default_config = (
 #!/bin/bash
 export LC_ALL=C
 [%
-    IF c('gpg_keyring_path');
-        SET gpg_kr = '--keyring ' _ c('gpg_keyring_path')
-                     _ ' --no-default-keyring --no-auto-check-trustdb --trust-model always';
+    IF c('gpg_keyring_args');
+        SET gpg_kr = c('gpg_keyring_args') _ ' --no-default-keyring --no-auto-check-trustdb --trust-model always';
     END;
 -%]
 gpg_verify=0
