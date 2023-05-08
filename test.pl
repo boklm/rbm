@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Path::Tiny;
-use Test::More tests => 40;
+use Test::More tests => 41;
 use lib 'lib/';
 
 sub set_target {
@@ -218,6 +218,14 @@ my @tests = (
             'out/r1' => "1 - build\n",
             'out/r2' => "1 - build\n2 - build\n",
             'out/r3' => "1 - build\n2 - build\n3 - build\n",
+        },
+    },
+    {
+        name => 'multi-steps build with changing targets',
+        target => [ 'target_a' ],
+        build => [ 'change-targets', 'build', { pkg_type => 'build' } ],
+        files => {
+          'out/change-targets.txt' => "no\nz\ntta\n",
         },
     },
     {

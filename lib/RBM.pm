@@ -898,12 +898,17 @@ sub input_files {
             next;
         }
         if ($input_file->{target} || $input_file->{target_append}
-                                  || $input_file->{target_prepend}) {
+                                  || $input_file->{target_prepend}
+                                  || $input_file->{target_replace}) {
             $input_file = { %$input_file };
             foreach my $t (qw/target target_append target_prepend/) {
                 if ($input_file->{$t} && ref $input_file->{$t} ne 'ARRAY') {
                     exit_error("$t should be an ARRAY:\n" . pp($input_file));
                 }
+            }
+            if ($input_file->{target_replace} &&
+                ref $input_file->{target_replace} ne 'HASH') {
+                exit_error("target_replace should be a HASH\n" . pp($input_file));
             }
             if ($input_file->{target}) {
                 $input_file->{target} = process_template_opt($project,
@@ -922,6 +927,14 @@ sub input_files {
                                           @{ process_template_opt($project,
                                                $input_file->{target_append},
                                                $options) } ];
+            }
+            if ($input_file->{target_replace}) {
+                foreach my $pattern (keys %{$input_file->{target_replace}}) {
+                    my $subst = $input_file->{target_replace}{$pattern};
+                    $input_file->{target} = [
+                        map { s/$pattern/$subst/r } @{$input_file->{target}}
+                    ];
+                }
             }
         }
         if ($action eq 'getfnames') {

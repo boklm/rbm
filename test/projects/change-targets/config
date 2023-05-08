@@ -1,0 +1,49 @@
+# vim: filetype=yaml sw=2
+
+targets:
+  tt_a:
+    option_a: 'tta'
+
+
+steps:
+
+  build:
+    filename: change-targets.txt
+    build: |
+      #!/bin/sh
+      cat preptarget.txt replacetarget-1.txt replacetarget-2.txt > [% dest_dir %]/[% c('filename') %]
+    input_files:
+      - name: preptarget
+        refresh_input: 1
+        project: change-targets
+        pkg_type: preptarget
+        target_prepend:
+          - target_b
+      - name: replacetarget
+        r: 1
+        refresh_input: 1
+        project: change-targets
+        pkg_type: replacetarget
+        target_replace:
+          '^target_a$': target_z
+      - name: replacetarget
+        r: 2
+        refresh_input: 1
+        project: change-targets
+        pkg_type: replacetarget
+        target_replace:
+          '^target_.*$': 'tt_a'
+
+  preptarget:
+    filename: preptarget.txt
+    preptarget: |
+      #!/bin/sh
+      echo [% c('option_a') %] > [% dest_dir %]/[% c('filename') %]
+    input_files: []
+
+  replacetarget:
+    filename: 'replacetarget-[% c("r") %].txt'
+    replacetarget: |
+      #!/bin/sh
+      echo [% c('option_a') %] > [% dest_dir %]/[% c('filename') %]
+    input_files: []
