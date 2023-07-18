@@ -649,12 +649,14 @@ sub maketar {
             '--prefix', "$project-$version", "$dest_dir/$tar_file") == 0
                 || exit_error 'Error running hg archive.';
     }
-    my %compress = (
-        xz  => ['xz', '-f'],
-        gz  => ['gzip', '--no-name', '-f'],
-        bz2 => ['bzip2', '-f'],
-    );
     if (my $c = project_config($project, 'compress_tar', $options)) {
+        my $num_procs = project_config($project, 'num_procs', $options);
+        my %compress = (
+            xz  => ['xz', '-f'],
+            gz  => ['gzip', '--no-name', '-f'],
+            bz2 => ['bzip2', '-f'],
+            zst => ['zstd', '-qf', '--rm', "--threads=$num_procs"],
+        );
         if (!defined $compress{$c}) {
             exit_error "Unknow compression $c";
         }
