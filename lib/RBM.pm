@@ -802,6 +802,7 @@ sub input_file_need_dl {
 
 sub input_file_id_hash {
     my ($fname, $filename) = @_;
+    exit_error "input_file_id: file $filename is missing" unless $fname;
     return $filename . ':' . sha256file($fname) if -f $fname;
     return $filename . ':' . sha256file(readlink $fname) if -l $fname;
     my @subdirs = sort(map { $_->basename } path($fname)->children);
