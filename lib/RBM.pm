@@ -782,14 +782,17 @@ sub input_file_need_dl {
     return undef if $action eq 'getfpaths';
     if ($fname
         && ($input_file->{sha256sum} || $input_file->{norec}{sha256sum})
+        && $t->('sha256sum')
         && $t->('sha256sum') ne sha256file($fname)) {
         sha256file($fname, { remove_cache => 1 });
         $fname = undef;
     }
     if ($action eq 'input_files_id') {
         return undef if $input_file->{input_file_id};
-        return undef if $input_file->{sha256sum};
-        return undef if $input_file->{norec}{sha256sum};
+        if ( ($input_file->{sha256sum} || $input_file->{norec}{sha256sum})
+             && $t->('sha256sum') ) {
+            return undef;
+        }
         return undef if $input_file->{exec};
         return undef if $fname;
         return 1 if $input_file->{URL};
@@ -814,7 +817,8 @@ sub input_file_id {
     my ($input_file, $t, $fname, $filename) = @_;
     return $t->('input_file_id') if $input_file->{input_file_id};
     return $input_file->{project} . ':' . $filename if $input_file->{project};
-    if ($input_file->{sha256sum} || $input_file->{norec}{sha256sum}) {
+    if ( ($input_file->{sha256sum} || $input_file->{norec}{sha256sum})
+         && $t->('sha256sum') ) {
         return $filename . ':' . $t->('sha256sum');
     }
     my $opts = { norec => { output_dir => '/out', getting_id => 1, }};
