@@ -1229,6 +1229,10 @@ sub build_run {
                     exec_name => 'put',
                     exec_as_root => 0,
                 });
+            if ($ENV{RBM_VERBOSE_LOG}) {
+                my $now = localtime;
+                path($build_log)->append_utf8("[$now] Copying file $file\n");
+            }
             if (run_script($project, $cmd, sub { system(@_) }) != 0) {
                 $error = "Error uploading $file";
                 goto EXIT;
