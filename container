@@ -110,7 +110,7 @@ sub copy_file_to {
     my $filename = fileparse($src);
     rcopy($src, "$rootfsdir/$dst/$filename")
         or exit_error "Failed to copy $src to $rootfsdir/$dst/$filename";
-    return run_chroot($rootfsdir, ['chown', '-R', $owner, $dst]);
+    return system('/usr/sbin/chroot', $rootfsdir, 'chown', '-R', $owner, $dst);
 }
 
 sub copy_file_from {
