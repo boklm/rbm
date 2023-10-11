@@ -1091,7 +1091,8 @@ sub input_files {
         my $file_type = -d $fname ? 'directory' : 'file';
         print "Using $file_type $fname\n";
         mkdir dirname("$dest_dir/$name");
-        push @res_copy, recursive_copy($fname, $name, $dest_dir, $action);
+        recursive_copy($fname, $name, $dest_dir, $action);
+        push @res_copy, $name;
     }
     chdir $old_cwd;
     RETURN_RES:
