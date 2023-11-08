@@ -549,7 +549,7 @@ sub git_submodule_init_sync_update {
 sub execute {
     my ($project, $cmd, $options) = @_;
     CORE::state %cache;
-    my $res_name;
+    my $res_name = '';
     my $old_cwd = getcwd;
     if (project_config($project, 'git_url', $options)) {
         my $git_hash = project_config($project, 'git_hash', $options)
@@ -571,6 +571,8 @@ sub execute {
         my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('hg', 'update', '-C', $hg_hash);
         exit_error "Cannot checkout $hg_hash:\n$stderr" unless $success;
+    } else {
+        chdir($config->{basedir});
     }
     my ($stdout, $stderr, $success, $exit_code)
                 = run_script($project, $cmd, \&capture_exec);
