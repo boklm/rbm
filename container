@@ -95,7 +95,9 @@ sub run_chroot {
     # On some systems resolv.conf is a symlink (see #40015)
     local $File::Copy::Recursive::CopyLink = 0;
     fcopy('/etc/resolv.conf', "$rootfsdir/etc/resolv.conf");
-    local %ENV = ();
+    local %ENV = (
+      PATH => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+    );
     path("$rootfsdir/etc/hosts")->append("\n127.0.1.1 rbm\n")
         unless grep { m/^127.0.1.1 rbm$/ } path("$rootfsdir/etc/hosts")->lines;
     system('hostname', 'rbm');
@@ -110,6 +112,9 @@ sub copy_file_to {
     my $filename = fileparse($src);
     rcopy($src, "$rootfsdir/$dst/$filename")
         or exit_error "Failed to copy $src to $rootfsdir/$dst/$filename";
+    local %ENV = (
+      PATH => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+    );
     return system('/usr/sbin/chroot', $rootfsdir, 'chown', '-R', $owner, $dst);
 }
 
