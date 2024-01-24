@@ -151,6 +151,7 @@ our %default_config = (
     debug         => 0,
     compress_tar  => 'gz',
     version       => "[%- exit_error('No version specified for ' _ project); -%]",
+    isatty        => sub { -t STDOUT },
 ####
 ####
 ####
@@ -577,7 +578,7 @@ set -e
     END;
     -%]
 tmpfile="\$(mktemp -p [% shell_quote(rbm_tmp_dir) %])"
-wget -O"\$tmpfile" [% shell_quote(c("URL")) %]
+wget[% IF !c("getting_id") && !c("isatty") %] --no-verbose[% END %] -O"\$tmpfile" [% shell_quote(c("URL")) %]
 mv -f "\$tmpfile" [% shell_quote(dest_dir _ "/" _ c("filename")) %]
 URLGET
     sig_ext => [ qw(gpg asc sig) ],
