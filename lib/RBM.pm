@@ -10,7 +10,7 @@ use YAML::XS qw(LoadFile);
 use Template;
 use File::Basename;
 use IO::Handle;
-use IO::CaptureOutput qw(capture_exec);
+use Capture::Tiny qw(capture);
 use File::Temp;
 use File::Copy;
 use File::Copy::Recursive qw(fcopy);
@@ -29,7 +29,7 @@ use feature "state";
 BEGIN {
     require Exporter;
     our @ISA = qw(Exporter);
-    our @EXPORT = qw(exit_error);
+    our @EXPORT = qw(exit_error capture_exec);
 }
 
 our $config;
@@ -306,6 +306,15 @@ sub project_step_config {
 sub exit_error {
     print STDERR "Error: ", $_[0], "\n";
     exit (exists $_[1] ? $_[1] : 1);
+}
+
+sub capture_exec {
+    my @cmd = @_;
+    my ($stdout, $stderr, $exit) = capture {
+        system(@cmd);
+    };
+    return ($stdout, $stderr, $exit == 0, $exit) if wantarray();
+    return $stdout;
 }
 
 sub set_git_gpg_wrapper {
