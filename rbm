@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+use open OUT => ':locale';
 use File::Basename;
 use lib dirname($0) . '/lib';
 use RBM;
