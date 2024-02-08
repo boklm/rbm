@@ -597,14 +597,24 @@ TAR_END
 ####
 ####
 ####
-    zip    => <<ZIP_END,
+    '7z_bin' => '7z',
+    zip      => <<ZIP_END,
 [%- SET src = c('zip_src', { error_if_undef => 1 }) -%]
 [% USE date -%]
+[% IF c("use_7z") -%]
+  tmp7z=\$(mktemp)
+[% END -%]
 find [% src.join(' ') %] -exec touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %] -- {} +
 find [% src.join(' ') %] [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 700 {} \\;
 find [% src.join(' ') %] ! [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 600 {} \\;
 find [% src.join(' ') %] | sort | \
+[% IF c("use_7z") -%]
+        cat > "\$tmp7z"
+        [% c('7z_bin') %] a -tzip -spf [% c('7z_opts') %] [% c('zip_args', { error_if_undef => 1 }) %] "@\$tmp7z"
+        rm -f "\$tmp7z"
+[% ELSE -%]
         zip -q -@ -X [% c('zip_args', { error_if_undef => 1 }) %]
+[% END -%]
 ZIP_END
 ####
 ####
