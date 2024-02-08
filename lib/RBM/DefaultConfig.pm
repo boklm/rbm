@@ -10,7 +10,8 @@ BEGIN {
 }
 
 use File::Basename;
-use RBM qw(capture_exec);
+use RBM;
+use RBM::CaptureExec qw(capture_exec);
 use Cwd qw(getcwd);
 use File::Temp;
 use File::Path qw(make_path);

@@ -10,7 +10,6 @@ use YAML::XS qw(LoadFile);
 use Template;
 use File::Basename;
 use IO::Handle;
-use Capture::Tiny qw(capture);
 use File::Temp;
 use File::Copy;
 use File::Copy::Recursive qw(fcopy);
@@ -18,6 +17,7 @@ use File::Path qw(make_path);
 use File::Basename;
 use String::ShellQuote;
 use Sort::Versions;
+use RBM::CaptureExec qw(capture_exec);
 use RBM::DefaultConfig;
 use Digest::SHA qw(sha256_hex);
 use Data::UUID;
@@ -29,7 +29,7 @@ use feature "state";
 BEGIN {
     require Exporter;
     our @ISA = qw(Exporter);
-    our @EXPORT = qw(exit_error capture_exec);
+    our @EXPORT = qw(exit_error);
 }
 
 our $config;
@@ -306,15 +306,6 @@ sub project_step_config {
 sub exit_error {
     print STDERR "Error: ", $_[0], "\n";
     exit (exists $_[1] ? $_[1] : 1);
-}
-
-sub capture_exec {
-    my @cmd = @_;
-    my ($stdout, $stderr, $exit) = capture {
-        system(@cmd);
-    };
-    return ($stdout, $stderr, $exit == 0, $exit) if wantarray();
-    return $stdout;
 }
 
 sub set_git_gpg_wrapper {
