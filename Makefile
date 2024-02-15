@@ -3,7 +3,7 @@ VERSION=0.4
 PROJECTNAME=rbm
 BINFILES=rbm
 PERL_MODULE_MAIN=lib/RBM.pm
-PERL_MODULES=lib/RBM/DefaultConfig.pm
+PERL_MODULES=lib/RBM/CaptureExec.pm lib/RBM/DefaultConfig.pm
 
 sysconfdir=/etc
 bindir=/usr/bin
