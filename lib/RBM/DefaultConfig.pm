@@ -607,7 +607,7 @@ TAR_END
 find [% src.join(' ') %] -exec touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %] -- {} +
 find [% src.join(' ') %] [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 700 {} \\;
 find [% src.join(' ') %] ! [% IF c('gnu_utils') %]-executable[% ELSE %]-perm +0111[% END %] -exec chmod 600 {} \\;
-find [% src.join(' ') %] | sort | \
+find [% src.join(' ') %][% IF c("use_7z") -%] -printf '%P\\n'[% END %] | sort | \
 [% IF c("use_7z") -%]
         cat > "\$tmp7z"
         [% c('7z_bin') %] a -tzip -spf [% c('7z_opts') %] [% c('zip_args', { error_if_undef => 1 }) %] "@\$tmp7z"
