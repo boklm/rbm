@@ -1001,6 +1001,8 @@ sub input_files {
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
         if (input_file_need_dl($input_file, $t, $fname, $action)) {
             if ($t->('content')) {
+                my $dname = dirname("$proj_out_dir/$name");
+                make_path($dname) unless -d $dname;
                 path("$proj_out_dir/$name")->spew_utf8($t->('content'));
             } elsif ($t->('URL')) {
                 urlget($project, {%$options, %$input_file, filename => $name}, 1);
