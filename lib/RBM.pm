@@ -796,7 +796,7 @@ sub input_file_need_dl {
             return undef;
         }
         return undef if $input_file->{exec};
-        return undef if $fname;
+        return undef if ($fname && !$t->('refresh_input'));
         return 1 if $input_file->{URL};
         return 1 if $input_file->{content};
         return undef;
