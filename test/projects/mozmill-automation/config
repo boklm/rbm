@@ -5,4 +5,11 @@ compress_tar: ''
 t: '[% sha256(exec("cat testrun_remote.py")) %]'
 build: |
   #!/bin/sh
-  sha256sum [% project %]-[% c("version") %].tar > [% dest_dir %]/[% project %]-[% c("version") %]_sha256sum.txt
+  mkdir t
+  tar -C t -xf mozmill-automation-bbad7215c713.tar
+  files=$(find t | sort)
+  for file in $files
+  do
+    sha256sum $file >> s.txt
+  done
+  sha256sum s.txt > [% dest_dir %]/[% project %]-[% c("version") %]_sha256sum.txt
