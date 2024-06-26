@@ -19,7 +19,7 @@ use String::ShellQuote;
 use Sort::Versions;
 use RBM::CaptureExec qw(capture_exec);
 use RBM::DefaultConfig;
-use Digest::SHA qw(sha256_hex);
+use Digest::SHA qw(sha256_hex sha512_hex);
 use Data::UUID;
 use Data::Dump qw(dd pp);
 use FindBin;
@@ -673,16 +673,22 @@ sub maketar {
     return $tar_file;
 }
 
-sub sha256file {
+sub shafile {
     CORE::state %res;
+    my $type = shift;
     my $f = rbm_path(shift);
     my $opt = shift;
+    my %sha_hex = (
+        sha256sum => \&sha256_hex,
+        sha512sum => \&sha512_hex,
+    );
+    exit_error "Unknown sha type $type" unless $sha_hex{$type};
     if (ref $opt eq 'HASH' && $opt->{remove_cache}) {
-        delete $res{$f};
+        delete $res{$type}{$f};
         return;
     }
-    return $res{$f} if exists $res{$f};
-    return $res{$f} = -f $f ? sha256_hex(path($f)->slurp_raw) : '';
+    return $res{$type}{$f} if exists $res{$type}{$f};
+    return $res{$type}{$f} = -f $f ? $sha_hex{$type}->(path($f)->slurp_raw) : '';
 }
 
 sub process_template_opt {
@@ -731,7 +737,11 @@ sub process_template {
         sha256      => sub {
             return sha256_hex(encode("utf8", $_[0]));
         },
-        sha256file  => \&sha256file,
+        sha512      => sub {
+            return sha512_hex(encode("utf8", $_[0]));
+        },
+        sha256file  => sub { return shafile('sha256sum', @_) },
+        sha512file  => sub { return shafile('sha512sum', @_) },
         fileparse   => \&fileparse,
         ENV         => \%ENV,
     };
@@ -782,18 +792,22 @@ sub file_in_dir {
 sub input_file_need_dl {
     my ($input_file, $t, $fname, $action) = @_;
     return undef if $action eq 'getfpaths';
-    if ($fname
-        && ($input_file->{sha256sum} || $input_file->{norec}{sha256sum})
-        && $t->('sha256sum')
-        && $t->('sha256sum') ne sha256file($fname)) {
-        sha256file($fname, { remove_cache => 1 });
-        $fname = undef;
+    for my $checksum (qw/sha512sum sha256sum/) {
+        if ($fname
+            && ($input_file->{$checksum} || $input_file->{norec}{$checksum})
+            && $t->($checksum)
+            && $t->($checksum) ne shafile($checksum, $fname)) {
+            shafile($checksum, $fname, { remove_cache => 1 });
+            $fname = undef;
+        }
     }
     if ($action eq 'input_files_id') {
         return undef if $input_file->{input_file_id};
-        if ( ($input_file->{sha256sum} || $input_file->{norec}{sha256sum})
-             && $t->('sha256sum') ) {
-            return undef;
+        for my $checksum (qw/sha512sum sha256sum/) {
+            if ( ($input_file->{$checksum} || $input_file->{norec}{$checksum})
+                && $t->($checksum) ) {
+                return undef;
+            }
         }
         return undef if $input_file->{exec};
         return undef if ($fname && !$t->('refresh_input'));
@@ -808,8 +822,8 @@ sub input_file_need_dl {
 sub input_file_id_hash {
     my ($fname, $filename) = @_;
     exit_error "input_file_id: file $filename is missing" unless $fname;
-    return $filename . ':' . sha256file($fname) if -f $fname;
-    return $filename . ':' . sha256file(readlink $fname) if -l $fname;
+    return $filename . ':' . shafile('sha256sum', $fname) if -f $fname;
+    return $filename . ':' . shafile('sha256sum', readlink $fname) if -l $fname;
     my @subdirs = sort(map { $_->basename } path($fname)->children);
     my @hashes = map { input_file_id_hash("$fname/$_", "$filename/$_") } @subdirs;
     return join("\n", @hashes);
@@ -819,9 +833,11 @@ sub input_file_id {
     my ($input_file, $t, $fname, $filename) = @_;
     return $t->('input_file_id') if $input_file->{input_file_id};
     return $input_file->{project} . ':' . $filename if $input_file->{project};
-    if ( ($input_file->{sha256sum} || $input_file->{norec}{sha256sum})
-         && $t->('sha256sum') ) {
-        return $filename . ':' . $t->('sha256sum');
+    for my $checksum (qw/sha512sum sha256sum/) {
+        if ( ($input_file->{$checksum} || $input_file->{norec}{$checksum})
+            && $t->($checksum) ) {
+            return $filename . ':' . $t->($checksum);
+        }
     }
     my $opts = { norec => { output_dir => '/out', getting_id => 1, }};
     return $filename . ':' . sha256_hex($t->('exec', $opts))
@@ -1057,11 +1073,13 @@ sub input_files {
             next;
         }
         exit_error "Missing file $name" unless $fname;
-        if ($t->('sha256sum')
-            && $t->('sha256sum') ne sha256file($fname)) {
-            exit_error "Can't have sha256sum on directory: $fname" if -d $fname;
-            exit_error "Wrong sha256sum for $fname.\n" .
-                       "Expected sha256sum: " . $t->('sha256sum');
+        for my $checksum (qw/sha512sum sha256sum/) {
+            if ($t->($checksum)
+                && $t->($checksum) ne shafile($checksum, $fname)) {
+                exit_error "Can't have $checksum on directory: $fname" if -d $fname;
+                exit_error "Wrong $checksum for $fname.\n" .
+                           "Expected $checksum: " . $t->($checksum);
+            }
         }
         if ($file_gpg_id) {
             exit_error "Can't have gpg sig on directory: $fname" if -d $fname;

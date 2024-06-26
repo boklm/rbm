@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Path::Tiny;
-use Test::More tests => 41;
+use Test::More tests => 45;
 use lib 'lib/';
 
 sub set_target {
@@ -260,6 +260,28 @@ my @tests = (
             "1\n2\n3\n4\n1\n2\n",
         },
     },
+    {
+        name => 'sha256sum input_files',
+        target => [ 'sha256sum' ],
+        build  => [ 'shasum', 'build' ],
+        files  => {},
+    },
+    {
+        name => 'sha512sum input_files',
+        target => [ 'sha512sum' ],
+        build  => [ 'shasum', 'build' ],
+        files  => {},
+    },
+    {
+        name => 'wrong sha256sum input_files',
+        target => [ 'wrong_sha256sum' ],
+        fail_build  => [ 'shasum', 'build' ],
+    },
+    {
+        name => 'wrong sha512sum input_files',
+        target => [ 'wrong_sha512sum' ],
+        fail_build  => [ 'shasum', 'build' ],
+    },
 );
 
 foreach my $test (@tests) {
@@ -277,5 +299,17 @@ foreach my $test (@tests) {
         RBM::build_run(@{$test->{build}});
         my $res = grep { path($_)->slurp_utf8 ne $test->{files}{$_} } keys %{$test->{files}};
         ok(!$res, $test->{name});
+    }
+    if ($test->{fail_build}) {
+        my $pid = fork;
+        if (!$pid) {
+            close STDOUT;
+            close STDERR;
+            RBM::build_run(@{$test->{fail_build}});
+            exit 0;
+        }
+        wait;
+        my $exit_code = $?;
+        ok($exit_code, $test->{name});
     }
 }
