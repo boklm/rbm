@@ -551,15 +551,18 @@ sub execute {
     CORE::state %cache;
     my $res_name = '';
     my $old_cwd = getcwd;
+    my $exec_noco = ref $options eq 'HASH' && $options->{exec_noco};
     if (project_config($project, 'git_url', $options)) {
         my $git_hash = project_config($project, 'git_hash', $options)
                 || exit_error "No git_hash specified for project $project";
         $res_name = "git-$project-/-$git_hash-/-$cmd";
         return $cache{$res_name} if exists $cache{$res_name};
         git_clone_fetch_chdir($project, $options);
-        my ($stdout, $stderr, $success, $exit_code)
+        if (!$exec_noco) {
+            my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('git', 'checkout', $git_hash);
-        exit_error "Cannot checkout $git_hash:\n$stderr" unless $success;
+            exit_error "Cannot checkout $git_hash:\n$stderr" unless $success;
+        }
         git_submodule_init_sync_update()
                 if project_config($project, 'git_submodule', $options);
     } elsif (project_config($project, 'hg_url', $options)) {
@@ -568,9 +571,11 @@ sub execute {
         $res_name = "hg-$project-/-$hg_hash-/-$cmd";
         return $cache{$res_name} if exists $cache{$res_name};
         hg_clone_fetch_chdir($project, $options);
-        my ($stdout, $stderr, $success, $exit_code)
+        if (!$exec_noco) {
+            my ($stdout, $stderr, $success, $exit_code)
                 = capture_exec('hg', 'update', '-C', $hg_hash);
-        exit_error "Cannot checkout $hg_hash:\n$stderr" unless $success;
+            exit_error "Cannot checkout $hg_hash:\n$stderr" unless $success;
+        }
     } else {
         chdir($config->{basedir});
     }

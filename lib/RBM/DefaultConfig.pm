@@ -126,9 +126,9 @@ our %default_config = (
     abbrev_length => '12',
     abbrev        => '[%
                          IF c("git_url");
-                                exec("git log -1 --abbrev=" _ c("abbrev_length") _ " --format=%h " _ c("git_hash"));
+                                exec("git log -1 --abbrev=" _ c("abbrev_length") _ " --format=%h " _ c("git_hash"), { exec_noco => 1 });
                          ELSE;
-                                exec(c("hg") _ " id -i -r " _ c("hg_hash"));
+                                exec(c("hg") _ " id -i -r " _ c("hg_hash"), { exec_noco => 1 });
                          END;
                       %]',
     timestamp     => sub {
@@ -136,12 +136,14 @@ our %default_config = (
         if (RBM::project_config($project, 'git_url', $options)) {
             my $git_hash = RBM::project_config($project, 'git_hash', $options);
             return RBM::execute($project,
-                "git show -s --format=format:%ct ${git_hash}^{commit}", $options);
+                "git show -s --format=format:%ct ${git_hash}^{commit}",
+                 { %$options, exec_noco => 1 });
         } elsif (RBM::project_config($project, 'hg_url', $options)) {
             my $hg = RBM::project_config($project, 'hg', $options);
             my $hg_hash = RBM::project_config($project, 'hg_hash', $options);
             my $changeset = RBM::execute($project,
-                "$hg export --noninteractive -r $hg_hash", $options);
+                "$hg export --noninteractive -r $hg_hash",
+                { %$options, exec_noco => 1 });
             foreach my $line (split "\n", $changeset) {
                 return $1 if ($line =~ m/^# Date (\d+) \d+/);
             }
