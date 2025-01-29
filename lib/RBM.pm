@@ -424,8 +424,16 @@ sub git_need_fetch {
     if ($fetch eq 'if_needed') {
         my $git_hash = project_config($project, 'git_hash', $options)
                 || exit_error "No git_hash specified for project $project";
-        my (undef, undef, $success) = capture_exec('git', 'rev-parse',
+        my ($stdout, undef, $success) = capture_exec('git', 'rev-parse',
                                         '--verify', "$git_hash^{commit}");
+        return 1 unless $success;
+        # If rev-parse returns the same as git_hash, then git_hash is
+        # a hash and there is no need to fetch
+        return 0 if $stdout eq $git_hash;
+        # Check if git_hash is a tag. If it's not a tag or hash then
+        # it's probably a branch and we should do a fetch.
+        (undef, undef, $success) = capture_exec('git', 'rev-parse',
+                                        '--verify', "$git_hash^{tag}");
         return !$success;
     }
     return $fetch;
