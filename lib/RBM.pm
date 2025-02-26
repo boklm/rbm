@@ -427,6 +427,7 @@ sub git_need_fetch {
         my ($stdout, undef, $success) = capture_exec('git', 'rev-parse',
                                         '--verify', "$git_hash^{commit}");
         return 1 unless $success;
+        chomp $stdout;
         # If rev-parse returns the same as git_hash, then git_hash is
         # a hash and there is no need to fetch
         return 0 if $stdout eq $git_hash;
