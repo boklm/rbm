@@ -1209,7 +1209,8 @@ sub build_run {
             $cmd = project_config($project, "remote_exec", {
                     %$options,
                     exec_cmd => project_config($project,
-                        "remote_mktemp", $options) || 'mktemp -d -p /var/tmp',
+                        "remote_mktemp", $options) ||
+                        'tmpdir=$(mktemp -d -p /var/tmp); chmod 0755 "$tmpdir"; echo "$tmpdir"',
                     exec_name => 'mktemp',
                     exec_as_root => 0,
                 });
