@@ -1291,9 +1291,10 @@ sub build_run {
                 if (project_config($project, 'debug', $options)) {
                     print STDERR $error, "\nOpening debug shell\n";
                     print STDERR "Warning: build files will be removed when you exit this shell.\n";
+                    my $original_term = shell_quote($ENV{TERM} || 'dumb');
                     my $cmd = project_config($project, "remote_exec", {
                             %$options,
-                            exec_cmd => "cd $remote_tmp_src; PS1='debug-$project\$ ' \${SHELL-/bin/bash}",
+                            exec_cmd => "cd $remote_tmp_src; TERM=$original_term PS1='debug-$project\$ ' /bin/bash",
                             exec_name => "debug-$s",
                             exec_as_root => $scripts_root{$s},
                             interactive => 1,
