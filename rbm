@@ -30,6 +30,10 @@ my %actions = (
         run => \&show_conf,
         descr => 'Show configuration',
     },
+    show_used_projects => {
+        run => \&show_used_projects,
+        descr => 'Show the list of used projects when getting a config option',
+    },
     usage => {
         run => \&usage,
         descr => 'Show usage information for an action',
@@ -102,6 +106,19 @@ sub show_conf {
                 : $RBM::config->{projects}{$project};
     RBM::exit_error "Undefined" unless defined $r;
     print ref $r ? YAML::XS::Dump($r) : "$r\n";
+}
+
+sub show_used_projects {
+    shift;
+    my $args = set_options(@_);
+    usageexit('show_used_projects') unless @$args == 2;
+    my $project = shift @$args;
+    $RBM::store_used_projects = 1;
+    RBM::valid_project($project);
+    my $r = RBM::project_config($project, @$args);
+    RBM::exit_error "Undefined" unless defined $r;
+    my @usedprojects = RBM::get_used_projects;
+    print join("\n", @usedprojects), "\n";
 }
 
 sub fetch {

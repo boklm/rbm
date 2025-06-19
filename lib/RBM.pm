@@ -34,6 +34,13 @@ BEGIN {
 
 our $config;
 
+our %used_projects;
+our $store_used_projects;
+
+sub get_used_projects {
+    return sort keys %used_projects;
+}
+
 sub load_config_file {
     my $res = {};
     my @conf;
@@ -243,6 +250,7 @@ sub confkey_str {
 
 sub project_config {
     my ($project, $name, $options) = @_;
+    $used_projects{$project} = 1 if $store_used_projects;
     CORE::state %config_cache;
     my $res;
     my $error_if_undef = $options->{error_if_undef};

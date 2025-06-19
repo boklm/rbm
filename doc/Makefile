@@ -27,6 +27,7 @@ MAN1_ASC += rbm.asc
 MAN1_ASC += rbm-usage.asc
 MAN1_ASC += rbm-tar.asc
 MAN1_ASC += rbm-showconf.asc
+MAN1_ASC += rbm-show_used_projects.asc
 MAN1_ASC += rbm-fetch.asc
 MAN1_ASC += rbm-build.asc
 
