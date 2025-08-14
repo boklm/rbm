@@ -579,9 +579,11 @@ set -e
         SET rbm_tmp_dir = c("rbm_tmp_dir");
     END;
     -%]
-tmpfile="\$(mktemp -p [% shell_quote(rbm_tmp_dir) %])"
+tmpdir="\$(mktemp -d -p [% shell_quote(rbm_tmp_dir) %])"
+tmpfile="\$tmpdir"/download
 wget[% IF !c("getting_id") && !c("isatty") %] --no-verbose[% END %] -O"\$tmpfile" [% shell_quote(c("URL")) %]
 mv -f "\$tmpfile" [% shell_quote(dest_dir _ "/" _ c("filename")) %]
+rmdir "\$tmpdir"
 URLGET
     sig_ext => [ qw(gpg asc sig) ],
     enable => 1,
