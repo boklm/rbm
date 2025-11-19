@@ -10,7 +10,7 @@ use English;
 use Getopt::Long;
 use Path::Tiny;
 use File::Path qw(make_path);
-use File::Copy::Recursive qw(pathrmdir rcopy fcopy);
+use File::Copy::Recursive qw(rcopy fcopy);
 require "syscall.ph";
 
 *CLONE_NEWNS   = \0x20000;
@@ -204,19 +204,6 @@ my %actions = (
             unshare_run(
                 sub {
                     return extract_tar($ARGV[1], $ARGV[2]);
-                }
-            );
-        },
-    },
-    remove => {
-        descr => "Remove a container directory",
-        usage => "$0 remove <container-dir>",
-        run   => sub {
-            usageexit($ARGV[0]) unless @ARGV == 2;
-            exit_error "$ARGV[1] is not a directory" unless -d $ARGV[1];
-            unshare_run(
-                sub {
-                    return pathrmdir($ARGV[1]);
                 }
             );
         },

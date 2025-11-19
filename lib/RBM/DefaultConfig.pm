@@ -530,7 +530,7 @@ OPT_END
         remote_finish => <<OPT_END,
 #!/bin/sh
 set -e
-[% c("rbmdir") %]/container remove '[% c("container/dir") %]'
+[% c("rbmdir") %]/container run -- rm -Rf -- '[% c("container/dir") %]'
 OPT_END
 ####
 ####
