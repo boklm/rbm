@@ -237,11 +237,8 @@ sub config {
 }
 
 sub notmpl {
-    my ($name, $project) = @_;
-    return 1 if $name eq 'notmpl';
-    my @n = (@{$config->{default}{notmpl}},
-        @{project_config($project, 'notmpl')});
-    return grep { $name eq $_ } @n;
+    my ($name) = @_;
+    return grep { $name eq $_ } @{$config->{default}{notmpl}};
 }
 
 sub confkey_str {
@@ -282,9 +279,13 @@ sub project_config {
                         ['run'], $project_path, ['local'], [],
                         @modules, ['system'], ['default']);
     if (!$options->{no_tmpl} && defined($res) && !ref $res
-        && !notmpl(confkey_str($name), $project)) {
-        $res = process_template($project, $res,
-            confkey_str($name) eq 'output_dir' ? '.' : undef);
+        && !notmpl(confkey_str($name))) {
+        my $output_dir = undef;
+        if (confkey_str($name) eq 'output_dir' ||
+            confkey_str($name) eq 'getting_id_value/output_dir') {
+            $output_dir = '.';
+        }
+        $res = process_template($project, $res, $output_dir);
     }
     $config_cache{$project}{$step}{$name_str}{$cache_id} = $res;
     $config->{opt} = $opt_save;
@@ -733,7 +734,7 @@ sub process_template {
         }
         return $res;
     }
-    $dest_dir //= rbm_path(project_config($project, 'output_dir'));
+    $dest_dir //= rbm_path(project_config($project, 'getting_id_value/output_dir'));
     my $project_dir = modules_project_dir($project);
     my $common_dirs = join(':', modules_common_dirs($project));
     my $template = Template->new(
@@ -823,7 +824,7 @@ sub input_file_need_dl {
             $fname = undef;
         }
     }
-    if ($action eq 'input_files_id') {
+    if ($action eq 'input_files_id' || $action eq 'getfids') {
         return undef if $input_file->{input_file_id};
         for my $checksum (qw/sha512sum sha256sum/) {
             if ( ($input_file->{$checksum} || $input_file->{norec}{$checksum})
@@ -861,7 +862,7 @@ sub input_file_id {
             return $filename . ':' . $t->($checksum);
         }
     }
-    my $opts = { norec => { output_dir => '/out', getting_id => 1, }};
+    my $opts = { norec => { getting_id => 1, }};
     return $filename . ':' . sha256_hex($t->('exec', $opts))
                 if $input_file->{exec};
     shafile('sha256sum', $fname, { remove_cache => 1 }) if $t->('refresh_input');
@@ -923,6 +924,7 @@ sub input_files {
     my @res_copy;
     my %res_getfnames;
     my @res_getfpaths;
+    my %res_getfids;
     my $getfnames_noname = 0;
     my $input_files_id = '';
     $options = {$options ? %$options : ()};
@@ -1016,6 +1018,11 @@ sub input_files {
             };
             next;
         }
+        if ($action eq 'getfids') {
+            next if $input_file->{project};
+            next if $input_file->{exec};
+            next if $input_file->{content};
+        }
         my $proj_out_dir;
         if ($input_file->{project}) {
             $proj_out_dir = rbm_path(project_step_config($t->('project'), 'output_dir',
@@ -1038,38 +1045,51 @@ sub input_files {
         my ($fname) = file_in_dir($name, $src_dir, $proj_out_dir,
                                         @modules_common_dirs);
         my $file_gpg_id = gpg_id($t->('file_gpg_id'));
+        my $dl_file = sub {};
         if (input_file_need_dl($input_file, $t, $fname, $action)) {
-            if ($t->('content')) {
-                my $dname = dirname("$proj_out_dir/$name");
-                make_path($dname) unless -d $dname;
-                path("$proj_out_dir/$name")->spew_utf8($t->('content'));
-            } elsif ($t->('URL')) {
-                urlget($project, {%$options, %$input_file, filename => $name}, 1);
-            } elsif ($t->('exec')) {
-                my $exec_script = project_config($project, 'exec',
-                    { $options ? %$options : (), %$input_file });
-                if (run_script($project, $exec_script,
-                        sub { system(@_) }) != 0) {
-                    exit_error "Error creating $name";
+            $dl_file = sub {
+                if ($t->('content')) {
+                    my $dname = dirname("$proj_out_dir/$name");
+                    make_path($dname) unless -d $dname;
+                    path("$proj_out_dir/$name")->spew_utf8($t->('content'));
+                } elsif ($t->('URL')) {
+                    urlget($project, {%$options, %$input_file, filename => $name}, 1);
+                } elsif ($t->('exec')) {
+                    my $exec_script = project_config($project, 'exec',
+                        { $options ? %$options : (), %$input_file });
+                    if (run_script($project, $exec_script,
+                            sub { system(@_) }) != 0) {
+                        exit_error "Error creating $name";
+                    }
+                } elsif ($input_file->{project} && $t->('project')) {
+                    my $p = $t->('project');
+                    print "Building project $p - $name\n";
+                    my $run_save = $config->{run};
+                    $config->{run} = { target => $input_file->{target} };
+                    $config->{run}{target} //= $run_save->{target};
+                    build_pkg($p, {%$options, origin_project => $project,
+                            %$input_file});
+                    $config->{run} = $run_save;
+                    print "Finished build of project $p - $name\n";
+                } else {
+                    dd $input_file;
+                    exit_error "Missing file $name";
                 }
-            } elsif ($input_file->{project} && $t->('project')) {
-                my $p = $t->('project');
-                print "Building project $p - $name\n";
-                my $run_save = $config->{run};
-                $config->{run} = { target => $input_file->{target} };
-                $config->{run}{target} //= $run_save->{target};
-                build_pkg($p, {%$options, origin_project => $project,
-                               %$input_file});
-                $config->{run} = $run_save;
-                print "Finished build of project $p - $name\n";
-            } else {
-                dd $input_file;
-                exit_error "Missing file $name";
+                ($fname) = file_in_dir($name, $src_dir, $proj_out_dir,
+                    @modules_common_dirs);
+                exit_error "Error getting file $name" unless $fname;
             }
-            ($fname) = file_in_dir($name, $src_dir, $proj_out_dir,
-                                        @modules_common_dirs);
-            exit_error "Error getting file $name" unless $fname;
         }
+        if ($action eq 'getfids') {
+            my $if_name = $t->('name') if $input_file->{name};
+            next unless $if_name;
+            $res_getfids{$if_name} = sub {
+                $dl_file->();
+                return input_file_id($input_file, $t, $fname, $name);
+            };
+            next;
+        }
+        $dl_file->();
         if ($action eq 'input_files_id') {
             $input_files_id .= input_file_id($input_file, $t, $fname, $name);
             $input_files_id .= "\n";
@@ -1145,6 +1165,7 @@ sub input_files {
     return @res_copy if ($action eq 'copy' || $action eq 'link');
     return \%res_getfnames if $action eq 'getfnames';
     return \@res_getfpaths if $action eq 'getfpaths';
+    return \%res_getfids if $action eq 'getfids';
 }
 
 sub system_log {

@@ -114,6 +114,12 @@ our %default_config = (
     projects_dir  => 'projects',
     modules_dir   => 'modules',
     output_dir    => 'out',
+    # `getting_id_value/output_dir` is used as `output_dir` when processing
+    # template. To avoid having ids being affected by changing `output_dir`,
+    # a fixed value is returned when `getting_id` is set.
+    getting_id_value   => {
+        output_dir => '[% IF c("getting_id"); GET "/out"; ELSE; GET c("output_dir"); END %]',
+    },
     git_clone_dir => 'git_clones',
     hg_clone_dir  => 'hg_clones',
     hg_clone_subdir  => '.',
@@ -122,7 +128,7 @@ our %default_config = (
     build         => '[% INCLUDE build -%]',
     build_log     => '-',
     build_log_append => '1',
-    notmpl        => [ qw(projects_dir modules_dir) ],
+    notmpl        => [ qw(projects_dir modules_dir getting_id) ],
     abbrev_length => '12',
     abbrev        => '[%
                          IF c("git_url");
@@ -626,6 +632,7 @@ ZIP_END
     touch => "[% USE date %]touch -m -t [% date.format(c('timestamp'), format = '%Y%m%d%H%M') %]",
     arch   => \&get_arch,
     input_files_by_name => sub { RBM::input_files('getfnames', @_); },
+    input_files_ids_by_name => sub { RBM::input_files('getfids', @_); },
     input_files_id => sub { RBM::input_files('input_files_id', @_); },
     input_files_paths => sub { RBM::input_files('getfpaths', @_); },
     link_input_files => '[% IF c("remote_exec") %]1[% END %]',
