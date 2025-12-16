@@ -864,6 +864,7 @@ sub input_file_id {
     my $opts = { norec => { output_dir => '/out', getting_id => 1, }};
     return $filename . ':' . sha256_hex($t->('exec', $opts))
                 if $input_file->{exec};
+    shafile('sha256sum', $fname, { remove_cache => 1 }) if $t->('refresh_input');
     return input_file_id_hash($fname, $filename);
 }
 
