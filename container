@@ -200,7 +200,7 @@ my %actions = (
         usage => "$0 extract <container-dir> <tarball>",
         run   => sub {
             usageexit($ARGV[0]) unless @ARGV == 3;
-            exit_error "$ARGV[0] already exists" if -e $ARGV[1];
+            exit_error "$ARGV[1] already exists" if -e $ARGV[1];
             unshare_run(
                 sub {
                     return extract_tar($ARGV[1], $ARGV[2]);
