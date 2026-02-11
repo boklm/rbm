@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Path::Tiny;
-use Test::More tests => 45;
+use Test::More tests => 46;
 use lib 'lib/';
 
 sub set_target {
@@ -281,6 +281,15 @@ my @tests = (
         name => 'wrong sha512sum input_files',
         target => [ 'wrong_sha512sum' ],
         fail_build  => [ 'shasum', 'build' ],
+    },
+    {
+        name   => 'setting different tmp_dir per project',
+        step   => 'build',
+        target => [],
+        build  => [ 'tmpdir_t1', 'build' ],
+        files  => {
+            'out/tmpdir_t1.txt' => "/var/tmp\n/tmp\n",
+        },
     },
 );
 

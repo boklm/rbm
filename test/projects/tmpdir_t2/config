@@ -1,0 +1,8 @@
+filename: tmpdir_t2.txt
+tmp_dir: /var/tmp
+build: |
+  #!/bin/sh
+  set -e
+  dir=$(dirname $(dirname $(pwd)))
+  test "$dir" = '[% c("tmp_dir") %]'
+  echo "$dir" > [% dest_dir %]/[% c('filename') %]

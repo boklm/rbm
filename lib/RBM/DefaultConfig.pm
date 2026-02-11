@@ -88,14 +88,14 @@ sub docker_version {
 
 sub rbm_tmp_dir {
     my ($project, $options) = @_;
-    CORE::state $rbm_tmp_dir;
-    return $rbm_tmp_dir->dirname if $rbm_tmp_dir;
+    CORE::state %rbm_tmp_dir;
     my $tmp_dir = RBM::project_config($project, 'tmp_dir', $options)
                   || RBM::exit_error('No tmp_dir specified');
+    return $rbm_tmp_dir{$tmp_dir}->dirname if $rbm_tmp_dir{$tmp_dir};
     make_path($tmp_dir);
-    $rbm_tmp_dir = File::Temp->newdir(TEMPLATE => 'rbm-XXXXXX',
+    $rbm_tmp_dir{$tmp_dir} = File::Temp->newdir(TEMPLATE => 'rbm-XXXXXX',
                                       DIR => $tmp_dir);
-    return $rbm_tmp_dir->dirname;
+    return $rbm_tmp_dir{$tmp_dir}->dirname;
 }
 
 our %default_config = (

@@ -1,0 +1,11 @@
+filename: tmpdir_t1.txt
+tmp_dir: /tmp
+build: |
+  #!/bin/sh
+  set -e
+  cat tmpdir_t2.txt tmpdir_t3.txt > [% dest_dir %]/[% c('filename') %]
+input_files:
+  - project: tmpdir_t2
+    refresh_input: 1
+  - project: tmpdir_t3
+    refresh_input: 1
