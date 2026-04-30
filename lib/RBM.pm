@@ -245,16 +245,35 @@ sub confkey_str {
     ref $_[0] eq 'ARRAY' ? join '/', @{$_[0]} : $_[0];
 }
 
+sub error_many_lookups {
+    my ($project, $name_str, $lookups_count) = @_;
+    my $errmsg = "High number of config lookups for option $name_str" .
+                 " in project $project.\n" .
+                 "This may indicate a loop in the definition of $name_str.\n\n" .
+                 "Most requested options, possibly part of the loop, are:\n";
+    my @opts = sort {
+        $lookups_count->{$b} cmp $lookups_count->{$a}
+    } keys %$lookups_count;
+    foreach my $opt (@opts[0 .. 9]) {
+        last unless $lookups_count->{$opt};
+        $errmsg .= " - $opt ($lookups_count->{$opt})\n";
+    }
+    exit_error($errmsg);
+}
+
 sub project_config {
     my ($project, $name, $options) = @_;
     $used_projects{$project} = 1 if $store_used_projects;
     CORE::state %config_cache;
+    CORE::state %lookups_count;
     my $res;
     my $error_if_undef = $options->{error_if_undef};
     $options = {%$options, error_if_undef => 0} if $options;
     my $cache_id = pp($config->{run})
                         . pp({ %{$config->{opt}}, $options ? %$options : () });
     my $name_str = ref $name eq 'ARRAY' ? join '/', @$name : $name;
+    error_many_lookups($project, $name_str, $lookups_count{$project})
+        if (++$lookups_count{$project}{$name_str} > 500);
     my $step = $config->{step};
     if (exists $config_cache{$project}{$step}{$name_str}{$cache_id}) {
         $res = $config_cache{$project}{$step}{$name_str}{$cache_id};
@@ -290,6 +309,7 @@ sub project_config {
     $config_cache{$project}{$step}{$name_str}{$cache_id} = $res;
     $config->{opt} = $opt_save;
     FINISH:
+    --$lookups_count{$project}{$name_str};
     if (!defined($res) && $error_if_undef) {
         my $msg = $error_if_undef eq '1' ?
                 "Option " . confkey_str($name) . " is undefined"
