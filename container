@@ -88,6 +88,15 @@ sub create_tar {
     system('tar', '--exclude=./dev', '-C', $rootfsdir, '-caf', $tarfile, '.');
 }
 
+sub get_chroot_bin {
+  my @dirs = qw|/usr/sbin /usr/bin /sbin /bin|;
+  push @dirs, split(':', $ENV{PATH});
+  foreach my $dir (@dirs) {
+    my $cpath = "$dir/chroot";
+    return $cpath if -e $cpath;
+  }
+}
+
 sub run_chroot {
     my ($rootfsdir, $cmd) = @_;
     create_devfiles($rootfsdir);
@@ -101,7 +110,7 @@ sub run_chroot {
     path("$rootfsdir/etc/hosts")->append("\n127.0.1.1 rbm\n")
         unless grep { m/^127.0.1.1 rbm$/ } path("$rootfsdir/etc/hosts")->lines;
     system('hostname', 'rbm');
-    my $res = system('/usr/sbin/chroot', $rootfsdir, @$cmd);
+    my $res = system(get_chroot_bin(), $rootfsdir, @$cmd);
     do_unmounts($rootfsdir);
     return $res;
 }
@@ -115,7 +124,7 @@ sub copy_file_to {
     local %ENV = (
       PATH => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
     );
-    return system('/usr/sbin/chroot', $rootfsdir, 'chown', '-R', $owner, $dst);
+    return system(get_chroot_bin(), $rootfsdir, 'chown', '-R', $owner, $dst);
 }
 
 sub copy_file_from {
